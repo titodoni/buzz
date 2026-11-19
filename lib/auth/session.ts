@@ -5,6 +5,7 @@ import type { Session, User } from "@supabase/supabase-js"
 
 import { getSupabase } from "@/lib/supabase/browser-client"
 import { MSG_GENERIC, MSG_EMAIL_IN_USE, mapAuthError, mapThrownError } from "./errors"
+import { mapRecoveryError } from "./recovery"
 
 export type AuthResult = { ok: true } | { ok: false; message: string }
 export type SignUpResult =
@@ -86,5 +87,42 @@ export async function signOut(): Promise<AuthResult> {
     return { ok: true }
   } catch {
     return { ok: false, message: MSG_GENERIC }
+  }
+}
+
+/** Drops this device's session without signing out other devices. */
+export async function discardLocalSession(): Promise<void> {
+  try {
+    await getSupabase().auth.signOut({ scope: "local" })
+  } catch {
+    // Nothing stored or not configured: already signed out here.
+  }
+}
+
+/**
+ * Sends a recovery email with a one-time code (Req 13.5). Supabase answers the
+ * same way for unknown emails, so this never reveals who has an account.
+ */
+export async function sendRecoveryCode(email: string): Promise<AuthResult> {
+  try {
+    const { error } = await getSupabase().auth.resetPasswordForEmail(email)
+    if (error) return { ok: false, message: mapRecoveryError(error) }
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, message: mapThrownError(e) }
+  }
+}
+
+/** Checks the emailed code, then sets the new password; the user ends up signed in (Req 13.6). */
+export async function resetPasswordWithCode(email: string, code: string, password: string): Promise<AuthResult> {
+  try {
+    const supabase = getSupabase()
+    const verified = await supabase.auth.verifyOtp({ email, token: code, type: "recovery" })
+    if (verified.error) return { ok: false, message: mapRecoveryError(verified.error) }
+    const updated = await supabase.auth.updateUser({ password })
+    if (updated.error) return { ok: false, message: mapRecoveryError(updated.error) }
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, message: mapThrownError(e) }
   }
 }

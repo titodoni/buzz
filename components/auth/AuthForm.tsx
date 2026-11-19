@@ -7,7 +7,9 @@ import { useRouter } from "next/navigation"
 import { WindowFrame } from "@/components/WindowFrame"
 import { signIn, signUp, MSG_CONFIRM_EMAIL } from "@/lib/auth/session"
 import { isValidEmail, isValidPassword, PASSWORD_MAX, PASSWORD_MIN } from "@/lib/validation/profile"
-import { loadRememberedEmail, saveRememberedEmail } from "./remember"
+import { AboutDialog } from "@/components/AboutDialog"
+import { MenuBar, type MenuDef } from "@/components/friends/MenuBar"
+import { loadRememberedEmail, loadSignInOptions, markRunStarted, saveRememberedEmail, saveSignInOptions } from "./remember"
 
 export type AuthMode = "signin" | "signup"
 
@@ -17,7 +19,7 @@ const COPY = {
     submit: "Sign In",
     busy: "Signing in...",
     altText: "New to Buzz?",
-    altLabel: "Sign Up",
+    altLabel: "Get a new account",
     altHref: "/signup/",
   },
   signup: {
@@ -37,6 +39,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [remember, setRemember] = useState(false)
+  const [autoSignIn, setAutoSignIn] = useState(true)
+  const [invisible, setInvisible] = useState(false)
+  const [about, setAbout] = useState(false)
   const [emailError, setEmailError] = useState("")
   const [passwordError, setPasswordError] = useState("")
   const [formError, setFormError] = useState("")
@@ -48,11 +53,15 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     let active = true
     // Deferred so the first render matches the static export (no hydration mismatch).
     queueMicrotask(() => {
+      if (!active) return
       const saved = loadRememberedEmail()
-      if (active && saved) {
+      if (saved) {
         setEmail(saved)
         setRemember(true)
       }
+      const options = loadSignInOptions()
+      setAutoSignIn(options.autoSignIn)
+      setInvisible(options.signInInvisible)
     })
     return () => {
       active = false
@@ -85,11 +94,15 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         const res = await signIn(trimmed, password)
         if (!res.ok) return setFormError(res.message)
         saveRememberedEmail(remember ? trimmed : null)
+        saveSignInOptions({ autoSignIn, signInInvisible: invisible })
+        // This session belongs to the current run, so start-up keeps it (Req 13.3).
+        markRunStarted()
         router.replace("/")
       } else {
         const res = await signUp(trimmed, password)
         if (!res.ok) return setFormError(res.message)
         if (res.needsConfirmation) return setNotice(MSG_CONFIRM_EMAIL)
+        markRunStarted()
         router.replace("/")
       }
     } finally {
@@ -97,11 +110,25 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     }
   }
 
+  const menus: MenuDef[] = [
+    {
+      label: "Messenger",
+      items:
+        mode === "signin"
+          ? [
+              { label: "Get a New Account...", onSelect: () => router.push("/signup/") },
+              { label: "Forgot Your Password?", onSelect: () => router.push("/forgot/") },
+            ]
+          : [{ label: "Sign In", onSelect: () => router.push("/login/") }],
+    },
+    { label: "Help", items: [{ label: "About Buzz", onSelect: () => setAbout(true) }] },
+  ]
   const emailId = `${uid}-email`
   const passwordId = `${uid}-password`
 
   return (
-    <WindowFrame title={copy.title}>
+    <WindowFrame title={copy.title} menuBar={<MenuBar menus={menus} />}>
+      {about ? <AboutDialog onClose={() => setAbout(false)} /> : null}
       {/* The window frame spans the whole window at any size; the form stays a centered column. */}
       <div className="flex min-h-full items-center justify-center p-4">
         <form onSubmit={onSubmit} noValidate className="flex w-full max-w-sm flex-col gap-3">
@@ -146,10 +173,21 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             )}
           </div>
           {mode === "signin" && (
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-              Remember my ID
-            </label>
+            <fieldset className="m-0 flex flex-col gap-1 border-0 p-0 text-sm">
+              <legend className="sr-only">Sign-in options</legend>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+                Remember my ID
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={autoSignIn} onChange={(e) => setAutoSignIn(e.target.checked)} />
+                Sign in automatically
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={invisible} onChange={(e) => setInvisible(e.target.checked)} />
+                Sign in as invisible to everyone
+              </label>
+            </fieldset>
           )}
           <div aria-live="polite" role="status" className="min-h-5 text-sm">
             {formError && <span className="text-red-700">{formError}</span>}
@@ -158,12 +196,19 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           <button type="submit" disabled={submitting} className="ym-button px-4 py-2 disabled:opacity-60">
             {submitting ? copy.busy : copy.submit}
           </button>
-          <p className="text-sm">
+          <p className="m-0 text-sm">
             {copy.altText}{" "}
             <Link href={copy.altHref} className="text-ym-blue underline">
               {copy.altLabel}
             </Link>
           </p>
+          {mode === "signin" && (
+            <p className="m-0 text-sm">
+              <Link href="/forgot/" className="text-ym-blue underline">
+                Forgot your password?
+              </Link>
+            </p>
+          )}
         </form>
       </div>
     </WindowFrame>

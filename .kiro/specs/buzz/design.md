@@ -574,11 +574,17 @@ Fields: email, password. Checkboxes: "Remember my ID" (stores the email only),
 account" (sign-up) and "Forgot your password?". The Messenger and Help menus sit
 under the title bar.
 
-- **Sign in automatically** unchecked: the session is removed when the last
-  window closes, via `supabase.auth.signOut({ scope: "local" })` from the Rust
-  `ExitRequested`/last-window-closed hook calling into the page, or on the next
-  start if the app was killed (the stored `autoSignIn=false` flag makes the
-  sign-in page sign out first).
+- **Sign in automatically** unchecked: the main window's `StartupGate` drops
+  a session left from an earlier run with `signOut({ scope: "local" })`
+  before anything renders. "Earlier run" is told apart from a reload by a mark
+  in `sessionStorage`, which lives for the window's page session and is gone
+  after the app restarts. Chat windows skip the check (they have their own
+  page session). Trade-off: the refresh token stays on disk until the next
+  start; ending it on window close needs a Rust hook and is left for the tray
+  work (task 25.7), which changes what "close" means anyway.
+- The three choices and the remembered email are saved on the device
+  (`localStorage`: `buzz.signInOptions`, `buzz.rememberedEmail`); the password
+  is never stored.
 - **Forgot password** is code-based because a desktop app has no web address for
   an emailed link to open: `resetPasswordForEmail(email)`, then
   `verifyOtp({ email, token, type: "recovery" })`, then `updateUser({ password })`.

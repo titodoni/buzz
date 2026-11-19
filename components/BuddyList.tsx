@@ -4,7 +4,9 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { useSignOut } from "@/components/AuthGuard"
 import { WindowFrame } from "@/components/WindowFrame"
+import { AboutDialog } from "@/components/AboutDialog"
 import { PresenceDot } from "@/components/PresenceDot"
+import { loadSignInOptions } from "@/components/auth/remember"
 import { StatusSelector } from "@/components/StatusSelector"
 import { FriendList } from "@/components/friends/FriendList"
 import { FriendSearch } from "@/components/friends/FriendSearch"
@@ -34,7 +36,11 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
   const [note, setNote] = useState<string | null>(null)
   const [statusMenu, setStatusMenu] = useState(false)
   const friendIds = useMemo(() => friends.map((f) => f.id), [friends])
-  const { myState, setAvailable, setBusy, setInvisible, friendsPresence } = usePresenceTracker(me, friendIds)
+  // "Sign in as invisible to everyone" is a sign-in choice saved on this device (Req 13.4).
+  const [startInvisible] = useState(() => loadSignInOptions().signInInvisible)
+  const { myState, setAvailable, setBusy, setInvisible, friendsPresence } = usePresenceTracker(me, friendIds, {
+    startInvisible,
+  })
   const { unreadBySender } = useOfflineDelivery(me)
   // A nudge from an accepted friend pops their chat window open and shakes it.
   useNudgeInbox(me, (sender) => {
@@ -147,15 +153,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
         </section>
       ) : null}
 
-      {panel === "about" ? (
-        <section aria-label="About Buzz" className="border-t px-2 py-1 text-xs">
-          <p className="m-0 font-bold">Buzz</p>
-          <p className="m-0">Chat with your friends and see who&apos;s around. Give them a nudge!</p>
-          <button type="button" className="ym-button mt-1" onClick={() => setPanel(null)}>
-            Close
-          </button>
-        </section>
-      ) : null}
+      {panel === "about" ? <AboutDialog onClose={() => setPanel(null)} /> : null}
 
       <footer className="border-t">
         <button

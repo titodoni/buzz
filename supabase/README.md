@@ -66,3 +66,19 @@ The Realtime Authorization policies (`realtime.messages`) are not covered by
 this script, because they only apply to live Realtime connections. Check
 them with two signed-in app instances: a non-friend must fail to join
 `chat:<pair>` or send to `inbox:<id>`.
+
+## Password recovery email (required for "Forgot your password?")
+
+Buzz is a desktop app, so a reset *link* has nowhere to open. The app asks for
+the one-time **code** instead (`resetPasswordForEmail`, then
+`verifyOtp({ type: "recovery" })`). Supabase's default "Reset password" email
+only contains a link, so change it once in the dashboard:
+
+1. Authentication → Emails → Templates → **Reset password**.
+2. Put the code in the message, for example:
+   `<p>Your Buzz code is <strong>{{ .Token }}</strong>. It expires soon.</p>`
+3. Save.
+
+The app accepts codes of 6 to 10 digits (Supabase's default is 6). The built-in
+email service only sends a few emails per hour; configure your own SMTP server
+before real users rely on this.

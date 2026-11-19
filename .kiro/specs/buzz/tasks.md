@@ -274,16 +274,16 @@ running desktop app instances (or two app windows), per `tech.md`.
   - [x] 21.7 Use `PresenceDot` for every Availability picture: Buddy List header and title bar, friend rows, chat window header and title bar (`TitleBar` `icon`), with a ghost marker on the user's own Invisible icon
     - _Requirements: 12.2, 12.8, 12.9, 17.10_
 
-- [ ] 22. Sign-in options
-  - [ ] 22.1 Add to the sign-in window the checkboxes "Remember my ID", "Sign in automatically", and "Sign in as invisible to everyone", the links "Get a new account" and "Forgot your password?", and the Messenger and Help menus
+- [x] 22. Sign-in options
+  - [x] 22.1 Add to the sign-in window the checkboxes "Remember my ID", "Sign in automatically", and "Sign in as invisible to everyone", the links "Get a new account" and "Forgot your password?", and the Messenger and Help menus
     - _Requirements: 13.1, 13.2, 13.4_
-  - [ ] 22.2 Implement "Sign in automatically": when unchecked, end the session when the last window closes, and on the next start if the app was killed; when checked, restore the session and skip the sign-in window
+  - [x] 22.2 Implement "Sign in automatically": when unchecked, end the session when the last window closes, and on the next start if the app was killed; when checked, restore the session and skip the sign-in window
     - _Requirements: 13.2, 13.3_
-  - [ ] 22.3 Implement the password recovery flow: ask for the email, call `resetPasswordForEmail`, accept the 6-digit code and a new password of 8 to 128 characters through `verifyOtp` and `updateUser`, and map a wrong or expired code to a plain message; record the required email template change (`{{ .Token }}`) in `supabase/README.md`
+  - [x] 22.3 Implement the password recovery flow: ask for the email, call `resetPasswordForEmail`, accept the 6-digit code and a new password of 8 to 128 characters through `verifyOtp` and `updateUser`, and map a wrong or expired code to a plain message; record the required email template change (`{{ .Token }}`) in `supabase/README.md`
     - _Requirements: 13.5, 13.6, 13.7_
-  - [ ] 22.4 Add the About Buzz dialog: version, copyright line, and the not-affiliated statement
+  - [x] 22.4 Add the About Buzz dialog: version, copyright line, and the not-affiliated statement
     - _Requirements: 13.8_
-  - [ ]* 22.5 Write tests for the pure code and password checks used by the recovery form
+  - [x]* 22.5 Write tests for the pure code and password checks used by the recovery form
     - _Requirements: 13.6, 13.7_
 
 - [ ] 23. Groups and contacts

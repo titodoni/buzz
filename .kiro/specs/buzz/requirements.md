@@ -214,7 +214,7 @@ Avatar images, a native mobile app, and any end-to-end encryption claim.
 
 1. WHEN a user signs in with "Remember my ID" checked, THE Auth_Service SHALL fill in the email on the next start and SHALL NOT store the password.
 2. WHEN a user signs in with "Sign in automatically" checked, THE Auth_Service SHALL restore the session on the next start and SHALL skip the sign-in window.
-3. WHEN a user signs in with "Sign in automatically" unchecked, THE Auth_Service SHALL end the session when the last Buzz window closes.
+3. WHEN a user signs in with "Sign in automatically" unchecked, THE Auth_Service SHALL require the user to sign in again the next time Buzz starts.
 4. WHEN a user signs in with "Sign in as invisible to everyone" checked, THE Presence_Service SHALL start the user as Invisible.
 5. WHEN a user chooses "Forgot your password?" and enters an email address, THE Auth_Service SHALL send a recovery email that contains a 6-digit code.
 6. WHEN a user enters a valid recovery code and a new password of 8 to 128 characters, THE Auth_Service SHALL set the new password and sign the user in.
