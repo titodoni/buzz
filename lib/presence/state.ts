@@ -14,10 +14,10 @@ export const IDLE_TIMEOUT_MS = 300_000;
 /**
  * Pure presence transition.
  *
- * - `activity` and `setOnline` always yield `online`. This includes `busy`:
- *   busy persists only until an explicit activity/setOnline/disconnect, so
- *   user activity DOES end busy. It also includes `offline`; the caller is
- *   responsible for only emitting events while connected.
+ * - `activity` yields `online`, except from `busy`: a user who chose Busy
+ *   stays Busy while active (Req 4.3). From `offline` it also yields
+ *   `online`; the caller only emits events while connected.
+ * - `setOnline` (the user picks Available) always yields `online`.
  * - `idleTimeout` yields `away` only when `now - lastActivityAt >= 5 min`
  *   and current is `online` or `away`. It never overrides `busy` or `offline`.
  *   Otherwise the current state is returned unchanged.
@@ -30,6 +30,8 @@ export function nextPresenceState(
 ): PresenceState {
   switch (e.type) {
     case "activity":
+      // A user who chose Busy stays Busy while they keep working (Req 4.3).
+      return current === "busy" ? "busy" : "online";
     case "setOnline":
       return "online";
     case "idleTimeout":

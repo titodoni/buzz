@@ -31,11 +31,20 @@ const opts = { numRuns: 200 };
 
 // Feature: buzz, Property 9: Presence state machine
 describe("Property 9: Presence state machine", () => {
-  it("activity/setOnline -> online from any state", () => {
+  it("setOnline (choosing Available) -> online from any state", () => {
+    fc.assert(
+      fc.property(stateArb, (cur) => {
+        expect(nextPresenceState(cur, { type: "setOnline" })).toBe("online");
+      }),
+      opts,
+    );
+  });
+  it("activity -> online, except a user who chose busy stays busy (Req 4.3)", () => {
     fc.assert(
       fc.property(stateArb, time, (cur, now) => {
-        expect(nextPresenceState(cur, { type: "activity", now })).toBe("online");
-        expect(nextPresenceState(cur, { type: "setOnline" })).toBe("online");
+        expect(nextPresenceState(cur, { type: "activity", now })).toBe(
+          cur === "busy" ? "busy" : "online",
+        );
       }),
       opts,
     );
@@ -102,9 +111,9 @@ describe("Property 9: Presence state machine", () => {
     );
   });
 
-  it("busy persists across idleTimeout/setBusy sequences", () => {
+  it("busy persists across activity/idleTimeout/setBusy sequences", () => {
     const persisting = eventArb.filter(
-      (e) => e.type === "idleTimeout" || e.type === "setBusy",
+      (e) => e.type === "activity" || e.type === "idleTimeout" || e.type === "setBusy",
     );
     fc.assert(
       fc.property(fc.array(persisting, { maxLength: 30 }), (events) => {
@@ -129,6 +138,8 @@ describe("Property 9: Presence state machine", () => {
             let expected: PresenceState;
             switch (e.type) {
               case "activity":
+                expected = prev === "busy" ? "busy" : "online";
+                break;
               case "setOnline":
                 expected = "online";
                 break;

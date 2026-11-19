@@ -663,7 +663,7 @@ Redundant or overlapping criteria were consolidated: `2.5` is subsumed by `2.4` 
 
 ### Property 9: Presence state machine
 
-*For any* current presence state and event, `nextPresenceState` follows the spec: an `activity` or `setOnline` event yields `online`; an `idleTimeout` event where `now - lastActivityAt >= 5 min` yields `away`; a `setBusy` event yields `busy` and `busy` persists until an explicit `activity`/`setOnline`/`disconnect`; a `disconnect` or `heartbeatMissed` event yields `offline`.
+*For any* current presence state and event, `nextPresenceState` follows the spec: a `setOnline` event (the user picks Available) yields `online`; an `activity` event yields `online` from any state except `busy`, which stays `busy` (Req 4.3); an `idleTimeout` event where `now - lastActivityAt >= 5 min` yields `away` from `online` or `away`; a `setBusy` event yields `busy` and `busy` persists until an explicit `setOnline` or a `disconnect`; a `disconnect` or `heartbeatMissed` event yields `offline`.
 
 **Validates: Requirements 4.1, 4.2, 4.3, 4.6**
 
