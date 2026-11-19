@@ -18,7 +18,9 @@ export function WindowFrame({ title, children, menuBar, className }: WindowFrame
     >
       <TitleBar title={title} />
       {menuBar ? <div style={{ flexShrink: 0 }}>{menuBar}</div> : null}
-      <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>{children}</div>
+      <div className="ym-window-body">
+        <div className="ym-content">{children}</div>
+      </div>
     </div>
   );
 }

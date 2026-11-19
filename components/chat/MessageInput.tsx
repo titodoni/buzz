@@ -81,9 +81,9 @@ export const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(fu
   return (
     <div style={{ padding: 6 }}>
       <textarea
+        className="ym-message-box"
         ref={areaRef}
         value={text}
-        rows={3}
         aria-label="Type a message"
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? "message-error" : undefined}

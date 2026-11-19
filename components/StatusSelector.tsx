@@ -145,7 +145,7 @@ export function StatusSelector({
           role="menu"
           aria-label="Set your status"
           onKeyDown={onListKeyDown}
-          className="m-0 list-none border p-0 shadow"
+          className="ym-dropdown m-0 list-none border p-0 shadow"
           style={{ position: "absolute", left: 0, top: "100%", background: "var(--window-bg)", zIndex: 50, minWidth: 170 }}
         >
           {MENU_ITEMS.map((m) => (

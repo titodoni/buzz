@@ -44,9 +44,9 @@ export function MenuBar({ menus }: { menus: MenuDef[] }) {
   }
 
   return (
-    <div ref={rootRef} role="menubar" aria-label="Main menu" className="flex border-b">
+    <div ref={rootRef} role="menubar" aria-label="Main menu" className="ym-menubar flex flex-wrap border-b">
       {menus.map((m, i) => (
-        <div key={m.label} style={{ position: "relative" }}>
+        <div key={m.label} className="ym-menu-item">
           <button
             type="button"
             aria-haspopup="menu"
@@ -66,12 +66,12 @@ export function MenuBar({ menus }: { menus: MenuDef[] }) {
             <ul
               role="menu"
               aria-label={m.label}
-              className="m-0 list-none border p-0 shadow"
+              className="ym-dropdown m-0 list-none border p-0 shadow"
               style={{
                 position: "absolute",
                 top: "100%",
                 left: 0,
-                minWidth: 190,
+                minWidth: "min(190px, 100%)",
                 background: "var(--window-bg)",
                 zIndex: 50,
               }}

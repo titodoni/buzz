@@ -101,9 +101,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const passwordId = `${uid}-password`
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <WindowFrame title={copy.title} className="w-full max-w-sm">
-        <form onSubmit={onSubmit} noValidate className="flex flex-col gap-3 p-4">
+    <WindowFrame title={copy.title}>
+      {/* The window frame spans the whole window at any size; the form stays a centered column. */}
+      <div className="flex min-h-full items-center justify-center p-4">
+        <form onSubmit={onSubmit} noValidate className="flex w-full max-w-sm flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label htmlFor={emailId} className="text-sm font-bold">
               Email
@@ -164,7 +165,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             </Link>
           </p>
         </form>
-      </WindowFrame>
-    </div>
+      </div>
+    </WindowFrame>
   )
 }

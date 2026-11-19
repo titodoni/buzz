@@ -62,7 +62,7 @@ export function TitleBar({ title, icon, showMaximize = true }: TitleBarProps) {
         {title}
       </span>
       <div
-        style={{ display: "flex", gap: 3 }}
+        style={{ display: "flex", gap: 3, flexShrink: 0 }}
         onMouseDown={stop}
         onDoubleClick={stop}
       >

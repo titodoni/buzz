@@ -168,3 +168,16 @@ Avatar images, a native mobile app, and any end-to-end encryption claim.
 1. WHILE a user is entering text in the chat message input, THE Typing_Indicator SHALL display "<Display_Name> is typing..." to the other participant in the conversation.
 2. WHEN the user stops typing for 3 seconds, THE Typing_Indicator SHALL clear the indicator.
 3. WHEN the user sends the message, THE Typing_Indicator SHALL clear the typing indicator for the other participant.
+
+### Requirement 11: Responsive window layout
+
+**User Story:** As a user, I want every Buzz window to stay usable at any size I drag it to, so that Buzz fits my screen and my habits.
+
+#### Acceptance Criteria
+
+1. WHEN a user resizes a window anywhere between its minimum size and a maximized window, THE Buzz SHALL keep every control visible and reachable without horizontal scrolling.
+2. WHILE a chat window is narrower than 400 px, THE Buzz SHALL hide the pictures column so the conversation keeps the full width.
+3. WHILE a window is at least 900 px wide, THE Buzz SHALL limit its content to a readable column of at most 720 px and center that column.
+4. WHILE a window is shorter than 340 px, THE Buzz SHALL reduce vertical spacing so the newest message and the message input stay visible.
+5. WHEN the Emoticon picker opens in a window narrower than the picker, THE Emoticon_Service SHALL fit the picker inside the window width.
+6. IF a Display_Name, Status, or Now_Playing line is longer than the space available, THEN THE Buzz SHALL truncate it with an ellipsis instead of wrapping it or overflowing the window.

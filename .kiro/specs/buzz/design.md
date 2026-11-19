@@ -482,9 +482,40 @@ The emoticon images are the classic yellow YM smiley style (glossy, the same fam
 
 ### Responsiveness and accessibility
 
-- The Buddy List and each Chat are **real OS windows** (Tauri), independent and freely moved/resized like classic YM. Default sizes match the YM client (Buddy List ~260px wide; Chat ~420x360px); windows enforce a sensible minimum. There is no browser chrome and no responsive mobile layout — this is a desktop app.
+- The Buddy List and each Chat are **real OS windows** (Tauri), independent and freely moved/resized like classic YM. Default sizes match the YM client (Buddy List ~260px wide; Chat ~420x360px); windows enforce a sensible minimum. There is no browser chrome and no phone layout: this is a desktop app, but each window is **responsive to its own size** (see Responsive window layout below).
 - Keyboard: `Enter` sends a message, `Ctrl+G` buzzes, the Emoticon picker is reachable by its toolbar button and dismissible by `Esc`. All interactive controls are focusable with visible focus rings (the purple accent).
 - The contrast floor (>=4.5:1) and the status-smiley color coding keep the classic look legible (Req 8.4, Property 19).
+
+### Responsive window layout
+
+Every window is the whole viewport (`WindowFrame` fills it), so the layout
+responds to the **window size** with plain CSS media queries; there is no
+JavaScript breakpoint logic. Sizes are enforced by the Tauri shell: the
+Buddy List opens at 260x560 (minimum 220x400) and a chat window at 420x360
+(minimum 320x280).
+
+| Breakpoint | Applies to | Behaviour |
+| --- | --- | --- |
+| Narrow: width < 400 px | chat window | Pictures column hidden; the toolbar wraps onto a second line if needed (Req 11.2) |
+| Regular: 400 to 899 px | all windows | Default layout |
+| Wide: width >= 900 px | all windows | Content column capped at 720 px and centered; title bar and menu bar still span the window (Req 11.3) |
+| Short: height < 340 px | chat window | Tighter padding and a 2-row message box so the newest message and input stay visible (Req 11.4) |
+
+Related details: the chat window's arrangement is a presentational
+`ChatLayout` (header, list, typing line, toolbar, input, pictures column) so
+it can be shown without a network; the sign-in and sign-up windows use the
+normal full-width frame with the form centered at up to 384 px; the menu bar
+wraps onto a second line when its menus don't fit, and menus open from the
+bar's left edge below 400 px; text fields get a visible border and white
+background from a base style (Tailwind's reset removes them).
+
+Rules that apply at every size (Req 11.1, 11.5, 11.6):
+- Nothing has a fixed pixel width that can exceed the window: lists and text
+  use `min-width: 0` with `text-overflow: ellipsis`; the Emoticon picker is a
+  wrapping grid capped at the window width.
+- The content area scrolls vertically; horizontal scrolling never appears.
+- Window controls and the Send, Buzz!, and Emoticons buttons keep their
+  size and stay clickable.
 
 ### Out-of-scope YM features (deliberately omitted)
 

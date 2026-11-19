@@ -20,6 +20,7 @@ Buzz does not use end-to-end encryption and does not claim to.
 | Offline messages and unread badges | Built |
 | Live profile updates in the Buddy List (task 18.1) | Not yet |
 | Supabase schema, RLS, Realtime policies | Applied and checked |
+| Responsive windows (220x400 up to maximized) | Built; see [docs/responsive-checks.md](docs/responsive-checks.md) |
 | Installer config (task 17.1) and two-user integration tests | Not yet |
 
 The eight migrations are applied to a real Supabase project, and

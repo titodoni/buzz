@@ -247,6 +247,16 @@ running desktop app instances (or two app windows), per `tech.md`.
 
 - [~] 19. Final checkpoint — Ensure all tests pass, ask the user if questions arise.
 
+- [x] 20. Make the windows responsive
+  - [x] 20.1 Add the responsive CSS foundation in `app/globals.css`: the `xs` (400 px) and `wide` (900 px) breakpoints, a `.ym-content` column (max 720 px, centered, from 900 px), no horizontal overflow, and an ellipsis helper
+    - _Requirements: 11.1, 11.3, 11.6_
+  - [x] 20.2 Make the chat window responsive: hide the pictures column under 400 px, wrap the toolbar, tighten spacing and use a 2-row message box under 340 px of height, and fit the Emoticon picker inside the window
+    - _Requirements: 11.1, 11.2, 11.4, 11.5_
+  - [x] 20.3 Make the Buddy List, profile, and sign-in windows responsive: use the `.ym-content` column when wide, truncate long names, status lines, and Now_Playing, and keep menus and buttons inside the window at the minimum size
+    - _Requirements: 11.1, 11.3, 11.6_
+  - [x] 20.4 Check every window at its minimum, default, and maximized sizes with screenshots (no horizontal scrollbar, nothing clipped) and record the sizes checked in `docs/responsive-checks.md`
+    - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
+
 ## Notes
 
 - The design uses TypeScript throughout (Next.js App Router + TypeScript strict) as a static export, so all code examples and tasks are TypeScript; no language selection step was needed.
@@ -270,7 +280,9 @@ running desktop app instances (or two app windows), per `tech.md`.
     { "id": 3, "tasks": ["8.1", "8.2", "9.1", "9.2", "10.1", "10.2", "10.3", "11.1", "12.1", "12.2", "12.3", "12.4", "13.1", "13.2", "14.1"] },
     { "id": 4, "tasks": ["8.3", "9.3", "10.4", "10.5", "11.2", "12.5", "15.1", "17.1"] },
     { "id": 5, "tasks": ["12.6", "13.3", "14.2", "15.2", "18.1"] },
-    { "id": 6, "tasks": ["18.2"] }
+    { "id": 6, "tasks": ["18.2", "20.1"] },
+    { "id": 7, "tasks": ["20.2", "20.3"] },
+    { "id": 8, "tasks": ["20.4"] }
   ]
 }
 ```

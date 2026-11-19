@@ -7,6 +7,7 @@ import { NudgeButton } from "@/components/chat/NudgeButton";
 import { EmoticonPicker } from "./EmoticonPicker";
 import { MessageInput, type MessageInputHandle } from "./MessageInput";
 import { MessageList } from "./MessageList";
+import { Avatar, ChatLayout } from "./ChatLayout";
 import { TypingIndicator } from "./TypingIndicator";
 import { conversation, emptyConversation, type MessageRow } from "@/lib/chat/conversation";
 import { loadHistory, markConversationRead, sendMessage } from "@/lib/chat/api";
@@ -18,49 +19,6 @@ import { onSend as typingOnSend, type TypingState } from "@/lib/typing/state";
 import { receiveTypingSignal, type TypingSignal } from "@/lib/typing/broadcast";
 import { reportActivity } from "@/lib/realtime/activity";
 import { sendNudgeToInbox } from "@/lib/realtime/inbox";
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const letters = parts.length > 1 ? parts[0][0] + parts[1][0] : (parts[0] ?? "?").slice(0, 2);
-  return letters.toUpperCase();
-}
-
-function Avatar({ name, url }: { name: string; url: string | null }) {
-  return (
-    <div style={{ textAlign: "center", marginBottom: 8 }}>
-      {url ? (
-        // eslint-disable-next-line @next/next/no-img-element -- remote avatar in a static export
-        <img
-          src={url}
-          alt={`${name}'s picture`}
-          width={64}
-          height={64}
-          style={{ objectFit: "cover", border: "1px solid var(--border)" }}
-        />
-      ) : (
-        <div
-          role="img"
-          aria-label={`${name}'s picture`}
-          style={{
-            width: 64,
-            height: 64,
-            margin: "0 auto",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "var(--ym-purple)",
-            color: "var(--titlebar-text)",
-            fontSize: 22,
-            fontWeight: 700,
-          }}
-        >
-          {initials(name)}
-        </div>
-      )}
-      <div style={{ fontSize: 11, overflowWrap: "anywhere" }}>{name}</div>
-    </div>
-  );
-}
 
 export interface ChatWindowProps {
   me: string;
@@ -214,58 +172,58 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
 
   return (
     <WindowFrame title={`${friendName} - Instant Message`}>
-      <div ref={rootRef} style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--window-bg)" }}>
-        <header
-          style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px", borderBottom: "1px solid var(--border)" }}
-        >
-          <PresenceDot state={presence} />
-          <strong>{friendName}</strong>
-          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-            {friend?.statusMessage ? `"${friend.statusMessage}"` : presenceLabel(presence)}
-          </span>
-        </header>
-        {loadError ? (
-          <p role="alert" style={{ color: "var(--buzz-red)", fontSize: 12, margin: "4px 8px" }}>
-            Couldn&apos;t load your earlier messages. We&apos;ll try again when you&apos;re back online.
-          </p>
-        ) : null}
-        <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-            <div style={{ flex: 1, minHeight: 0 }}>
-              <MessageList items={state.items} myName={myName} friendName={friendName} />
-            </div>
-            <TypingIndicator friendName={friendName} typing={friendTyping} />
-            <div style={{ position: "relative", display: "flex", gap: 6, padding: "2px 6px" }}>
-              <button
-                type="button"
-                className="ym-button"
-                aria-haspopup="dialog"
-                aria-expanded={pickerOpen}
-                onClick={() => (pickerOpen ? closePicker() : setPickerOpen(true))}
-              >
-                Emoticons
-              </button>
-              <NudgeButton friendId={friendId} friendPresence={presence} onNudge={handleNudge} />
-              {pickerOpen ? (
-                <EmoticonPicker
-                  onPick={(code) => {
-                    inputRef.current?.insertShortcode(code);
-                    setPickerOpen(false);
-                  }}
-                  onClose={closePicker}
-                />
-              ) : null}
-            </div>
-            <MessageInput ref={inputRef} onSend={handleSend} onTyping={sendTyping} />
-          </div>
-          <aside style={{ width: 88, padding: 8, borderLeft: "1px solid var(--border)" }} aria-label="Pictures">
+      <ChatLayout
+        rootRef={rootRef}
+        header={
+          <>
+            <PresenceDot state={presence} />
+            <strong className="ym-truncate">{friendName}</strong>
+            <span className="ym-truncate" style={{ fontSize: 12, color: "var(--text-muted)" }}>
+              {friend?.statusMessage ? `"${friend.statusMessage}"` : presenceLabel(presence)}
+            </span>
+          </>
+        }
+        notice={
+          loadError ? (
+            <p role="alert" style={{ color: "var(--buzz-red)", fontSize: 12, margin: "4px 8px" }}>
+              Couldn&apos;t load your earlier messages. We&apos;ll try again when you&apos;re back online.
+            </p>
+          ) : null
+        }
+        list={<MessageList items={state.items} myName={myName} friendName={friendName} />}
+        typing={<TypingIndicator friendName={friendName} typing={friendTyping} />}
+        toolbar={
+          <>
+            <button
+              type="button"
+              className="ym-button"
+              aria-haspopup="dialog"
+              aria-expanded={pickerOpen}
+              onClick={() => (pickerOpen ? closePicker() : setPickerOpen(true))}
+            >
+              Emoticons
+            </button>
+            <NudgeButton friendId={friendId} friendPresence={presence} onNudge={handleNudge} />
+            {pickerOpen ? (
+              <EmoticonPicker
+                onPick={(code) => {
+                  inputRef.current?.insertShortcode(code);
+                  setPickerOpen(false);
+                }}
+                onClose={closePicker}
+              />
+            ) : null}
+          </>
+        }
+        input={<MessageInput ref={inputRef} onSend={handleSend} onTyping={sendTyping} />}
+        pictures={
+          <>
             <Avatar name={friendName} url={friend?.avatarUrl ?? null} />
             <Avatar name={myName} url={mine?.avatarUrl ?? null} />
-          </aside>
-        </div>
-      </div>
+          </>
+        }
+      />
     </WindowFrame>
   );
 }
-
 export default ChatWindow;

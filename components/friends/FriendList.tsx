@@ -114,7 +114,7 @@ export function FriendList({
           ref={menuRef}
           role="menu"
           aria-label={`Options for ${overlay.friend.displayName}`}
-          className="m-0 list-none border p-0 shadow"
+          className="ym-dropdown m-0 list-none border p-0 shadow"
           style={{
             position: "fixed",
             left: Math.max(0, Math.min(overlay.x, window.innerWidth - 180)),

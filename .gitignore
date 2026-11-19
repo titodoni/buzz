@@ -6,3 +6,6 @@ out
 src-tauri/target
 *.tsbuildinfo
 next-env.d.ts
+
+# Third-party reference screenshots (not ours to redistribute, see docs/adr/0006)
+/screenshoot/
