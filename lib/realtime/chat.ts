@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react"
 import type { RealtimeChannel } from "@supabase/supabase-js"
-import { getSupabase } from "@/lib/supabase/browser-client"
+import { closeChannel, openChannel } from "@/lib/realtime/channel"
 import { pairKey } from "@/lib/friends/search"
 import type { MessageRow } from "@/lib/chat/conversation"
 import type { TypingSignal } from "@/lib/typing/broadcast"
@@ -68,13 +68,17 @@ export function useChatChannel(options: ChatChannelOptions): {
     let attempt = 0
     let hasConnected = false
     let timer: ReturnType<typeof setTimeout> | null = null
-    const supabase = getSupabase()
+    const topic = `chat:${pairKey(me, friendId)}`
 
-    const connect = () => {
+    const connect = async () => {
       if (!active) return
-      const channel = supabase.channel(`chat:${pairKey(me, friendId)}`, {
-        config: { private: true, broadcast: { ack: true, self: false } },
-      })
+      // Waits for an earlier removal of this topic (dev double-mount, reconnect).
+      const channel = await openChannel(
+        topic,
+        { config: { private: true, broadcast: { ack: true, self: false } } },
+        () => !active,
+      )
+      if (!channel) return
       channelRef.current = channel
       // Two listeners, because a filter takes one column: messages to me, and
       // my own sends from another instance. Only rows of this pair are kept;
@@ -114,22 +118,22 @@ export function useChatChannel(options: ChatChannelOptions): {
             hasConnected = true
           } else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT") {
             channelRef.current = null
-            void supabase.removeChannel(channel)
+            void closeChannel(topic, channel)
             const delay = RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)]
             attempt += 1
             hasConnected = true // the next successful subscribe is a reconnect
-            timer = setTimeout(connect, delay)
+            timer = setTimeout(() => void connect(), delay)
           }
         })
     }
 
-    connect()
+    void connect()
     return () => {
       active = false
       if (timer) clearTimeout(timer)
       const ch = channelRef.current
       channelRef.current = null
-      if (ch) void supabase.removeChannel(ch)
+      if (ch) void closeChannel(topic, ch)
     }
   }, [me, friendId])
 

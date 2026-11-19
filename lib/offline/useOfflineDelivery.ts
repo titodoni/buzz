@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { planDelivery } from "@/lib/offline/delivery"
+import type { RealtimeChannel } from "@supabase/supabase-js"
+import { closeChannel, openChannel } from "@/lib/realtime/channel"
 import { getSupabase } from "@/lib/supabase/browser-client"
 
 export interface OfflineDelivery {
@@ -77,8 +79,15 @@ export function useOfflineDelivery(me: string): OfflineDelivery {
 
     const supabase = getSupabase()
     const filter = `receiver_id=eq.${me}`
-    const channel = supabase
-      .channel(`offline:${me}`)
+    const topic = `offline:${me}`
+    let cancelled = false
+    let opened: RealtimeChannel | null = null
+    // Open after any earlier removal of this topic has finished (dev double-mount).
+    void (async () => {
+      const channel = await openChannel(topic, undefined, () => cancelled)
+      if (!channel) return
+      opened = channel
+      channel
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter }, (p) => {
         const row: unknown = p.new
         if (!isInsertedRow(row) || row.read_at) return
@@ -101,11 +110,13 @@ export function useOfflineDelivery(me: string): OfflineDelivery {
         if (unreadRef.current.delete(row.id)) publish()
       })
       .subscribe()
+    })()
 
     return () => {
+      cancelled = true
       clearTimeout(first)
       window.removeEventListener("focus", onFocus)
-      void supabase.removeChannel(channel)
+      if (opened) void closeChannel(topic, opened)
     }
   }, [me, load, publish])
 

@@ -1,6 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import type { RealtimeChannel } from "@supabase/supabase-js"
+import { closeChannel, openChannel } from "@/lib/realtime/channel"
 import { getSupabase } from "@/lib/supabase/browser-client"
 import type { Database } from "@/lib/supabase/database.types"
 import { canSendRequest, MAX_SEARCH_RESULTS } from "./search"
@@ -211,27 +213,34 @@ export function useFriends(me: string): FriendsData {
   }, [me, tick])
 
   useEffect(() => {
-    let supabase: ReturnType<typeof getSupabase>
     try {
-      supabase = getSupabase()
+      getSupabase() // throws when Supabase isn't configured; then there is nothing to subscribe to
     } catch {
       return
     }
-    const channel = supabase
-      .channel(`friendships:${me}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "friendships", filter: `requester_id=eq.${me}` },
-        reload,
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "friendships", filter: `addressee_id=eq.${me}` },
-        reload,
-      )
-      .subscribe()
+    const topic = `friendships:${me}`
+    let cancelled = false
+    let opened: RealtimeChannel | null = null
+    void (async () => {
+      const channel = await openChannel(topic, undefined, () => cancelled)
+      if (!channel) return
+      opened = channel
+      channel
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "friendships", filter: `requester_id=eq.${me}` },
+          reload,
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "friendships", filter: `addressee_id=eq.${me}` },
+          reload,
+        )
+        .subscribe()
+    })()
     return () => {
-      void supabase.removeChannel(channel)
+      cancelled = true
+      if (opened) void closeChannel(topic, opened)
     }
   }, [me, reload])
 

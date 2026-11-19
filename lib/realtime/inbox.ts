@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { getSupabase } from "../supabase/browser-client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
+import { closeChannel, openChannel } from "./channel";
 
 // Each signed-in user's Buddy List listens on a personal inbox channel. A nudge
 // is sent there as well as on the pair's chat channel, so a friend whose chat
@@ -21,17 +22,18 @@ const NUDGE_EVENT = "nudge";
  * (no subscription needed). Resolves true when the server accepted it.
  */
 export async function sendNudgeToInbox(me: string, friendId: string): Promise<boolean> {
-  const supabase = getSupabase();
+  const name = inboxChannel(friendId);
   // Private: only accepted friends may send here (Realtime Authorization,
   // migration 20250101000600).
-  const channel = supabase.channel(inboxChannel(friendId), { config: { private: true } });
+  const channel = await openChannel(name, { config: { private: true } });
+  if (!channel) return false;
   try {
     const res = await channel.httpSend(NUDGE_EVENT, { sender: me });
     return res.success;
   } catch {
     return false;
   } finally {
-    void supabase.removeChannel(channel);
+    void closeChannel(name, channel);
   }
 }
 
@@ -47,17 +49,24 @@ export function useNudgeInbox(me: string, onNudge: (senderId: string) => void): 
 
   useEffect(() => {
     if (!me) return;
-    const supabase = getSupabase();
-    const channel = supabase
-      .channel(inboxChannel(me), { config: { private: true } })
-      .on("broadcast", { event: NUDGE_EVENT }, ({ payload }) => {
-        // Payload comes from another client, so check its shape before use.
-        const sender = (payload as { sender?: unknown } | null)?.sender;
-        if (typeof sender === "string" && sender !== me) onNudgeRef.current(sender);
-      })
-      .subscribe();
+    const name = inboxChannel(me);
+    let cancelled = false;
+    let opened: RealtimeChannel | null = null;
+    void (async () => {
+      const channel = await openChannel(name, { config: { private: true } }, () => cancelled);
+      if (!channel) return;
+      opened = channel;
+      channel
+        .on("broadcast", { event: NUDGE_EVENT }, ({ payload }) => {
+          // Payload comes from another client, so check its shape before use.
+          const sender = (payload as { sender?: unknown } | null)?.sender;
+          if (typeof sender === "string" && sender !== me) onNudgeRef.current(sender);
+        })
+        .subscribe();
+    })();
     return () => {
-      void supabase.removeChannel(channel);
+      cancelled = true;
+      if (opened) void closeChannel(name, opened);
     };
   }, [me]);
 }

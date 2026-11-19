@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { nextPresenceState, type PresenceEvent, type PresenceState } from "@/lib/presence/state"
 import { onRemoteActivity } from "@/lib/realtime/activity"
 import { mergePresence, type PresencePayload } from "@/lib/realtime/presenceMerge"
-import { getSupabase } from "@/lib/supabase/browser-client"
+import { closeChannel, openChannel } from "@/lib/realtime/channel"
 
 export const PRESENCE_CHANNEL = "presence:global"
 
@@ -40,12 +40,15 @@ function openPresence(opts: {
   let attempt = 0
   let closed = false
 
-  const connect = () => {
+  const connect = async () => {
     if (closed) return
-    const ch = getSupabase().channel(
+    // Waits for an earlier removal of this topic (dev double-mount, reconnect).
+    const ch = await openChannel(
       PRESENCE_CHANNEL,
       opts.key ? { config: { presence: { key: opts.key } } } : undefined,
+      () => closed,
     )
+    if (!ch) return
     channel = ch
     const sync = () => opts.onPayload(ch.presenceState<TrackedPayload>())
     ch.on("presence", { event: "sync" }, sync)
@@ -58,14 +61,14 @@ function openPresence(opts: {
           opts.onSubscribed?.(ch)
         } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           channel = null
-          void getSupabase().removeChannel(ch)
+          void closeChannel(PRESENCE_CHANNEL, ch)
           const delay = RECONNECT_BACKOFF_MS[Math.min(attempt, RECONNECT_BACKOFF_MS.length - 1)]
           attempt += 1
-          timer = setTimeout(connect, delay)
+          timer = setTimeout(() => void connect(), delay)
         }
       })
   }
-  connect()
+  void connect()
 
   return {
     current: () => channel,
@@ -76,7 +79,7 @@ function openPresence(opts: {
       channel = null
       if (!ch) return
       if (opts.key) await ch.untrack().catch(() => undefined)
-      await getSupabase().removeChannel(ch)
+      await closeChannel(PRESENCE_CHANNEL, ch)
     },
   }
 }
