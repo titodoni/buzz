@@ -1,7 +1,8 @@
 # Buzz — Kiro spec pack
 
 Kiroween 2026, category Resurrection. Buzz is a Yahoo Messenger revival:
-a web chat app built around people being present, not infinite scroll.
+a native desktop chat app (Windows, Linux, macOS) built around people
+being present, not infinite scroll.
 
 ## What is in this pack
 
@@ -24,8 +25,10 @@ a web chat app built around people being present, not infinite scroll.
 
 ## Stack (locked)
 
-Next.js App Router + TypeScript, Supabase (Auth, Postgres, Realtime),
-Tailwind CSS, deployed on Vercel. No other backend, no other database.
+Next.js App Router + TypeScript (static client export), Supabase
+(Auth, Postgres, Realtime), Tailwind CSS, wrapped in Tauri as a
+native desktop app for Windows, Linux, and macOS. No other backend,
+no other database.
 
 ## Scope (locked)
 

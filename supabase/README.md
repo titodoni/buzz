@@ -1,0 +1,46 @@
+# Supabase
+
+Schema changes live in `migrations/` as timestamped SQL files. Do not use the
+dashboard SQL editor to change the schema.
+
+## Apply migrations
+
+```sh
+supabase login
+supabase link --project-ref <your-project-ref>
+supabase db push
+```
+
+Then regenerate types (replaces the hand-written file):
+
+```sh
+supabase gen types typescript --linked > lib/supabase/database.types.ts
+```
+
+## Migrations
+
+| File | Contents |
+| --- | --- |
+| `20250101000000_profiles.sql` | `profiles`, signup trigger, `updated_at` trigger, RLS |
+| `20250101000100_friendships.sql` | `friendships`, unique pair index, transition trigger, RLS |
+| `20250101000200_messages.sql` | `messages`, indexes, receipt-only update trigger, RLS, Realtime publication |
+| `20250101000300_storage_avatars.sql` | public `avatars` bucket and owner-folder policies |
+| `20250101000400_retention_cron.sql` | `pg_cron` daily purge of undelivered messages older than 30 days |
+
+## Notes
+
+- Status transitions on `friendships` and receipt-only updates on `messages`
+  are enforced by triggers, because RLS cannot compare old and new rows. The
+  triggers are skipped when `auth.uid()` is null (service role, migrations).
+- Re-requesting after `removed`/`declined` is allowed only for the original
+  `requester_id`. If the original addressee wants to re-friend, the app needs a
+  follow-up decision (swap roles or relax the rule).
+- The default avatar URL set at signup is the app asset path
+  `/avatars/default.png`. The app must bundle that file, or change the trigger.
+- `pg_cron` must be enabled on the project (Database > Extensions) if
+  `create extension` is not permitted by your plan.
+- The service-role key is never used by the app. Only the project URL and
+  publishable key are public build inputs.
+- `tests/rls.sql` holds two-user verification queries to run manually.
+- None of this SQL has been executed yet (no local Postgres/Supabase available
+  when written).

@@ -1,0 +1,79 @@
+-- Two-user RLS verification for Buzz. NOT run automatically.
+-- Run manually against a dev/local database (e.g. `supabase start`, then psql)
+-- after `supabase db push`. Do not run against production.
+--
+-- Setup: create two users A and B (and optionally C as a stranger) through
+-- Auth, or insert into auth.users on a local DB. Replace the UUIDs below.
+-- Each block impersonates a user by setting the JWT claims and role.
+-- Expected result is in the comment next to each statement.
+
+-- \set a '00000000-0000-0000-0000-00000000000a'
+-- \set b '00000000-0000-0000-0000-00000000000b'
+-- \set c '00000000-0000-0000-0000-00000000000c'
+
+-- == 0. Profiles were created by the signup trigger ==
+-- select id, display_name, avatar_url from public.profiles;   -- 3 rows
+
+-- == 1. Profiles ==
+-- begin;
+-- set local role authenticated;
+-- select set_config('request.jwt.claims', json_build_object('sub', :'a')::text, true);
+-- select count(*) from public.profiles;                                   -- all rows visible
+-- update public.profiles set status_message = 'hi' where id = :'a';       -- 1 row
+-- update public.profiles set status_message = 'hax' where id = :'b';      -- 0 rows
+-- update public.profiles set id = :'b' where id = :'a';                   -- ERROR (with check)
+-- insert into public.profiles (id, display_name) values (gen_random_uuid(), 'x'); -- ERROR (no policy)
+-- delete from public.profiles where id = :'a';                            -- 0 rows
+-- update public.profiles set status_message = repeat('x', 141) where id = :'a'; -- ERROR (check)
+-- rollback;
+
+-- == 2. Friendships ==
+-- As A: request B.
+--   insert into public.friendships (requester_id, addressee_id, status) values (:'a', :'b', 'pending'); -- ok
+--   insert into public.friendships (requester_id, addressee_id, status) values (:'b', :'a', 'pending'); -- ERROR (unique pair)
+--   insert into public.friendships (requester_id, addressee_id, status) values (:'a', :'c', 'accepted'); -- ERROR (must be pending)
+--   insert into public.friendships (requester_id, addressee_id, status) values (:'b', :'c', 'pending');  -- ERROR (not requester)
+--   update public.friendships set status = 'accepted' where requester_id = :'a'; -- ERROR (requester cannot accept)
+-- As C: select * from public.friendships;                                   -- 0 rows
+--   update public.friendships set status = 'removed';                       -- 0 rows
+-- As B: accept.
+--   update public.friendships set status = 'accepted' where addressee_id = :'b'; -- ok
+--   update public.friendships set requester_id = :'b', addressee_id = :'a';     -- ERROR (immutable)
+-- As either: unfriend.
+--   update public.friendships set status = 'removed';                        -- ok
+-- As B (not original requester): re-request.
+--   update public.friendships set status = 'pending';                        -- ERROR (only requester re-requests)
+-- As A (requester): re-request.
+--   update public.friendships set status = 'pending';                        -- ok
+-- Nobody: delete from public.friendships;                                    -- 0 rows
+
+-- == 3. Messages (friendship accepted between A and B) ==
+-- As A:
+--   insert into public.messages (sender_id, receiver_id, body) values (:'a', :'b', 'hello');   -- ok
+--   insert into public.messages (sender_id, receiver_id, body) values (:'b', :'a', 'spoof');   -- ERROR (sender must be me)
+--   insert into public.messages (sender_id, receiver_id, body) values (:'a', :'c', 'hi');      -- ERROR (not friends)
+--   insert into public.messages (sender_id, receiver_id, body) values (:'a', :'b', '   ');     -- ERROR (blank)
+--   insert into public.messages (sender_id, receiver_id, body) values (:'a', :'b', repeat('x', 1001)); -- ERROR (length)
+--   update public.messages set delivered_at = now();                          -- 0 rows (sender cannot update)
+-- As C: select * from public.messages;                                        -- 0 rows
+-- As B:
+--   select * from public.messages;                                            -- sees 'hello'
+--   update public.messages set delivered_at = now();                          -- ok
+--   update public.messages set read_at = now();                               -- ok
+--   update public.messages set body = 'edited';                               -- ERROR (trigger)
+--   update public.messages set delivered_at = null;                           -- ERROR (already set)
+--   delete from public.messages;                                              -- 0 rows
+-- Unfriend (status 'removed'): as A and B, select * from public.messages;     -- 0 rows (hidden)
+-- Re-friend (back to 'accepted'): same select returns the old rows again.
+
+-- == 4. Storage (avatars) ==
+-- As A, upload to '<A uuid>/pic.png' (image/png, < 2 MB)                      -- ok
+-- As A, upload to '<B uuid>/pic.png'                                          -- denied
+-- As A, upload a .gif or a file > 2 MB                                        -- rejected by bucket limits
+-- As anon, GET the public URL of A's file                                     -- 200
+
+-- == 5. Realtime publication and cron ==
+-- select tablename from pg_publication_tables where pubname = 'supabase_realtime'; -- includes messages, profiles
+-- select jobname, schedule, command from cron.job;                            -- purge_undelivered_messages, 0 3 * * *
+-- select relname, relrowsecurity from pg_class
+--   where relname in ('profiles', 'friendships', 'messages');                 -- all true

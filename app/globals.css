@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+:root {
+  --ym-purple: #6400cd;
+  --ym-purple-deep: #2f1050;
+  --ym-blue: #0067fa;
+  --titlebar-text: #ffffff;
+  --window-bg: #ececec;
+  --panel-bg: #ffffff;
+  --border: #b8b8b8;
+  --row-hover: #d9e8ff;
+  --text-body: #1a1a1a;
+  --text-muted: #595959;
+  --smiley: #ffcc00;
+  --idle: #f5a000;
+  --busy: #e8820a;
+  --offline: #8a8a8a;
+  --buzz-red: #cc0000;
+  --msg-self: #0067fa;
+  --msg-friend: #cc3300;
+}
+
+@theme {
+  --color-ym-purple: #6400cd;
+  --color-ym-purple-deep: #2f1050;
+  --color-ym-blue: #0067fa;
+  --color-titlebar-text: #ffffff;
+  --color-window-bg: #ececec;
+  --color-panel-bg: #ffffff;
+  --color-border: #b8b8b8;
+  --color-row-hover: #d9e8ff;
+  --color-text-body: #1a1a1a;
+  --color-text-muted: #595959;
+  --color-smiley: #ffcc00;
+  --color-idle: #f5a000;
+  --color-busy: #e8820a;
+  --color-offline: #8a8a8a;
+  --color-buzz-red: #cc0000;
+  --color-msg-self: #0067fa;
+  --color-msg-friend: #cc3300;
+  --font-ym: Tahoma, Verdana, "Segoe UI", sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+  font-size: 13px;
+  color: var(--text-body);
+  background: var(--window-bg);
+}
+
+.ym-skin {
+  min-height: 100vh;
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+  font-size: 13px;
+  color: var(--text-body);
+}
+
+.ym-window {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px 8px 4px 4px;
+  background: var(--window-bg);
+  color: var(--text-body);
+  overflow: hidden;
+}
+
+.ym-titlebar {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  color: var(--titlebar-text);
+  font-weight: bold;
+  background: linear-gradient(to bottom, var(--ym-purple), var(--ym-purple-deep));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4);
+  border-radius: 7px 7px 0 0;
+}
+
+.ym-button {
+  padding: 3px 12px;
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--ym-purple-deep);
+  border-radius: 4px;
+  background: linear-gradient(to bottom, var(--ym-purple), var(--ym-purple-deep));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4);
+}
+
+.ym-button:hover {
+  filter: brightness(1.15);
+}
+
+.ym-button:active {
+  filter: brightness(0.9);
+}
+
+.ym-row:hover {
+  background: var(--row-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ym-purple);
+  outline-offset: 1px;
+}
+
+.ym-button:focus-visible,
+.ym-titlebar :focus-visible {
+  outline-color: #ffffff;
+  box-shadow: 0 0 0 3px var(--ym-purple);
+}
+
+@keyframes ym-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10% {
+    transform: translateX(-8px);
+  }
+  20% {
+    transform: translateX(8px);
+  }
+  30% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(8px);
+  }
+  50% {
+    transform: translateX(-6px);
+  }
+  60% {
+    transform: translateX(6px);
+  }
+  70% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+  90% {
+    transform: translateX(-2px);
+  }
+}
+
+.ym-shake {
+  animation: ym-shake 600ms linear 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes ym-shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-2px);
+    }
+    75% {
+      transform: translateX(2px);
+    }
+  }
+}

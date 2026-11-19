@@ -1,0 +1,281 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Scaffold the Next.js App Router + TypeScript (strict) project with Tailwind CSS, configured as a static export (`output: 'export'`); add `@supabase/supabase-js` and `fast-check`; configure the test runner (Vitest) and a `typecheck` script": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916419226
+      },
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916437856
+      }
+    ],
+    "1.2 Scaffold the Tauri Rust shell (`src-tauri/`): the native window manager, the main window (Buddy List) loading the static export, frameless-window config for custom decorations, and the webview setup for WebView2 (Windows), WebKitGTK (Linux), and WKWebView (macOS); define the Tauri IPC command that opens a chat at `/chat/[friendId]` in its own OS window": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916419404
+      },
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916438156
+      }
+    ],
+    "1.3 Generate `lib/supabase/database.types.ts` with `supabase typegen` and implement `lib/supabase/browser-client.ts` (`createBrowserClient(URL, ANON_KEY)`, publishable key only) as the ONLY Supabase access point; components never call Supabase directly, they go through this client and the `lib/` pure-logic modules": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916419568
+      }
+    ],
+    "1.4 Create database schema migrations with RLS enabled on every table: `profiles` (with a `BEFORE INSERT` trigger setting `display_name = left(split_part(email,'@',1),50)` and a default avatar), `friendships` (with the unique unordered-pair index), and `messages` (with a `CHECK` that `body` length <= 1000); add RLS policies (profiles readable by any signed-in user, writable only by owner; friendships and messages visible/writable only to the two parties and only for an accepted pair); create the public `avatars` Storage bucket (png/jpeg/webp, 2 MB limit); schedule the daily `pg_cron` job that deletes undelivered messages older than 30 days": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916419653
+      }
+    ],
+    "2.1 Implement `lib/validation/profile.ts`: `isValidEmail` (local-part@domain), `isValidPassword` (8..128 chars), `displayNameFromEmail` (prefix before first `@`, truncated to 50), `isValidDisplayName` (non-empty after trim), `isValidStatus` (<=140), `isValidNowPlaying` (<=140), `isValidMessageBody` (non-empty, non-whitespace-only, <=1000), `checkAvatar({size,type})` (ok iff size <= 2_097_152 and type is png/jpeg/webp)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916419736
+      }
+    ],
+    "2.9 Implement `lib/profile/render.ts`: `shouldShowField(value)` (false for empty/whitespace-only so the field is cleared, not shown) and `hasNowPlaying(value)` (true iff non-empty, gating the music-note glyph)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916419817
+      }
+    ],
+    "3.1 Implement `lib/emoticons/shortcode.ts`: `SHORTCODE_MAP` (>=30 classic-style entries, the classic YM 5.5 set with 35 visible plus hidden emoticons, mapping unique shortcodes to unique image paths), `renderMessage(body)` (splits body into `text` and `emoticon` tokens; unrecognized shortcode-shaped strings stay text; concatenation reconstructs `body`), and `insertAtCursor(text, pos, shortcode)` (returns `{ text: text.slice(0,pos)+shortcode+text.slice(pos), pos: pos+shortcode.length }`)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916419895
+      }
+    ],
+    "4.1 Implement `lib/presence/state.ts`: `PresenceState` (`online|away|busy|offline`) and `nextPresenceState(current, event)` where `activity`/`setOnline` -> `online`, `idleTimeout` with `now - lastActivityAt >= 5 min` -> `away`, `setBusy` -> `busy` (persists until `activity`/`setOnline`/`disconnect`), `disconnect`/`heartbeatMissed` -> `offline`": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916419976
+      }
+    ],
+    "4.3 Implement `lib/nudge/cooldown.ts`: `isInCooldown(s, now)` (true iff `lastNudgeAt != null` and `now - lastNudgeAt < 10_000`) and `onNudgeResult(s, now, delivered)` (sets `lastNudgeAt = now` only when `delivered`; a failed delivery leaves `lastNudgeAt` unchanged so the button stays enabled)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916420474
+      }
+    ],
+    "4.5 Implement `lib/typing/state.ts`: `shouldShowTyping(s, now)` (true iff `lastKeystrokeAt != null`, `now - lastKeystrokeAt < 3000`, and `sent` is false), `onKeystroke(s, now)` (sets `lastKeystrokeAt = now`, `sent = false`), `onSend(s)` (sets `sent = true`, clearing the indicator)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916420606
+      }
+    ],
+    "5.1 Implement `lib/friends/search.ts`: `searchUsers(users, query, selfId, limit=50)` (case-insensitive contains on email or display_name, excludes self, capped at 50), `canonicalPair(a, b)` and `pairKey(a, b)` (`<min>_<max>`), and `canSendRequest(rel, selfId, recipientId)` (ok false when recipient is self, or status is `accepted` or `pending`; in those cases no pending request is created)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916420726
+      }
+    ],
+    "5.4 Implement `lib/chat/messages.ts`: `loadRecentMessages(all, limit=50)` (the 50 messages with greatest `created_at`, ordered oldest-first; returns all when `|M| <= 50`) and `isOfflineMessage(m)` (true iff `delivered_at` is null)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916420859
+      }
+    ],
+    "5.6 Implement `lib/offline/retention.ts`: `shouldRetain(m, now)` (true iff `delivered_at` is null and `created_at > now - 30 days`) and `orderOfflineMessages(messages)` (ascending `created_at`)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916421088
+      }
+    ],
+    "6. Checkpoint — Ensure all tests pass, ask the user if questions arise.": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916421305
+      }
+    ],
+    "7.1 Implement `SkinProvider` and the skin color tokens: a purple base color (`--ym-purple` to `--ym-purple-deep` gradient), rounded corners, and a glossy surface highlight, maintaining a minimum text-to-background WCAG contrast ratio of 4.5:1": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916421421
+      }
+    ],
+    "7.3 Implement the custom frameless window decorations: each Tauri window (Buddy List, Chat, Sign-in, Profile) is frameless with an in-app purple gradient title bar (linear-gradient `--ym-purple` to `--ym-purple-deep`), rounded top corners, a 1px border, the YM title text, and standard min/max/close window controls": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916421532
+      }
+    ],
+    "7.4 Implement `PresenceDot` (the color-coded presence smiley for online, away, busy, offline)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916421640
+      }
+    ],
+    "8.1 Implement `/login` and `/signup` pages with `SignInForm` and `SignUpForm`: email + password fields, client-side format hints using `isValidEmail`/`isValidPassword`, a sign-up link, and server error display (duplicate email, invalid credentials)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916421765
+      }
+    ],
+    "8.2 Implement the client-side auth/session guard (NOT Next.js middleware — the app is a static export with no server runtime): a client-side route guard that reads the Supabase session from webview storage, redirects unauthenticated users from `/`, `/profile`, and `/chat/[friendId]` to `/login`, restores the session on window reload (keeping the user signed in), and implements sign-out (ending the session and returning to the sign-in page)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916421884
+      }
+    ],
+    "9.1 Implement `/profile` with `ProfileEditor`: editable Display_Name (max 50), Status (max 140), and Now_Playing (max 140) with live char counters; save via the browser client, rejecting empty/whitespace display name (retaining the previous value with an error) and over-limit Status/Now_Playing (retaining the existing value with an error); empty Status/Now_Playing clears the field": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916422001
+      }
+    ],
+    "9.2 Implement `AvatarUpload`: drag/click upload with a client size+MIME check via `checkAvatar`, a preview, and upload to the `avatars` Storage bucket scoped per user; reject (>2 MB or not png/jpeg/webp) by retaining the previous avatar and showing the constraint error": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916422126
+      }
+    ],
+    "10.1 Implement `FriendSearch`: search by email or Display_Name using `searchUsers` over a Friend_Service query, listing results (excluding self, capped at 50)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916422242
+      }
+    ],
+    "10.2 Implement `PendingRequests` (accept adds both users to each other's list and removes the request; decline removes it) and friend request sending gated by `canSendRequest`, rejecting self, existing friend, and existing pending request with an error": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916422360
+      }
+    ],
+    "10.3 Implement `FriendList` and `FriendListItem`: each row shows avatar, Display_Name, a `PresenceDot`, and Status/Now_Playing (Now_Playing with a music note, empty fields not shown); clicking a friend opens the chat in a new Tauri OS window via the IPC command (Req 5.6); include removing a friend (unfriend hides chat history for both directions; re-friend restores it)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916422479
+      }
+    ],
+    "11.1 Implement the `usePresence` hook over the `presence:global` Realtime channel, owned by the Buddy List window only: track `{ user_id, presence_state }`, run a 25s heartbeat, report online on activity, away after 5 min idle, busy when set, and offline on explicit untrack (sign-out/app close) or a missed heartbeat; drive transitions through `nextPresenceState` and expose friends' presence to the friend list": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916422601
+      }
+    ],
+    "12.1 Implement `MessageInput`: textarea with a char counter, send on Enter, an Emoticon picker slot, and a send flow that validates the body with `isValidMessageBody` and rejects empty/whitespace/>1000-char messages with an error (storing nothing)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916422728
+      }
+    ],
+    "12.2 Implement `MessageBubble`: sender/receiver styling, emoticon rendering via `renderMessage`, and system lines (e.g. \"You nudged <Display_Name>\")": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916422860
+      }
+    ],
+    "12.3 Implement `EmoticonPicker`: a grid of >=30 classic-style emoticons that inserts the matching shortcode at the cursor via `insertAtCursor`": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916422985
+      }
+    ],
+    "12.4 Implement the `useChatChannel` hook for `chat:<pairKey>` (postgres_changes on `messages` INSERT filtered to the pair, plus broadcast for `typing` and `nudge`); chat windows join only this channel (not `presence:global`); sending inserts a `messages` row so one write both persists and broadcasts; if the friend is offline the row is stored with `delivered_at = null`": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916423109
+      }
+    ],
+    "12.5 Implement `ChatWindow` (header with friend name, presence, and Nudge button slot) and `MessageList` (renders the most recent 50 via `loadRecentMessages` then appends), composing `MessageInput`, `MessageBubble`, `EmoticonPicker`, `NudgeButton`, `TypingIndicator`, and the `useChatChannel`/`usePresence` hooks; the chat route `/chat/[friendId]` renders in its own Tauri OS window opened via the IPC command (Req 5.6)": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916423236
+      }
+    ],
+    "13.1 Implement `NudgeButton`: disabled with a \"friend is offline\" message when presence is offline; on click broadcast `nudge` on `chat:<pairKey>` and show \"You nudged <Display_Name>\" locally; do not start the cooldown until delivery is confirmed; on confirmed delivery enter a 10s cooldown with a visible countdown; on delivery failure show a \"nudge was not delivered\" message and leave the button enabled with no cooldown, all driven by `isInCooldown`/`onNudgeResult`": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916423351
+      }
+    ],
+    "13.2 Implement the `useNudgeReceiver` hook: on a received `nudge` broadcast, add a 600 ms shake CSS class to the chat window and play a <=1s Web Audio sound": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916423473
+      }
+    ],
+    "14.1 Implement `TypingIndicator`: broadcast `typing` on keystroke (driven by `onKeystroke`), clear after 3s idle (`shouldShowTyping`), and clear on send (`onSend`); render \"<Display_Name> is typing...\" to the other participant": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916423584
+      }
+    ],
+    "15.1 Implement the `useOfflineMessages` hook: on connect, query `messages` where `receiver_id = me AND delivered_at IS NULL` ordered by `created_at` (via `orderOfflineMessages`), render them, and set `delivered_at = now`; if that update fails the row stays `delivered_at = null` and is retried on the next connect; when the user opens a stored message set `read_at`": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916423717
+      }
+    ],
+    "16. Checkpoint — Ensure all tests pass, ask the user if questions arise.": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916423837
+      }
+    ],
+    "17.1 Configure the Tauri build config and bundlers to produce per-OS installers: `.msi`/`.exe` (Windows), `.deb`/`.AppImage` (Linux), and `.dmg`/`.app` (macOS); the build loads the Next.js static export into the native webview": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916423959
+      }
+    ],
+    "18.1 Wire the profiles-feed subscription (postgres_changes on `profiles` UPDATE) so a changed Display_Name, Avatar, Status, or Now_Playing appears in the friend list and chat headers without a reload": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916424075
+      }
+    ],
+    "19. Final checkpoint — Ensure all tests pass, ask the user if questions arise.": [
+      {
+        "executionId": "c5f8d770-bded-439c-974f-8d577ff8bd50",
+        "chatSessionId": "sess_d76d414e-199a-4ef3-a71c-7aadf85b5576",
+        "timestamp": 1794916424361
+      }
+    ]
+  }
+}

@@ -2,9 +2,11 @@
 
 ## What Buzz is
 
-A Yahoo Messenger revival. Chat built around people being present,
-not around infinite scroll. The product argument: chat got efficient
-and lost its soul, Buzz brings the soul back with modern engineering.
+A Yahoo Messenger revival, shipped as a **native desktop app**
+(Windows, Linux, macOS) — not a web page. Chat built around people
+being present, not around infinite scroll. The product argument: chat
+got efficient and lost its soul, Buzz brings the soul back with modern
+engineering.
 
 ## Rules
 
@@ -12,7 +14,7 @@ and lost its soul, Buzz brings the soul back with modern engineering.
   matters more than what was said.
 - No feed, no algorithm, no infinite scroll, no recommendations.
   Never add them, even if asked.
-- One tap, one action. Big touch targets, plain words, no jargon.
+- One tap, one action. Big click targets, plain words, no jargon.
 - YM-era tone: warm, a little playful, never corporate. Status
   messages and now playing are the personality of the app.
 - Nudge is the signature. It must feel alive: shake plus sound,

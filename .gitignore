@@ -1,0 +1,8 @@
+node_modules
+.next
+out
+.env*
+!.env.example
+src-tauri/target
+*.tsbuildinfo
+next-env.d.ts
