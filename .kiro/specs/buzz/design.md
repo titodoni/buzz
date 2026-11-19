@@ -529,7 +529,7 @@ checkboxes. Buzz follows that shape with its own artwork.
 | Available | yellow smiley | chosen, or at sign-in | Available |
 | Busy | orange busy sign | chosen, a Preset_Status, or a custom Status set to Busy | Busy |
 | Away | clock | automatic after 5 minutes without activity | Away |
-| Invisible | smiley with a ghost marker (own view only) | chosen, or "Sign in as invisible" | Offline |
+| Invisible | faded smiley inside a dashed ring (own view only) | chosen, or "Sign in as invisible" | Offline |
 | Offline | faded smiley | signed out, or not reachable | Offline |
 
 - **Presets set Busy.** Be Right Back, Not at My Desk, Not in Office, On the
@@ -547,7 +547,8 @@ checkboxes. Buzz follows that shape with its own artwork.
 - **One icon component.** `PresenceDot` is the only place that maps an
   Availability to a picture; the Buddy List header, friend rows, chat window
   header, chat window title bar (`TitleBar` `icon` prop), and the tray icon all
-  use it, so they cannot disagree (Req 12.9).
+  use it, so they cannot disagree (Req 12.9). The tray icon arrives with task
+  25.7; until then Req 12.9 is met everywhere except the tray.
 - **Presence send budget.** Supabase closes a client's channel after 5
   presence updates (`track` or `untrack`) in 30 seconds
   ([Supabase KB](https://supabase.com/kb/troubleshooting/realtime-client-presence-rate-limit-reached)).
@@ -555,7 +556,12 @@ checkboxes. Buzz follows that shape with its own artwork.
   coalesces: while over budget it waits and then sends only the newest state.
   So friends always end on the latest choice, but a burst of more than four
   changes can reach them up to 30 s late. The channel also reconnects when the
-  server closes it.
+  server closes it. Sends wait until the channel has joined, a send the
+  server rejects is retried after 5 s, and the reconnect backoff resets only
+  after the channel has stayed up for 30 s.
+- **Text before icon.** Choosing a preset, or Available over a preset text,
+  saves the Status text first and changes the icon only once that worked, so
+  the two never disagree; a failed save shows a message and changes nothing.
 - **Defects found by the two-user test** (fixed): presence never announced
   itself at start-up, so friends looked Offline until someone changed status;
   and a fast run of status changes tripped the rate limit above, after which

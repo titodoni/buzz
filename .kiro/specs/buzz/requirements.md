@@ -197,7 +197,7 @@ Avatar images, a native mobile app, and any end-to-end encryption claim.
 #### Acceptance Criteria
 
 1. THE Presence_Service SHALL support the Availability values Available, Busy, Away, Invisible, and Offline.
-2. WHEN a user chooses Available or Busy, THE Presence_Service SHALL show the matching Status_Icon for that user in the user's own Buddy List header, in each friend's Buddy List, and in the title bar of each chat window with that user within 5 seconds.
+2. WHEN a user chooses Available or Busy, THE Presence_Service SHALL show the matching Status_Icon for that user in the user's own Buddy List header at once, and in each friend's Buddy List and in the title bar of each chat window with that user within 5 seconds, or within 30 seconds when the user has already changed Availability four times in the last 30 seconds (Supabase allows at most five presence updates per client in 30 seconds).
 3. WHEN a user chooses a Preset_Status, THE Profile_Service SHALL set the Status to the Preset_Status text and THE Presence_Service SHALL set the Availability to Busy.
 4. WHEN a user saves a custom Status, THE Profile_Service SHALL let the user choose Available or Busy for it and SHALL save the Status text and the Availability together.
 5. WHEN a user chooses Available while the Status is a Preset_Status text, THE Profile_Service SHALL clear that Status.

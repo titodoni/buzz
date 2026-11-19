@@ -9,6 +9,10 @@ import { mergePresence, type PresencePayload } from "@/lib/realtime/presenceMerg
 import { closeChannel, openChannel } from "@/lib/realtime/channel"
 
 export const PRESENCE_CHANNEL = "presence:global"
+/** How long a channel must stay joined before the reconnect backoff resets. */
+const STABLE_AFTER_MS = 30_000
+/** Wait before retrying a presence update the server did not accept. */
+const SEND_RETRY_MS = 5_000
 
 /** Pause before each reconnect attempt; the last value repeats. */
 export const RECONNECT_BACKOFF_MS = [1000, 2000, 5000, 10000] as const
@@ -20,7 +24,7 @@ const ACTIVITY_EVENTS = ["mousemove", "keydown", "mousedown", "focus", "visibili
 type TrackedPayload = { user_id: string; presence_state: PresenceState }
 
 interface Connection {
-  /** The live channel, or null while waiting to reconnect. */
+  /** The channel once it has joined, or null while joining or waiting to reconnect. */
   current(): RealtimeChannel | null
   close(): Promise<void>
 }
@@ -38,7 +42,9 @@ function openPresence(opts: {
   onSubscribed?: (channel: RealtimeChannel) => void
 }): Connection {
   let channel: RealtimeChannel | null = null
+  let joined = false
   let timer: ReturnType<typeof setTimeout> | null = null
+  let stableTimer: ReturnType<typeof setTimeout> | null = null
   let attempt = 0
   let closed = false
 
@@ -52,6 +58,7 @@ function openPresence(opts: {
     )
     if (!ch) return
     channel = ch
+    joined = false
     const sync = () => opts.onPayload(ch.presenceState<TrackedPayload>())
     ch.on("presence", { event: "sync" }, sync)
       .on("presence", { event: "join" }, sync)
@@ -59,12 +66,19 @@ function openPresence(opts: {
       .subscribe((status) => {
         if (closed || channel !== ch) return
         if (status === "SUBSCRIBED") {
-          attempt = 0
+          joined = true
+          // Reset the backoff only once the channel has stayed up, so a server
+          // that closes it straight after the join can't cause a 1 s loop.
+          stableTimer = setTimeout(() => {
+            attempt = 0
+          }, STABLE_AFTER_MS)
           opts.onSubscribed?.(ch)
         } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
           // CLOSED here means the server ended it (we only remove channels after
           // setting `closed`), for example when its presence rate limit is hit.
           channel = null
+          joined = false
+          if (stableTimer) clearTimeout(stableTimer)
           void closeChannel(PRESENCE_CHANNEL, ch)
           const delay = RECONNECT_BACKOFF_MS[Math.min(attempt, RECONNECT_BACKOFF_MS.length - 1)]
           attempt += 1
@@ -75,14 +89,16 @@ function openPresence(opts: {
   void connect()
 
   return {
-    current: () => channel,
+    current: () => (joined ? channel : null),
     async close() {
       closed = true
       if (timer) clearTimeout(timer)
+      if (stableTimer) clearTimeout(stableTimer)
       const ch = channel
       channel = null
       if (!ch) return
-      if (opts.key) await ch.untrack().catch(() => undefined)
+      if (opts.key && joined) await ch.untrack().catch(() => undefined)
+      joined = false
       await closeChannel(PRESENCE_CHANNEL, ch)
     },
   }
@@ -140,28 +156,37 @@ export function usePresenceTracker(
       const plan = planPresenceSend(sentAt, Date.now())
       sentAt = plan.recent
       if (!plan.sendNow) {
-        if (!retry) {
-          retry = setTimeout(() => {
-            retry = null
-            track()
-          }, plan.waitMs)
-        }
+        scheduleRetry(plan.waitMs)
         return
       }
       sentAt.push(Date.now())
       lastSent = want
       // Invisible means "no presence entry": friends then see Offline (Req 12.7),
       // while this window keeps listening to its friends.
-      if (want === "invisible") {
-        void ch.untrack()
-        return
-      }
-      const body: TrackedPayload = { user_id: me, presence_state: want }
-      void ch.track(body)
+      const body: TrackedPayload | null = want === "invisible" ? null : { user_id: me, presence_state: want }
+      void (body ? ch.track(body) : ch.untrack()).then(
+        (result) => {
+          if (result !== "ok") onSendFailed(want)
+        },
+        () => onSendFailed(want),
+      )
     }
-    // A fresh channel has no entry for us yet, so the next track always goes out.
+    function scheduleRetry(ms: number) {
+      if (retry) return
+      retry = setTimeout(() => {
+        retry = null
+        track()
+      }, ms)
+    }
+    // The server didn't take it: forget it was sent and try again shortly.
+    function onSendFailed(sent: Availability) {
+      if (lastSent === sent) lastSent = null
+      scheduleRetry(SEND_RETRY_MS)
+    }
+    // A fresh channel has no entry for us yet: the next track always goes out,
+    // and Invisible needs nothing sent at all (there is nothing to untrack).
     const onSubscribed = () => {
-      lastSent = null
+      lastSent = stateRef.current === "invisible" ? "invisible" : null
       track()
     }
     trackRef.current = track

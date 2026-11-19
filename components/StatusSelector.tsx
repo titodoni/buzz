@@ -122,19 +122,25 @@ export function StatusSelector({
       return
     }
     closeMenu()
-    // The icon changes at once; the text is saved after (Req 12.2).
     if (action.kind === "busy") {
       onBusy()
-    } else if (action.kind === "invisible") {
-      onInvisible()
-    } else if (action.kind === "available") {
-      onAvailable()
-      const choice = chooseAvailable(profile?.statusMessage)
-      if (choice.text !== (profile?.statusMessage ?? null)) setMenuError(await saveText(choice))
-    } else {
-      onBusy()
-      setMenuError(await saveText(applyPreset(action.name)))
+      return
     }
+    if (action.kind === "invisible") {
+      onInvisible()
+      return
+    }
+    // A status line and its Availability are saved together (Req 12.3-12.5):
+    // the text is saved first, and the icon changes only once that worked.
+    const choice = action.kind === "preset" ? applyPreset(action.name) : chooseAvailable(profile?.statusMessage)
+    if (choice.text !== (profile?.statusMessage ?? null)) {
+      const problem = await saveText(choice)
+      if (problem) {
+        setMenuError(problem)
+        return
+      }
+    }
+    applyAvailability(choice.availability)
   }
 
   function onListKeyDown(e: KeyboardEvent<HTMLUListElement>) {
@@ -160,13 +166,14 @@ export function StatusSelector({
     }
     setSaving(true)
     const choice = customStatus(text, availability)
-    applyAvailability(choice.availability)
     const problem = await saveText(choice)
     setSaving(false)
     if (problem) {
       setError(problem)
       return
     }
+    // Only after the text is saved, so the two never disagree (Req 12.4).
+    applyAvailability(choice.availability)
     closeDialog()
   }
 
@@ -190,7 +197,10 @@ export function StatusSelector({
         aria-haspopup="menu"
         aria-expanded={menuOpen}
         aria-label={`Your status: ${state}. Change it.`}
-        onClick={() => onMenuOpenChange(!menuOpen)}
+        onClick={() => {
+          setMenuError(null)
+          onMenuOpenChange(!menuOpen)
+        }}
       >
         <PresenceDot state={state} />
         <span aria-hidden="true">▾</span>
