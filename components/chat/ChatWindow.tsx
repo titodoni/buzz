@@ -44,9 +44,17 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   const presence = ignorers.has(friendId) ? "offline" : livePresence;
   // Buzz! and typing from someone I ignore are dropped here too (Req 15.3); the server blocks them first.
   const ignoredRef = useRef(false);
+  // Resolves once the first check is done, so a window opened by a Buzz! can
+  // wait for it before shaking.
+  const ignoreCheckedRef = useRef<Promise<void>>(Promise.resolve());
   useEffect(() => {
     let active = true;
-    const check = () => void isIgnoredByMe(me, friendId).then((v) => { if (active) ignoredRef.current = v; });
+    const check = () => {
+      const done = isIgnoredByMe(me, friendId).then((v) => {
+        if (active) ignoredRef.current = v;
+      });
+      ignoreCheckedRef.current = done;
+    };
     check();
     window.addEventListener("focus", check);
     return () => {
@@ -84,9 +92,10 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
         markReadIfActive();
       })
       .catch(() => setLoadError(true))
-      .then(() => {
+      .then(async () => {
         if (!pendingNudgeRef.current) return;
         pendingNudgeRef.current = false;
+        await ignoreCheckedRef.current;
         receiveNudge();
         // Drop `nudge` so a reload does not shake again.
         const url = new URL(window.location.href);

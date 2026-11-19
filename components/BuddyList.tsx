@@ -263,7 +263,12 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
         onChanged={reload}
         onGroupsChanged={reloadGroups}
       />
-      <PendingRequests incoming={incoming} outgoing={outgoing} onChanged={reload} />
+      {/* A request someone sent before I ignored them stays hidden (Req 15.4). */}
+      <PendingRequests
+        incoming={incoming.filter((r) => !ignoredIds.has(r.id))}
+        outgoing={outgoing}
+        onChanged={reload}
+      />
 
       {panel === "pick" ? (
         <section aria-label="Send an Instant Message" className="border-t px-2 py-1">
