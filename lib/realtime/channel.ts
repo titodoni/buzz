@@ -23,6 +23,13 @@ export async function openChannel(
   options?: RealtimeChannelOptions,
   isCancelled: () => boolean = () => false,
 ): Promise<RealtimeChannel | null> {
+  // Yield once before doing anything. React's dev double-mount runs
+  // effect, cleanup, effect in one synchronous pass; without this yield the
+  // first effect would create the channel before its cleanup could cancel it,
+  // and the second effect would be handed that same channel (already
+  // subscribing). After the yield the cancelled first effect gets null and
+  // only the second one creates the channel.
+  await Promise.resolve();
   let pending = removals.get(name);
   while (pending) {
     await pending;
