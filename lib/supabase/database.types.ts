@@ -5,7 +5,59 @@ export type Database = {
   
   "public": {
           Tables: {
-            "friendships": {
+            "contact_group_members": {
+                  Row: {
+                    "friend_id": string,"group_id": string,"owner_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "friend_id": string,"group_id": string,"owner_id"?: string
+                  }
+                  Update: {
+                    "friend_id"?: string,"group_id"?: string,"owner_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "contact_group_members_friend_id_fkey"
+      columns: ["friend_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "contact_group_members_group_id_owner_id_fkey"
+      columns: ["group_id","owner_id"]
+isOneToOne: false
+      referencedRelation: "contact_groups"
+      referencedColumns: ["id","owner_id"]
+    },{
+      foreignKeyName: "contact_group_members_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"contact_groups": {
+                  Row: {
+                    "created_at": string,"id": string,"name": string,"owner_id": string,"position": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"name": string,"owner_id"?: string,"position"?: number
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"name"?: string,"owner_id"?: string,"position"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "contact_groups_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"friendships": {
                   Row: {
                     "addressee_id": string,"created_at": string,"id": string,"requester_id": string,"status": string,"updated_at": string
                   }
@@ -26,6 +78,32 @@ isOneToOne: false
     },{
       foreignKeyName: "friendships_requester_id_fkey"
       columns: ["requester_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"ignored_users": {
+                  Row: {
+                    "created_at": string,"ignored_id": string,"owner_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"ignored_id": string,"owner_id"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"ignored_id"?: string,"owner_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ignored_users_ignored_id_fkey"
+      columns: ["ignored_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "ignored_users_owner_id_fkey"
+      columns: ["owner_id"]
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]

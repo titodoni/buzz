@@ -618,7 +618,16 @@ New tables (migration `20250101000800`), all with RLS `owner_id = auth.uid()`:
 | `ignored_users` | `owner_id`, `ignored_id`, `created_at` | primary key `(owner_id, ignored_id)` |
 
 Collapsed state and "Show Offline Contacts" are per-device preferences
-(localStorage), not database rows.
+(localStorage key `buzz:buddyListView`), not database rows; Section 28 moves
+"Show Offline Contacts" into Preferences and should read the same key. The
+name "Friends" is reserved by a `CHECK`, names are unique per owner ignoring
+case, and a membership's group must have the same owner (composite foreign
+key), so a user can never file a friend under someone else's group. The pure
+`arrangeBuddyList` builds the visible list; an empty default group is hidden
+once the user has groups of their own, and while searching every matching
+group stays open. Group actions: Contacts > New Group..., right-click a group
+header for Rename Group... or Delete Group, and right-click a friend for Move
+to Group....
 
 ### Ignore list (Requirement 15)
 

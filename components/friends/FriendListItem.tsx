@@ -11,11 +11,13 @@ export interface FriendListItemProps {
   presence: PresenceState
   /** Messages waiting from this friend. */
   unread?: number
+  /** Online friends are bold, offline ones normal weight (Req 14.6). */
+  bold?: boolean
   onOpen: (friendId: string) => void
   onContextMenu: (friend: FriendEntry, x: number, y: number) => void
 }
 
-export function FriendListItem({ friend, presence, unread, onOpen, onContextMenu }: FriendListItemProps) {
+export function FriendListItem({ friend, presence, unread, bold = true, onOpen, onContextMenu }: FriendListItemProps) {
   function onKeyDown(e: KeyboardEvent<HTMLLIElement>) {
     if (e.key === "Enter") {
       e.preventDefault()
@@ -43,7 +45,7 @@ export function FriendListItem({ friend, presence, unread, onOpen, onContextMenu
     >
       <PresenceDot state={presence} />
       <div className="min-w-0 flex-1">
-        <div className="truncate font-bold">
+        <div className={`truncate ${bold ? "font-bold" : ""}`}>
           {friend.displayName}
           {unread && unread > 0 ? <span> ({unread})</span> : null}
         </div>

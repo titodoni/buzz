@@ -286,19 +286,19 @@ running desktop app instances (or two app windows), per `tech.md`.
   - [x]* 22.5 Write tests for the pure code and password checks used by the recovery form
     - _Requirements: 13.6, 13.7_
 
-- [ ] 23. Groups and contacts
-  - [ ] 23.1 Write migration `20250101000800`: `contact_groups`, `contact_group_members`, and `ignored_users` with RLS limiting every row to its owner, and regenerate `database.types.ts`
+- [x] 23. Groups and contacts
+  - [x] 23.1 Write migration `20250101000800`: `contact_groups`, `contact_group_members`, and `ignored_users` with RLS limiting every row to its owner, and regenerate `database.types.ts`
     - _Requirements: 14.2, 14.3, 14.4, 15.1_
-  - [ ] 23.2 Implement the pure `lib/friends/arrange.ts`: from friends, groups, memberships, presence, "Show Offline Contacts", and a search text, return the Groups in order with their friends, "(online/total)" counts, sorting, and bold flags
+  - [x] 23.2 Implement the pure `lib/friends/arrange.ts`: from friends, groups, memberships, presence, "Show Offline Contacts", and a search text, return the Groups in order with their friends, "(online/total)" counts, sorting, and bold flags
     - No I/O; pure functions only
     - _Requirements: 14.1, 14.5, 14.6, 14.8, 14.9_
-  - [ ]* 23.3 Write tests: counts always count the whole group, online friends sort first, hiding Offline friends keeps the total, search ignores case and keeps groups with no match out
+  - [x]* 23.3 Write tests: counts always count the whole group, online friends sort first, hiding Offline friends keeps the total, search ignores case and keeps groups with no match out
     - _Requirements: 14.1, 14.5, 14.6, 14.8, 14.9_
-  - [ ] 23.4 Build the Groups UI and API: create, rename, delete (members return to "Friends"), move a friend through "Move to", and remember collapsed groups on the device
+  - [x] 23.4 Build the Groups UI and API: create, rename, delete (members return to "Friends"), move a friend through "Move to", and remember collapsed groups on the device
     - _Requirements: 14.2, 14.3, 14.4, 14.7_
-  - [ ] 23.5 Build the Buddy List toolbar and header: the Add a Friend button, the search box (filter as you type; Enter on an email opens add-a-friend), and the header with Display_Name, Availability dropdown, Status, and Now_Playing
+  - [x] 23.5 Build the Buddy List toolbar and header: the Add a Friend button, the search box (filter as you type; Enter on an email opens add-a-friend), and the header with Display_Name, Availability dropdown, Status, and Now_Playing
     - _Requirements: 14.9, 14.10, 14.11, 14.12_
-  - [ ]* 23.6 Extend `npm run test:rls` with checks for the three new tables: only the owner can read or change their rows, and a group delete returns friends to "Friends"
+  - [x]* 23.6 Extend `npm run test:rls` with checks for the three new tables: only the owner can read or change their rows, and a group delete returns friends to "Friends"
     - _Requirements: 14.2, 14.3, 15.1_
 
 - [ ] 24. Ignore list

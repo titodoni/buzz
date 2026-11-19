@@ -14,6 +14,9 @@ import { FriendSearch } from "@/components/friends/FriendSearch"
 import { MenuBar, type MenuDef } from "@/components/friends/MenuBar"
 import { PendingRequests } from "@/components/friends/PendingRequests"
 import { getProfile, useFriends, type PublicProfile } from "@/lib/friends/api"
+import { createGroup, useGroups } from "@/lib/friends/groups"
+import { useBuddyView } from "@/lib/friends/useBuddyView"
+import { isValidEmail } from "@/lib/validation/profile"
 import { useSession } from "@/lib/auth/session"
 import { hasNowPlaying, shouldShowField } from "@/lib/profile/render"
 import { useOfflineDelivery } from "@/lib/offline/useOfflineDelivery"
@@ -21,7 +24,7 @@ import { useNudgeInbox } from "@/lib/realtime/inbox"
 import { usePresenceTracker } from "@/lib/realtime/presence"
 import { openChatWindow } from "@/lib/tauri/windows"
 
-type Panel = "search" | "pick" | "about" | null
+type Panel = "search" | "pick" | "about" | "newGroup" | null
 
 export function BuddyList() {
   const { user } = useSession()
@@ -36,6 +39,12 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
   const [panel, setPanel] = useState<Panel>(null)
   const [note, setNote] = useState<string | null>(null)
   const [statusMenu, setStatusMenu] = useState(false)
+  const { groups, memberships, reload: reloadGroups } = useGroups(me)
+  const { view, toggleGroup, setShowOffline } = useBuddyView()
+  const [search, setSearch] = useState("")
+  const [addQuery, setAddQuery] = useState("")
+  const [groupName, setGroupName] = useState("")
+  const [groupError, setGroupError] = useState<string | null>(null)
   const friendIds = useMemo(() => friends.map((f) => f.id), [friends])
   // "Sign in as invisible to everyone" applies once per run (Req 13.4); after a
   // reload the user's own last choice wins. Marked in an effect, not here,
@@ -71,6 +80,21 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
     }
   }, [me])
 
+  function openAddFriend(query: string) {
+    setAddQuery(query)
+    setPanel("search")
+  }
+  function openNewGroup() {
+    setGroupName("")
+    setGroupError(null)
+    setPanel("newGroup")
+  }
+  async function saveGroup() {
+    const res = await createGroup(me, groupName, groups)
+    if (!res.ok) return setGroupError(res.message)
+    setPanel(null)
+    reloadGroups()
+  }
   const menus: MenuDef[] = [
     {
       label: "Messenger",
@@ -80,7 +104,18 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
         { label: "Sign Out", onSelect: () => void onSignOut() },
       ],
     },
-    { label: "Contacts", items: [{ label: "Add a Contact", onSelect: () => setPanel("search") }] },
+    {
+      label: "Contacts",
+      items: [
+        { label: "Add a Contact", onSelect: () => openAddFriend("") },
+        { label: "New Group...", onSelect: () => openNewGroup() },
+        {
+          // A tick shows the current setting (Req 14.8).
+          label: `${view.showOffline ? "✓ " : ""}Show Offline Contacts`,
+          onSelect: () => setShowOffline(!view.showOffline),
+        },
+      ],
+    },
     { label: "Actions", items: [{ label: "Send an Instant Message", onSelect: () => setPanel("pick") }] },
     { label: "Help", items: [{ label: "About Buzz", onSelect: () => setPanel("about") }] },
   ]
@@ -133,11 +168,89 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
           You have {totalUnread} offline {totalUnread === 1 ? "message" : "messages"}
         </p>
       ) : null}
+      <div className="flex items-center gap-1 border-b px-2 py-1" role="toolbar" aria-label="Buddy List tools">
+        <button
+          type="button"
+          className="ym-button shrink-0 px-2"
+          aria-expanded={panel === "search"}
+          title="Add a Friend"
+          onClick={() => (panel === "search" ? setPanel(null) : openAddFriend(""))}
+        >
+          + Add
+        </button>
+        <input
+          type="search"
+          aria-label="Find a friend in your list, or type an email and press Enter to add someone"
+          placeholder="Find a friend"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && isValidEmail(search.trim())) {
+              e.preventDefault()
+              openAddFriend(search.trim())
+              setSearch("")
+            } else if (e.key === "Escape") {
+              setSearch("")
+            }
+          }}
+          className="min-w-0 flex-1"
+        />
+      </div>
+      {panel === "search" ? (
+        <FriendSearch key={addQuery} me={me} initialQuery={addQuery} onSent={reload} />
+      ) : null}
+      {panel === "newGroup" ? (
+        <form
+          aria-label="New group"
+          className="border-b p-2"
+          onSubmit={(e) => {
+            e.preventDefault()
+            void saveGroup()
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setPanel(null)
+          }}
+        >
+          <label className="block text-xs font-bold">
+            Group name
+            <input
+              type="text"
+              autoFocus
+              value={groupName}
+              onChange={(e) => {
+                setGroupName(e.target.value)
+                setGroupError(null)
+              }}
+              className="mt-1 block w-full font-normal"
+            />
+          </label>
+          {groupError ? (
+            <p role="alert" className="m-0 text-xs" style={{ color: "var(--buzz-red)" }}>
+              {groupError}
+            </p>
+          ) : null}
+          <div className="mt-1 flex gap-1">
+            <button type="submit" className="ym-button">
+              Create
+            </button>
+            <button type="button" className="ym-button" onClick={() => setPanel(null)}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : null}
       <FriendList
+        me={me}
         friends={friends}
+        groups={groups}
+        memberships={memberships}
         presence={friendsPresence}
         unreadBySender={unreadBySender}
+        view={view}
+        search={search}
+        onToggleGroup={toggleGroup}
         onChanged={reload}
+        onGroupsChanged={reloadGroups}
       />
       <PendingRequests incoming={incoming} outgoing={outgoing} onChanged={reload} />
 
@@ -166,17 +279,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
 
       {panel === "about" ? <AboutDialog onClose={() => setPanel(null)} /> : null}
 
-      <footer className="border-t">
-        <button
-          type="button"
-          className="ym-row w-full cursor-pointer border-0 bg-transparent px-2 py-1 text-left"
-          aria-expanded={panel === "search"}
-          onClick={() => setPanel(panel === "search" ? null : "search")}
-        >
-          + Add a friend
-        </button>
-        {panel === "search" ? <FriendSearch me={me} onSent={reload} /> : null}
-      </footer>
+
     </WindowFrame>
   )
 }
