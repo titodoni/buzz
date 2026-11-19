@@ -155,6 +155,20 @@ Linux packages built locally need the glibc of the machine that built them
 (a build on Ubuntu 26.04 needs glibc 2.39, so Ubuntu 24.04 or newer). For
 older distributions, build on an older system, as the CI does.
 
+**Windows installer from Linux** (NSIS `.exe` only; `.msi` needs Windows).
+The Tauri docs call this experimental, a fallback to building on Windows:
+
+```sh
+sudo apt install nsis lld llvm
+rustup target add x86_64-pc-windows-msvc
+cargo install --locked cargo-xwin
+XWIN_CACHE_DIR=$HOME/.cache/cargo-xwin \
+  npm run tauri build -- --runner cargo-xwin --target x86_64-pc-windows-msvc
+```
+
+The installer lands in
+`src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/`.
+
 **Beta builds for all three systems:** `.github/workflows/beta-build.yml`
 runs the checks, then builds on Windows, macOS (Apple Silicon and Intel), and
 Ubuntu 22.04, and attaches the installers to a draft pre-release. Start it

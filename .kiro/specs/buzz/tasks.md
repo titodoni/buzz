@@ -237,7 +237,7 @@ running desktop app instances (or two app windows), per `tech.md`.
 - [ ] 17. Configure the Tauri build and distribution
   - [~] 17.1 Configure the Tauri build config and bundlers to produce per-OS installers: `.msi`/`.exe` (Windows), `.deb`/`.AppImage` (Linux), and `.dmg`/`.app` (macOS); the build loads the Next.js static export into the native webview
     - This is a coding/config task; release artifacts are desktop installers, not a Vercel deploy
-    - Beta (unsigned): Linux `.deb`, `.rpm`, `.AppImage` built and launch-checked locally; Windows and macOS come from `.github/workflows/beta-build.yml`, not yet run. Open: code signing, auto-update
+    - Beta (unsigned): Linux `.deb`, `.rpm`, `.AppImage` built and launch-checked locally; Windows NSIS `-setup.exe` cross-built on Linux with cargo-xwin, not yet run on Windows; macOS (and `.msi`) come from `.github/workflows/beta-build.yml`, not yet run. Open: code signing, auto-update
     - _Requirements: 5.6_
 
 - [ ] 18. Final integration
