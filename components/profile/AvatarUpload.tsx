@@ -90,7 +90,7 @@ export function AvatarUpload({ userId, currentUrl, onUploaded }: AvatarUploadPro
           e.target.value = ""
         }}
       />
-      <button type="button" disabled={busy} onClick={() => inputRef.current?.click()}>
+      <button type="button" className="ym-button" disabled={busy} onClick={() => inputRef.current?.click()}>
         {busy ? "Uploading..." : "Change picture"}
       </button>
       <span className="text-xs">Drop an image here. PNG, JPEG or WebP, up to 2 MB.</span>

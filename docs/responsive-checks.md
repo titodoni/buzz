@@ -41,8 +41,18 @@ The Tauri minimum sizes are 220x400 (Buddy List) and 320x280 (chat).
 
 ## Not checked
 
-- Real Tauri windows (the screenshots are Chrome). In particular, resizing by
-  dragging the edges of a transparent frameless window on Linux.
-- The Profile page (needs a signed-in user; it uses the same frame and form
-  styles as the pages above).
+- Real Tauri windows. Every screenshot is Chrome, so the layout has not been
+  seen in WebKitGTK (Linux), WebView2 (Windows), or WKWebView (macOS). The chat
+  window relies on a chain of `height: 100%` boxes (`.ym-content` to `.ym-chat`
+  to the message list); if a webview scrolls the whole window instead of the
+  message list, start there. Also unchecked: dragging the edges of a transparent
+  frameless window to resize it on Linux.
+- The Profile page (needs a signed-in user). It uses the same frame and field
+  styles as the pages above, and its picture button now has the `ym-button`
+  style it was missing.
+- The custom-status dialog in the Buddy List header at 220 px. It opens inside
+  the narrow status column, so it cannot overflow the window but may look
+  cramped.
+- The right-click friend menu at 220 px (its position is clamped to the window
+  in code, not by a screenshot).
 - Font scaling: text sizes stay fixed at every window size.
