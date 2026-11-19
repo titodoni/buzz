@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import {
   cooldownRemainingMs,
   isNudgeEnabled,
@@ -15,11 +15,15 @@ function cooldownKey(friendId: string): string {
   return `buzz:nudgeCooldown:${friendId}`;
 }
 
-export function NudgeButton(props: {
-  friendId: string;
-  friendPresence: PresenceState;
-  onNudge: () => Promise<boolean>;
-}) {
+/** Lets the chat window's Actions > Buzz! send through the same cooldown. */
+export interface NudgeButtonHandle {
+  send: () => void;
+}
+
+export const NudgeButton = forwardRef<
+  NudgeButtonHandle,
+  { friendId: string; friendPresence: PresenceState; onNudge: () => Promise<boolean> }
+>(function NudgeButton(props, ref) {
   const { friendId, friendPresence, onNudge } = props;
   // Restored from storage so reopening the chat window keeps the cooldown (Req 6.3).
   // A chat window has one friend for its whole life, so reading once is enough.
@@ -82,6 +86,8 @@ export function NudgeButton(props: {
     setSending(false);
   }, []);
 
+  useImperativeHandle(ref, () => ({ send: () => void sendNudge() }), [sendNudge]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "g") {
@@ -118,4 +124,4 @@ export function NudgeButton(props: {
       </span>
     </span>
   );
-}
+});

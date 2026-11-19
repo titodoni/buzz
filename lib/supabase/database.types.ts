@@ -111,14 +111,14 @@ isOneToOne: false
                   ]
                 },"messages": {
                   Row: {
-                    "body": string,"created_at": string,"delivered_at": string | null,"id": string,"read_at": string | null,"receiver_id": string,"sender_id": string
+                    "body": string,"created_at": string,"delivered_at": string | null,"format": Json | null,"id": string,"read_at": string | null,"receiver_id": string,"sender_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "body": string,"created_at"?: string,"delivered_at"?: string | null,"id"?: string,"read_at"?: string | null,"receiver_id": string,"sender_id": string
+                    "body": string,"created_at"?: string,"delivered_at"?: string | null,"format"?: Json | null,"id"?: string,"read_at"?: string | null,"receiver_id": string,"sender_id": string
                   }
                   Update: {
-                    "body"?: string,"created_at"?: string,"delivered_at"?: string | null,"id"?: string,"read_at"?: string | null,"receiver_id"?: string,"sender_id"?: string
+                    "body"?: string,"created_at"?: string,"delivered_at"?: string | null,"format"?: Json | null,"id"?: string,"read_at"?: string | null,"receiver_id"?: string,"sender_id"?: string
                   }
                   Relationships: [
                     {

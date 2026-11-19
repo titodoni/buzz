@@ -24,16 +24,17 @@ Buzz does not use end-to-end encryption and does not claim to.
 | Buddy List groups, search box, Add a Friend, Show Offline Contacts | Built; checked with three users |
 | Ignore list: blocks messages, Buzz!, and friend requests; ignored person sees you Offline | Built; checked with two users |
 | Sign-in options, forgot password by emailed code, About Buzz | Built; recovery email needs the template change in [supabase/README.md](supabase/README.md) and a real inbox to test |
+| Chat menus (Conversation, Edit, View, Actions, Help), fonts and colors, F3 earlier messages, Clear Window | Built; needs migration `20250101001200` applied, then a two-user check |
 | Incoming-message alerts, "is now online" toast, tray icon, sounds | Built; checked in the Linux desktop app except the tray itself (see design.md, Requirement 16) |
 | Responsive windows (220x400 up to maximized) | Built; see [docs/responsive-checks.md](docs/responsive-checks.md) |
 | Installer config (task 17.1) and two-user integration tests | Not yet |
 
-The eight migrations are applied to a real Supabase project, and
-`npm run test:rls` (15 two-user checks: signup trigger, friends vs
-strangers, message and receipt rules, search, unfriend, re-request)
-passes against it. The Realtime parts (presence, chat delivery, Nudge,
-private-channel policies) and the desktop app have **not** been run
-end to end yet; that needs two signed-in app instances.
+The migrations in [supabase/README.md](supabase/README.md) are applied to a
+real Supabase project, and `npm run test:rls` (three-user checks: signup
+trigger, friends vs strangers, message and receipt rules, search, unfriend,
+re-request, groups, ignore, message format) passes against it. Presence, chat
+delivery, Nudge, and the alerts have been checked with two and three signed-in
+users, including in the Linux desktop app.
 
 Known gap: `presence:global` is a public channel, so a malicious signed-in
 user could fake someone else's presence ([ADR 0003](docs/adr/0003-chat-windows-read-presence-without-tracking.md)).

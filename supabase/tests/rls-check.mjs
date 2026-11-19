@@ -66,6 +66,16 @@ await check("is_ignored_by tells B that A ignores B", async () => { await ignore
 await check("ignorers_of_me lists A for B, nothing for C", async () => { await ignoreB(); await as(B); const forB = (await c.query(`select count(*)::int n from public.ignorers_of_me()`)).rows[0].n; await as(C); const forC = (await c.query(`select count(*)::int n from public.ignorers_of_me()`)).rows[0].n; return `${forB},${forC}`; }, "1,0");
 await check("is_ignored_by can't read someone else's list: C asks about A, who ignores B", async () => { await ignoreB(); await as(C); return (await c.query(`select public.is_ignored_by($1) x`, [A])).rows[0].x; }, false);
 await check("is_ignored_by is false for a malformed id", async () => { await as(B); return (await c.query(`select public.is_ignored_by('not-a-uuid') x`)).rows[0].x; }, false);
+// Message formatting (Req 17.2, 17.4): the CHECK and the receipt guard.
+const fmt = (o) => JSON.stringify({ font: "Verdana", size: 14, color: "#cc0000", bold: true, italic: false, underline: false, ...o });
+const sendFormatted = async (f) => { await as(A); return (await c.query(`insert into messages (sender_id, receiver_id, body, format) values ($1,$2,'styled',$3::jsonb)`, [A, B, f])).rowCount; };
+await check("A sends a message with an allowed format", async () => sendFormatted(fmt({})), 1);
+await check("format rejects a font Buzz doesn't offer", async () => sendFormatted(fmt({ font: "Comic Sans MS" })), (g) => /check constraint/.test(g));
+await check("format rejects size 25", async () => sendFormatted(fmt({ size: 25 })), (g) => /check constraint/.test(g));
+await check("format rejects a fractional size", async () => sendFormatted(fmt({ size: 12.5 })), (g) => /check constraint/.test(g));
+await check("format rejects a color that isn't #rrggbb", async () => sendFormatted(fmt({ color: "red;background:url(x)" })), (g) => /check constraint/.test(g));
+await check("format rejects an extra key", async () => sendFormatted(fmt({ background: "#000000" })), (g) => /check constraint/.test(g));
+await check("receiver B cannot change a message's format", async () => { await as(B); await c.query(`update messages set format=$2::jsonb where receiver_id=$1`, [B, fmt({ size: 24 })]); return "updated"; }, (g) => g.startsWith("ERROR"));
 await c.query("rollback");
 await c.end();
 console.table(results);

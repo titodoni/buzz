@@ -26,6 +26,14 @@ supabase gen types typescript --linked > lib/supabase/database.types.ts
 | `20250101000200_messages.sql` | `messages`, indexes, receipt-only update trigger, RLS, Realtime publication |
 | `20250101000300_storage_avatars.sql` | public `avatars` bucket and owner-folder policies |
 | `20250101000400_retention_cron.sql` | `pg_cron` daily purge of undelivered messages older than 30 days |
+| `20250101000500_friend_search_and_rerequest.sql` | exact-email `search_users`, re-request after removal |
+| `20250101000600_realtime_private_channels.sql` | Realtime Authorization for the private chat and inbox channels |
+| `20250101000700_realtime_friendships.sql` | `friendships` in the Realtime publication |
+| `20250101000800_groups_and_ignore.sql` | `contact_groups`, `contact_group_members`, `ignored_users`, RLS |
+| `20250101000900_groups_friends_only_and_realtime.sql` | group members must be accepted friends; groups in the Realtime publication |
+| `20250101001000_ignore_enforcement.sql` | ignore blocks messages, friend requests, and channels; `is_ignored_by`, `ignorers_of_me` |
+| `20250101001100_is_ignored_by_uses_index.sql` | `is_ignored_by` rewritten to use the primary key index |
+| `20250101001200_message_format.sql` | `messages.format` (font, size, color, bold, italic, underline) with a `CHECK`; the receipt guard also freezes `format` |
 
 ## Notes
 

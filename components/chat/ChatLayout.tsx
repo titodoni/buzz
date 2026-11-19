@@ -48,6 +48,8 @@ export function Avatar({ name, url }: { name: string; url: string | null }) {
 export interface ChatLayoutProps {
   /** The element a Nudge shakes. */
   rootRef?: Ref<HTMLDivElement>;
+  /** The menu bar under the title bar (Req 17.1). */
+  menu?: ReactNode;
   header: ReactNode;
   /** Optional line under the header, e.g. a load error. */
   notice?: ReactNode;
@@ -64,9 +66,10 @@ export interface ChatLayoutProps {
  * app/globals.css (`.ym-chat*`): the pictures column hides under 400 px, the
  * toolbar wraps, and short windows tighten up (Requirement 11).
  */
-export function ChatLayout({ rootRef, header, notice, list, typing, toolbar, input, pictures }: ChatLayoutProps) {
+export function ChatLayout({ rootRef, menu, header, notice, list, typing, toolbar, input, pictures }: ChatLayoutProps) {
   return (
     <div ref={rootRef} className="ym-chat">
+      {menu}
       <header className="ym-chat-header">{header}</header>
       {notice}
       <div className="ym-chat-body">

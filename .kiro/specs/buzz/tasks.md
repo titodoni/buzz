@@ -329,23 +329,23 @@ running desktop app instances (or two app windows), per `tech.md`.
   - [x] 25.7 Build the tray icon from the `tauri` crate's built-in `tray-icon` and `image-png` features with five original PNGs (Available, Busy, Away, Invisible, Offline): swap it with the Availability, hide the Buddy List on close, show it on click, and make Exit set the user Offline first
     - _Requirements: 16.6, 16.7, 16.8, 16.9_
 
-- [ ] 26. Chat window menus, formatting, and history
-  - [ ] 26.1 Write the migration that adds `messages.format jsonb` with a `CHECK` allowing only the four fonts, sizes 10 to 24, a `#rrggbb` color, and boolean bold, italic, and underline
+- [x] 26. Chat window menus, formatting, and history
+  - [x] 26.1 Write the migration that adds `messages.format jsonb` with a `CHECK` allowing only the four fonts, sizes 10 to 24, a `#rrggbb` color, and boolean bold, italic, and underline
     - _Requirements: 17.2, 17.4_
-  - [ ] 26.2 Implement the pure `lib/chat/format.ts`: `parseFormat(value)` returning the default for anything invalid, and `formatToStyle(format)` returning only validated inline style values
+  - [x] 26.2 Implement the pure `lib/chat/format.ts`: `parseFormat(value)` returning the default for anything invalid, and `formatToStyle(format)` returning only validated inline style values
     - No I/O; pure functions only
     - _Requirements: 17.2, 17.3, 17.4_
-  - [ ]* 26.3 Write tests: every allowed combination round-trips, every invalid font, size, or color falls back to the default, and no style value ever contains text from the input
+  - [x]* 26.3 Write tests: every allowed combination round-trips, every invalid font, size, or color falls back to the default, and no style value ever contains text from the input
     - _Requirements: 17.3, 17.4_
-  - [ ] 26.4 Build the formatting bar (font, size, color, bold, italic, underline), send the format with each message, and render received messages with it unless "Show my friends' fonts" is off
+  - [x] 26.4 Build the formatting bar (font, size, color, bold, italic, underline), send the format with each message, and render received messages with it unless "Show my friends' fonts" is off
     - _Requirements: 17.2, 17.3_
-  - [ ] 26.5 Build the chat `ChatMenuBar` with Conversation, Edit, View, Actions, and Help, Copy Conversation, Clear Window, the Show Timestamps toggle, and the F3 shortcut
+  - [x] 26.5 Build the chat `ChatMenuBar` with Conversation, Edit, View, Actions, and Help, Copy Conversation, Clear Window, the Show Timestamps toggle, and the F3 shortcut
     - _Requirements: 17.1, 17.5, 17.7, 17.8_
-  - [ ] 26.6 Add the `earlierLoaded` event to the conversation reducer and a `loadEarlier` API: fetch the 50 messages before the oldest on screen and merge them by id
+  - [x] 26.6 Add the `earlierLoaded` event to the conversation reducer and a `loadEarlier` API: fetch the 50 messages before the oldest on screen and merge them by id
     - _Requirements: 17.6_
-  - [ ]* 26.7 Write tests for `earlierLoaded`: merges without duplicates, keeps order, and a short page marks that no earlier messages remain
+  - [x]* 26.7 Write tests for `earlierLoaded`: merges without duplicates, keeps order, and a short page marks that no earlier messages remain
     - _Requirements: 17.6_
-  - [ ] 26.8 Show the offline line while the friend is Offline and put the friend's Status_Icon, Display_Name, and Status in the chat header and the Status_Icon in the title bar
+  - [x] 26.8 Show the offline line while the friend is Offline and put the friend's Status_Icon, Display_Name, and Status in the chat header and the Status_Icon in the title bar
     - _Requirements: 17.9, 17.10_
 
 - [ ] 27. Buzz! options

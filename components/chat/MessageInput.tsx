@@ -5,11 +5,14 @@ import { isValidMessageBody, MESSAGE_BODY_MAX } from "@/lib/validation/profile";
 import { onKeystroke, type TypingState } from "@/lib/typing/state";
 import { shouldBroadcastTyping } from "@/lib/typing/broadcast";
 import { insertAtCursor } from "@/lib/emoticons/shortcode";
+import { formatToStyle, type MessageFormat } from "@/lib/chat/format";
 
 export interface MessageInputHandle {
   /** Insert a shortcode at the cursor and refocus the box. */
   insertShortcode: (shortcode: string) => void;
   focus: () => void;
+  /** The text selected in the box, for Edit > Copy. */
+  selectedText: () => string;
 }
 
 export interface MessageInputProps {
@@ -17,10 +20,12 @@ export interface MessageInputProps {
   onSend: (body: string) => Promise<boolean>;
   /** Typing broadcast; `stopped: true` is sent once right after a message. */
   onTyping: (stopped: boolean) => void;
+  /** Shown in the box, so what you type looks like what you send (Req 17.2). */
+  format: MessageFormat;
 }
 
 export const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function MessageInput(
-  { onSend, onTyping },
+  { onSend, onTyping, format },
   ref,
 ) {
   const [text, setText] = useState("");
@@ -46,6 +51,10 @@ export const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(fu
 
   useImperativeHandle(ref, () => ({
     focus: () => areaRef.current?.focus(),
+    selectedText: () => {
+      const el = areaRef.current;
+      return el ? el.value.slice(el.selectionStart, el.selectionEnd) : "";
+    },
     insertShortcode: (shortcode) => {
       const el = areaRef.current;
       const pos = el?.selectionStart ?? text.length;
@@ -94,7 +103,7 @@ export const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(fu
             submit();
           }
         }}
-        style={{ width: "100%", boxSizing: "border-box", resize: "none", fontSize: 14, padding: 4 }}
+        style={{ width: "100%", boxSizing: "border-box", resize: "none", padding: 4, ...formatToStyle(format) }}
       />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         <span

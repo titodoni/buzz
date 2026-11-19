@@ -1,4 +1,5 @@
 import { nudgeSystemLine } from "../nudge/cooldown";
+import { parseFormat, type MessageFormat } from "./format";
 
 /** The message fields the chat window needs (a subset of the `messages` row). */
 export interface MessageRow {
@@ -7,6 +8,8 @@ export interface MessageRow {
   receiver_id: string;
   body: string;
   created_at: string;
+  /** As stored; checked by parseFormat before it is shown (Req 17.4). */
+  format?: unknown;
 }
 
 /**
@@ -22,6 +25,8 @@ export interface MessageItem {
   body: string;
   createdAt: string;
   status: MessageStatus;
+  /** Always valid: the default when the row had none or a bad one. */
+  format: MessageFormat;
 }
 
 /** A centered line that is not a chat message, e.g. Nudge notices. */
@@ -44,6 +49,13 @@ export interface ConversationState {
   items: ConversationItem[];
   /** Counter for unique system line ids. */
   systemCount: number;
+  /** True once an earlier page came back short: nothing older is stored. */
+  reachedStart: boolean;
+  /**
+   * When the user last chose Clear Window. A history reload leaves out
+   * messages from before it; only F3 brings them back (Req 17.8).
+   */
+  clearedAt: string | null;
 }
 
 /**
@@ -53,15 +65,19 @@ export interface ConversationState {
  */
 export type ConversationEvent =
   | { type: "historyLoaded"; messages: readonly MessageRow[] }
+  /** A page of older messages (F3); `pageSize` is how many were asked for. */
+  | { type: "earlierLoaded"; messages: readonly MessageRow[]; pageSize: number }
   | { type: "messageArrived"; message: MessageRow }
   | { type: "sendStarted"; message: MessageRow }
   | { type: "sendConfirmed"; id: string }
   | { type: "sendFailed"; id: string }
   | { type: "nudgeSent"; friendName: string; at: string }
-  | { type: "nudgeReceived"; at: string };
+  | { type: "nudgeReceived"; at: string }
+  /** Clear Window: empty the window; stored history is untouched. */
+  | { type: "cleared"; at: string };
 
 export function emptyConversation(me: string): ConversationState {
-  return { me, items: [], systemCount: 0 };
+  return { me, items: [], systemCount: 0, reachedStart: false, clearedAt: null };
 }
 
 function toItem(me: string, m: MessageRow, status: MessageStatus): MessageItem {
@@ -72,6 +88,7 @@ function toItem(me: string, m: MessageRow, status: MessageStatus): MessageItem {
     body: m.body,
     createdAt: m.created_at,
     status,
+    format: parseFormat(m.format),
   };
 }
 
@@ -96,6 +113,16 @@ function setStatus(state: ConversationState, id: string, status: MessageStatus):
   };
 }
 
+/** Adds fetched rows as sent, replacing any item with the same id. */
+function merge(state: ConversationState, rows: readonly MessageRow[]): ConversationState {
+  const fetched = rows.map((m) => toItem(state.me, m, "sent"));
+  const fetchedIds = new Set(fetched.map((i) => i.id));
+  return {
+    ...state,
+    items: [...state.items.filter((i) => !fetchedIds.has(i.id)), ...fetched].sort(byTime),
+  };
+}
+
 function add(state: ConversationState, item: ConversationItem): ConversationState {
   return { ...state, items: [...state.items, item].sort(byTime) };
 }
@@ -106,13 +133,13 @@ export function conversation(state: ConversationState, event: ConversationEvent)
     case "historyLoaded": {
       // Merge by id rather than replace: a reload (e.g. after a reconnect)
       // must not drop messages still sending or ones that arrived mid-fetch.
-      const fetched = event.messages.map((m) => toItem(state.me, m, "sent"));
-      const fetchedIds = new Set(fetched.map((i) => i.id));
-      return {
-        ...state,
-        items: [...state.items.filter((i) => !fetchedIds.has(i.id)), ...fetched].sort(byTime),
-      };
+      const clearedAt = state.clearedAt === null ? null : Date.parse(state.clearedAt);
+      const rows =
+        clearedAt === null ? event.messages : event.messages.filter((m) => Date.parse(m.created_at) > clearedAt);
+      return merge(state, rows);
     }
+    case "earlierLoaded":
+      return { ...merge(state, event.messages), reachedStart: event.messages.length < event.pageSize };
     case "messageArrived":
       if (state.items.some((i) => i.id === event.message.id)) return setStatus(state, event.message.id, "sent");
       return add(state, toItem(state.me, event.message, "sent"));
@@ -127,5 +154,16 @@ export function conversation(state: ConversationState, event: ConversationEvent)
       return addSystem(state, "info", nudgeSystemLine(event.friendName), event.at);
     case "nudgeReceived":
       return addSystem(state, "nudge", NUDGE_RECEIVED_TEXT, event.at);
+    case "cleared":
+      return { ...state, items: [], clearedAt: event.at, reachedStart: false };
   }
+}
+
+/**
+ * Where F3 pages back from: the oldest message on screen, else the moment
+ * the window was cleared, else null (the newest messages).
+ */
+export function earlierCursor(state: ConversationState): string | null {
+  const oldest = state.items.find((i) => i.kind === "message");
+  return oldest ? oldest.createdAt : state.clearedAt;
 }

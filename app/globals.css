@@ -289,6 +289,53 @@ body {
   height: 4.8em;
 }
 
+/* Formatting bar (Req 17.2): wraps on narrow windows like the toolbar. */
+.ym-format-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+.ym-format-bar select {
+  height: 24px;
+  font: inherit;
+  border: 1px solid var(--border);
+  background: #ffffff;
+}
+
+.ym-format-toggle {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+}
+
+.ym-format-toggle:hover {
+  border-color: var(--border);
+}
+
+.ym-format-toggle[aria-pressed="true"] {
+  border-color: var(--ym-purple-deep);
+  background: #ddd4ee;
+}
+
+.ym-format-color input {
+  width: 28px;
+  height: 24px;
+  padding: 1px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: #ffffff;
+}
+
 /* Short windows: tighter spacing so the newest message and the input stay visible (Req 11.4). */
 @media (max-height: 339px) {
   .ym-chat-header {
@@ -302,6 +349,11 @@ body {
 
   .ym-message-box {
     height: 2.8em;
+  }
+
+  /* The conversation and the box come first; formatting returns when the window is taller. */
+  .ym-format-bar {
+    display: none;
   }
 }
 

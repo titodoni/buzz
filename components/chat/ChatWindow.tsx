@@ -3,24 +3,38 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { WindowFrame } from "@/components/WindowFrame";
 import { PresenceDot, presenceLabel } from "@/components/PresenceDot";
-import { NudgeButton } from "@/components/chat/NudgeButton";
+import { NudgeButton, type NudgeButtonHandle } from "@/components/chat/NudgeButton";
+import { AboutDialog } from "@/components/AboutDialog";
+import { Dialog } from "@/components/Dialog";
+import { MenuBar, type MenuDef } from "@/components/friends/MenuBar";
 import { EmoticonPicker } from "./EmoticonPicker";
+import { FormatBar } from "./FormatBar";
 import { MessageInput, type MessageInputHandle } from "./MessageInput";
-import { MessageList } from "./MessageList";
+import { hhmm, MessageList } from "./MessageList";
 import { Avatar, ChatLayout } from "./ChatLayout";
 import { TypingIndicator } from "./TypingIndicator";
-import { conversation, emptyConversation, type MessageRow } from "@/lib/chat/conversation";
-import { loadHistory, markConversationRead, sendMessage } from "@/lib/chat/api";
+import { conversation, earlierCursor, emptyConversation, type MessageRow } from "@/lib/chat/conversation";
+import { EARLIER_PAGE_SIZE, loadEarlier, loadHistory, markConversationRead, sendMessage } from "@/lib/chat/api";
+import { conversationText, copyText } from "@/lib/chat/copy";
+import { useChatView } from "@/lib/chat/useChatView";
+import { hasNowPlaying, shouldShowField } from "@/lib/profile/render";
 import { useChatChannel } from "@/lib/realtime/chat";
 import { useFriendPresence } from "@/lib/realtime/presence";
-import { isIgnoredByMe, useIgnorers } from "@/lib/friends/ignore";
+import { ignoreUser, isIgnoredByMe, unignoreUser, useIgnorers } from "@/lib/friends/ignore";
 import { playNudgeSound, shakeChatWindow } from "@/lib/nudge/effects";
 import { getProfile, type PublicProfile } from "@/lib/friends/api";
 import { onSend as typingOnSend, type TypingState } from "@/lib/typing/state";
 import { receiveTypingSignal, type TypingSignal } from "@/lib/typing/broadcast";
 import { reportActivity } from "@/lib/realtime/activity";
 import { sendNudgeToInbox } from "@/lib/realtime/inbox";
-import { clearAttention } from "@/lib/tauri/windows";
+import { clearAttention, closeWindow } from "@/lib/tauri/windows";
+
+/** Req 17.9 */
+export function offlineLine(friendName: string): string {
+  return `${friendName} is offline. Your messages will be waiting when they sign in.`;
+}
+
+type ChatDialogKind = "profile" | "ignore" | "about";
 
 export interface ChatWindowProps {
   me: string;
@@ -36,6 +50,14 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<MessageInputHandle>(null);
+  const nudgeRef = useRef<NudgeButtonHandle>(null);
+  const logRef = useRef<HTMLDivElement>(null);
+  const { view, update: updateView } = useChatView();
+  const [dialog, setDialog] = useState<ChatDialogKind | null>(null);
+  /** A short note under the header, e.g. "Copied." or a failure. */
+  const [note, setNote] = useState<string | null>(null);
+  const [ignored, setIgnored] = useState(false);
+  const loadingEarlierRef = useRef(false);
 
   const friendName = friend?.displayName ?? "Your friend";
   const myName = mine?.displayName ?? "Me";
@@ -52,7 +74,9 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     let active = true;
     const check = () => {
       const done = isIgnoredByMe(me, friendId).then((v) => {
-        if (active) ignoredRef.current = v;
+        if (!active) return;
+        ignoredRef.current = v;
+        setIgnored(v);
       });
       ignoreCheckedRef.current = done;
     };
@@ -72,8 +96,10 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     return () => window.removeEventListener("focus", stop);
   }, []);
   const presenceRef = useRef(presence);
+  const formatRef = useRef(view.myFormat);
   useEffect(() => {
     presenceRef.current = presence;
+    formatRef.current = view.myFormat;
   });
 
   const receiveNudge = useCallback(() => {
@@ -183,9 +209,10 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
         receiver_id: friendId,
         body,
         created_at: new Date().toISOString(),
+        format: formatRef.current,
       };
       dispatch({ type: "sendStarted", message: row });
-      return sendMessage(row, presenceRef.current !== "offline").then((res) => {
+      return sendMessage(row, formatRef.current, presenceRef.current !== "offline").then((res) => {
         dispatch(res.ok ? { type: "sendConfirmed", id: row.id } : { type: "sendFailed", id: row.id });
         return res.ok;
       });
@@ -206,10 +233,114 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     inputRef.current?.focus();
   }, []);
 
+  // View > Show Earlier Messages and F3 (Req 17.6).
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  });
+  const showEarlier = useCallback(() => {
+    const s = stateRef.current;
+    if (loadingEarlierRef.current || s.reachedStart) return;
+    loadingEarlierRef.current = true;
+    loadEarlier(me, friendId, earlierCursor(s))
+      .then((rows) => {
+        dispatch({ type: "earlierLoaded", messages: rows, pageSize: EARLIER_PAGE_SIZE });
+        setNote(null);
+      })
+      .catch(() => setNote("Couldn't load earlier messages. Try again."))
+      .finally(() => {
+        loadingEarlierRef.current = false;
+      });
+  }, [me, friendId]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "F3") {
+        e.preventDefault();
+        showEarlier();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showEarlier]);
+
+  const copyConversation = useCallback(async () => {
+    const text = conversationText(stateRef.current.items, { mine: myName, friend: friendName }, hhmm);
+    setNote((await copyText(text)) ? "Conversation copied." : "Couldn't copy the conversation.");
+  }, [myName, friendName]);
+
+  const copySelection = useCallback(async () => {
+    const text = inputRef.current?.selectedText() || window.getSelection()?.toString() || "";
+    if (text) setNote((await copyText(text)) ? null : "Couldn't copy.");
+  }, []);
+
+  const selectAll = useCallback(() => {
+    const log = logRef.current;
+    const sel = window.getSelection();
+    if (!log || !sel) return;
+    const range = document.createRange();
+    range.selectNodeContents(log);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }, []);
+
+  const setIgnoring = useCallback(
+    async (on: boolean) => {
+      const res = on ? await ignoreUser(me, friendId) : await unignoreUser(me, friendId);
+      setDialog(null);
+      if (!res.ok) return setNote(res.message);
+      ignoredRef.current = on;
+      setIgnored(on);
+      setNote(on ? `You're ignoring ${friendName}.` : `You're no longer ignoring ${friendName}.`);
+    },
+    [me, friendId, friendName],
+  );
+
+  const menus: MenuDef[] = [
+    {
+      label: "Conversation",
+      items: [
+        { label: "Copy Conversation", onSelect: () => void copyConversation() },
+        { label: "Close", onSelect: () => void closeWindow() },
+      ],
+    },
+    {
+      label: "Edit",
+      items: [
+        { label: "Copy", shortcut: "Ctrl+C", onSelect: () => void copySelection() },
+        { label: "Select All", onSelect: selectAll },
+        { label: "Clear Window", onSelect: () => dispatch({ type: "cleared", at: new Date().toISOString() }) },
+      ],
+    },
+    {
+      label: "View",
+      items: [
+        { label: "Show Timestamps", checked: view.showTimestamps, onSelect: () => updateView({ showTimestamps: !view.showTimestamps }) },
+        { label: "Show Earlier Messages", shortcut: "F3", disabled: state.reachedStart, onSelect: showEarlier },
+        {
+          label: "Show Friends' Fonts",
+          checked: view.showFriendsFonts,
+          onSelect: () => updateView({ showFriendsFonts: !view.showFriendsFonts }),
+        },
+      ],
+    },
+    {
+      label: "Actions",
+      items: [
+        { label: "Buzz!", shortcut: "Ctrl+G", disabled: presence === "offline", onSelect: () => nudgeRef.current?.send() },
+        { label: "View Profile", onSelect: () => setDialog("profile") },
+        ignored
+          ? { label: "Stop Ignoring", onSelect: () => void setIgnoring(false) }
+          : { label: "Ignore...", onSelect: () => setDialog("ignore") },
+      ],
+    },
+    { label: "Help", items: [{ label: "About Buzz", onSelect: () => setDialog("about") }] },
+  ];
+
   return (
     <WindowFrame title={`${friendName} - Instant Message`} icon={<PresenceDot state={presence} size={14} />}>
       <ChatLayout
         rootRef={rootRef}
+        menu={<MenuBar menus={menus} label="Chat menu" />}
         header={
           <>
             <PresenceDot state={presence} />
@@ -220,13 +351,29 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
           </>
         }
         notice={
-          loadError ? (
-            <p role="alert" style={{ color: "var(--buzz-red)", fontSize: 12, margin: "4px 8px" }}>
-              Couldn&apos;t load your earlier messages. We&apos;ll try again when you&apos;re back online.
+          <>
+            {loadError ? (
+              <p role="alert" style={{ color: "var(--buzz-red)", fontSize: 12, margin: "4px 8px" }}>
+                Couldn&apos;t load your earlier messages. We&apos;ll try again when you&apos;re back online.
+              </p>
+            ) : null}
+            <p role="status" aria-live="polite" style={{ fontSize: 12, margin: note ? "4px 8px" : 0 }}>
+              {note ?? ""}
             </p>
-          ) : null
+          </>
         }
-        list={<MessageList items={state.items} myName={myName} friendName={friendName} />}
+        list={
+          <MessageList
+            items={state.items}
+            myName={myName}
+            friendName={friendName}
+            showTimestamps={view.showTimestamps}
+            showFriendsFonts={view.showFriendsFonts}
+            reachedStart={state.reachedStart}
+            footerLine={presence === "offline" ? offlineLine(friendName) : null}
+            logRef={logRef}
+          />
+        }
         typing={<TypingIndicator friendName={friendName} typing={friendTyping} />}
         toolbar={
           <>
@@ -239,7 +386,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
             >
               Emoticons
             </button>
-            <NudgeButton friendId={friendId} friendPresence={presence} onNudge={handleNudge} />
+            <NudgeButton ref={nudgeRef} friendId={friendId} friendPresence={presence} onNudge={handleNudge} />
             {pickerOpen ? (
               <EmoticonPicker
                 onPick={(code) => {
@@ -251,7 +398,12 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
             ) : null}
           </>
         }
-        input={<MessageInput ref={inputRef} onSend={handleSend} onTyping={sendTyping} />}
+        input={
+          <>
+            <FormatBar format={view.myFormat} onChange={(myFormat) => updateView({ myFormat })} />
+            <MessageInput ref={inputRef} onSend={handleSend} onTyping={sendTyping} format={view.myFormat} />
+          </>
+        }
         pictures={
           <>
             <Avatar name={friendName} url={friend?.avatarUrl ?? null} />
@@ -259,6 +411,33 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
           </>
         }
       />
+      {dialog === "about" ? <AboutDialog onClose={() => setDialog(null)} /> : null}
+      {dialog === "profile" ? (
+        <Dialog title={`${friendName}'s profile`} onClose={() => setDialog(null)}>
+          <p className="m-0 font-bold">{friendName}</p>
+          {shouldShowField(friend?.statusMessage) ? <p className="m-0 text-xs">{friend?.statusMessage}</p> : null}
+          {hasNowPlaying(friend?.nowPlaying) ? <p className="m-0 text-xs">♪ {friend?.nowPlaying}</p> : null}
+          <button type="button" className="ym-button mt-2" onClick={() => setDialog(null)}>
+            Close
+          </button>
+        </Dialog>
+      ) : null}
+      {dialog === "ignore" ? (
+        <Dialog title={`Ignore ${friendName}`} role="alertdialog" onClose={() => setDialog(null)}>
+          <p className="m-0 text-xs">
+            Ignore {friendName}? They won&apos;t be able to message you, Buzz you, or send you friend requests, and
+            they&apos;ll see you as offline. Buzz won&apos;t tell them.
+          </p>
+          <div className="mt-2 flex gap-1">
+            <button type="button" className="ym-button" onClick={() => void setIgnoring(true)}>
+              Ignore
+            </button>
+            <button type="button" className="ym-button" autoFocus onClick={() => setDialog(null)}>
+              Cancel
+            </button>
+          </div>
+        </Dialog>
+      ) : null}
     </WindowFrame>
   );
 }

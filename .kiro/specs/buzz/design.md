@@ -482,7 +482,7 @@ The emoticon images are the classic yellow YM smiley style (glossy, the same fam
 
 ### Responsiveness and accessibility
 
-- The Buddy List and each Chat are **real OS windows** (Tauri), independent and freely moved/resized like classic YM. Default sizes match the YM client (Buddy List ~260px wide; Chat ~420x360px); windows enforce a sensible minimum. There is no browser chrome and no phone layout: this is a desktop app, but each window is **responsive to its own size** (see Responsive window layout below).
+- The Buddy List and each Chat are **real OS windows** (Tauri), independent and freely moved/resized like classic YM. Default sizes match the YM client (Buddy List ~260px wide; Chat ~440x420px, taller than YM to fit the menu and formatting bars); windows enforce a sensible minimum. There is no browser chrome and no phone layout: this is a desktop app, but each window is **responsive to its own size** (see Responsive window layout below).
 - Keyboard: `Enter` sends a message, `Ctrl+G` buzzes, the Emoticon picker is reachable by its toolbar button and dismissible by `Esc`. All interactive controls are focusable with visible focus rings (the purple accent).
 - The contrast floor (>=4.5:1) and the status-smiley color coding keep the classic look legible (Req 8.4, Property 19).
 
@@ -491,7 +491,7 @@ The emoticon images are the classic yellow YM smiley style (glossy, the same fam
 Every window is the whole viewport (`WindowFrame` fills it), so the layout
 responds to the **window size** with plain CSS media queries; there is no
 JavaScript breakpoint logic. Sizes are enforced by the Tauri shell: the
-Buddy List opens at 260x560 (minimum 220x400) and a chat window at 420x360
+Buddy List opens at 260x560 (minimum 220x400) and a chat window at 440x420
 (minimum 320x280).
 
 | Breakpoint | Applies to | Behaviour |
@@ -727,10 +727,39 @@ Stop Ignoring) and the list in Contacts > Ignore List....
   `#rrggbb` color. The renderer builds inline style from these validated values
   only, never from raw text, and a pure `parseFormat()` returns the default
   format for anything invalid (Req 17.4).
-- **Earlier messages** (F3) page backwards by `created_at` with `limit 50`; the
-  conversation reducer already merges by id.
+  Formats are a whole: one bad field shows the message in the default format
+  (Tahoma 10 pt, black), not a partly repaired one. `formatToStyle` validates
+  again, so it can't be handed raw text. Sizes are points.
+- **Formatting bar** (`FormatBar`) sits between the toolbar and the message
+  box; the box shows the chosen format so what you type looks like what you
+  send. Under 340 px of window height it is hidden, so the conversation and
+  the box stay visible (Req 11.4). New chat windows open at 440x420, taller
+  than YM's, to make room for the menu and formatting bars.
+- **Per-device settings** (localStorage `buzz:chatView`): Show Timestamps,
+  Show Friends' Fonts, and my own format. Section 28's Preferences should read
+  the same key. Show Friends' Fonts off shows the friend's messages in the
+  default format; my own always keep mine.
+- **Earlier messages** (F3) page backwards with `limit 50` from the cursor
+  `earlierCursor(state)`: the oldest message on screen, else the moment of the
+  last Clear Window, else the newest. The query is `created_at <= cursor`, not
+  `<`, so messages sharing the cursor's timestamp aren't skipped; the reducer
+  drops the repeat by id. A page shorter than 50 sets `reachedStart`, which
+  shows "This is the start of your conversation." and disables the menu item.
+  Adding older messages keeps the reader's scroll position.
+- **Clear Window** empties the window and records `clearedAt`. A history
+  reload (after a reconnect) leaves out messages from before it, so cleared
+  messages don't come back by themselves; F3 brings them back on purpose.
+  Nothing is deleted from the database.
+- **Copy Conversation** copies "Name (hh:mm): text" lines; Edit > Copy copies
+  the selected text in the box or the conversation. Both use the Clipboard API
+  with a hidden-text-box fallback for older WebKitGTK.
+- **Actions** reuses the Buzz! button's cooldown (`NudgeButtonHandle.send`),
+  and Ignore... / Stop Ignoring use the same calls and wording as the Buddy
+  List's right-click menu. View Profile, Ignore, and About Buzz open as small
+  in-window dialogs (`components/Dialog.tsx`, which About Buzz now also uses).
 - **Offline line**: "<name> is offline. Your messages will be waiting when they
-  sign in." appears while the friend's presence is Offline.
+  sign in." is the last line of the conversation while the friend's presence
+  is Offline, so it scrolls with the messages instead of taking fixed space.
 - **Save to file is not offered** (it needs a file-dialog plugin); Copy
   Conversation covers the need without a new dependency.
 

@@ -7,6 +7,9 @@ export interface MenuItemDef {
   onSelect: () => void
   /** Set for an on/off item: it is announced as a checkbox and shows a tick when on. */
   checked?: boolean
+  /** Key hint shown on the right, e.g. "F3". The caller handles the key itself. */
+  shortcut?: string
+  disabled?: boolean
 }
 export interface MenuDef {
   label: string
@@ -14,7 +17,7 @@ export interface MenuDef {
 }
 
 /** Simple accessible menu bar. Click or Down opens, Enter picks, Escape closes, arrows move. */
-export function MenuBar({ menus }: { menus: MenuDef[] }) {
+export function MenuBar({ menus, label = "Main menu" }: { menus: MenuDef[]; label?: string }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -46,7 +49,7 @@ export function MenuBar({ menus }: { menus: MenuDef[] }) {
   }
 
   return (
-    <div ref={rootRef} role="menubar" aria-label="Main menu" className="ym-menubar flex flex-wrap border-b">
+    <div ref={rootRef} role="menubar" aria-label={label} className="ym-menubar flex flex-wrap border-b">
       {menus.map((m, i) => (
         <div key={m.label} className="ym-menu-item">
           <button
@@ -73,7 +76,10 @@ export function MenuBar({ menus }: { menus: MenuDef[] }) {
                 position: "absolute",
                 top: "100%",
                 left: 0,
-                minWidth: "min(190px, 100%)",
+                // As wide as its longest item, but never wider than the window.
+                width: "max-content",
+                minWidth: "min(190px, calc(100vw - 8px))",
+                maxWidth: "calc(100vw - 8px)",
                 background: "var(--window-bg)",
                 zIndex: 50,
               }}
@@ -84,9 +90,12 @@ export function MenuBar({ menus }: { menus: MenuDef[] }) {
                   <button
                     role={item.checked === undefined ? "menuitem" : "menuitemcheckbox"}
                     aria-checked={item.checked}
+                    aria-disabled={item.disabled || undefined}
                     type="button"
                     className="ym-row flex w-full cursor-pointer items-center border-0 bg-transparent px-3 py-1 text-left"
+                    style={item.disabled ? { color: "var(--text-muted)", cursor: "default" } : undefined}
                     onClick={() => {
+                      if (item.disabled) return
                       setOpenIndex(null)
                       item.onSelect()
                     }}
@@ -95,7 +104,12 @@ export function MenuBar({ menus }: { menus: MenuDef[] }) {
                     <span aria-hidden="true" className="inline-block w-4 shrink-0">
                       {item.checked ? "✓" : ""}
                     </span>
-                    {item.label}
+                    <span className="flex-1">{item.label}</span>
+                    {item.shortcut ? (
+                      <span className="pl-4 text-xs" style={{ color: "var(--text-muted)" }}>
+                        {item.shortcut}
+                      </span>
+                    ) : null}
                   </button>
                 </li>
               ))}

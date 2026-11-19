@@ -22,7 +22,7 @@ The Tauri minimum sizes are 220x400 (Buddy List) and 320x280 (chat).
 
 | Window | Sizes checked |
 | --- | --- |
-| Chat | 320x280 (minimum), 420x360 (default), 420x300 (short), 1400x900 (wide); the pictures column is hidden at 320 wide and shown from 400 wide |
+| Chat | 320x280 (minimum), 440x420 (default), 420x300 (short), 1400x900 (wide); the pictures column is hidden at 320 wide and shown from 400 wide |
 | Chat with Emoticon picker open | 320x280 |
 | Buddy List | 220x400 (minimum), 260x560 (default), 1400x900 (wide); with the Help menu open at 220 wide |
 | Sign in | 220x400, 260x560, 1400x900 |

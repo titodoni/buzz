@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { conversation, emptyConversation, type MessageRow } from "../conversation";
+import { conversation, earlierCursor, emptyConversation, type MessageRow } from "../conversation";
 
 const ME = "me";
 const ANN = "ann";
@@ -91,5 +91,67 @@ describe("conversation", () => {
     expect(
       s.items.map((i) => (i.kind === "system" ? `${i.tone}:${i.text}` : i.id)),
     ).toEqual(["a", "info:You nudged Ann", "c", "nudge:BUZZ!!!"]);
+  });
+
+  describe("earlier messages (F3, Req 17.6)", () => {
+    const shown = conversation(emptyConversation(ME), {
+      type: "historyLoaded",
+      messages: [msg("c", ANN, "2025-01-01T10:10:00Z"), msg("d", ME, "2025-01-01T10:20:00Z")],
+    });
+
+    it("puts the earlier page before what is on screen, once each, in time order", () => {
+      const s = conversation(shown, {
+        type: "earlierLoaded",
+        // Newest first, as the query returns them, and overlapping the oldest one on screen.
+        messages: [msg("c", ANN, "2025-01-01T10:10:00Z"), msg("b", ME, "2025-01-01T10:05:00Z"), msg("a", ANN, "2025-01-01T10:00:00Z")],
+        pageSize: 50,
+      });
+      expect(s.items.map((i) => i.id)).toEqual(["a", "b", "c", "d"]);
+    });
+
+    it("knows it reached the start of the conversation when a page comes back short", () => {
+      expect(shown.reachedStart).toBe(false);
+      const full = Array.from({ length: 3 }, (_, n) => msg(`e${n}`, ANN, `2025-01-01T09:0${n}:00Z`));
+      expect(conversation(shown, { type: "earlierLoaded", messages: full, pageSize: 3 }).reachedStart).toBe(false);
+      const short = conversation(shown, { type: "earlierLoaded", messages: full.slice(0, 2), pageSize: 3 });
+      expect(short.reachedStart).toBe(true);
+      expect(conversation(shown, { type: "earlierLoaded", messages: [], pageSize: 3 }).reachedStart).toBe(true);
+    });
+
+    it("pages back from the oldest message on screen, ignoring system lines", () => {
+      expect(earlierCursor(emptyConversation(ME))).toBeNull(); // nothing shown: start from now
+      const withLine = conversation(shown, { type: "nudgeReceived", at: "2025-01-01T09:00:00Z" });
+      expect(earlierCursor(withLine)).toBe("2025-01-01T10:10:00Z");
+    });
+  });
+
+  describe("Clear Window (Req 17.8)", () => {
+    const shown = conversation(emptyConversation(ME), {
+      type: "historyLoaded",
+      messages: [msg("a", ANN, "2025-01-01T10:00:00Z"), msg("b", ME, "2025-01-01T10:05:00Z")],
+    });
+    const cleared = conversation(shown, { type: "cleared", at: "2025-01-01T10:06:00Z" });
+
+    it("empties the window", () => {
+      expect(cleared.items).toEqual([]);
+    });
+
+    it("keeps cleared messages out when history reloads, but shows new ones", () => {
+      const s = conversation(cleared, {
+        type: "historyLoaded",
+        messages: [msg("a", ANN, "2025-01-01T10:00:00Z"), msg("b", ME, "2025-01-01T10:05:00Z"), msg("c", ANN, "2025-01-01T10:07:00Z")],
+      });
+      expect(s.items.map((i) => i.id)).toEqual(["c"]);
+    });
+
+    it("still lets F3 bring the stored messages back, starting from the clear", () => {
+      expect(earlierCursor(cleared)).toBe("2025-01-01T10:06:00Z");
+      const s = conversation(cleared, {
+        type: "earlierLoaded",
+        messages: [msg("b", ME, "2025-01-01T10:05:00Z"), msg("a", ANN, "2025-01-01T10:00:00Z")],
+        pageSize: 50,
+      });
+      expect(s.items.map((i) => i.id)).toEqual(["a", "b"]);
+    });
   });
 });

@@ -137,7 +137,8 @@ fn open_chat_window(
     let url = chat_url(&friend_id, nudge.unwrap_or(false));
     let window = WebviewWindowBuilder::new(&app, label, WebviewUrl::App(url.into()))
         .title("Buzz Chat")
-        .inner_size(420.0, 360.0)
+        // Tall enough for the menu bar, formatting bar, and a few messages (Req 11.4, 17.1, 17.2).
+        .inner_size(440.0, 420.0)
         .min_inner_size(320.0, 280.0)
         .resizable(true)
         .decorations(false)
