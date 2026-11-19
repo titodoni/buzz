@@ -9,7 +9,14 @@ import { signIn, signUp, MSG_CONFIRM_EMAIL } from "@/lib/auth/session"
 import { isValidEmail, isValidPassword, PASSWORD_MAX, PASSWORD_MIN } from "@/lib/validation/profile"
 import { AboutDialog } from "@/components/AboutDialog"
 import { MenuBar, type MenuDef } from "@/components/friends/MenuBar"
-import { loadRememberedEmail, loadSignInOptions, markRunStarted, saveRememberedEmail, saveSignInOptions } from "./remember"
+import {
+  loadRememberedEmail,
+  loadSignInOptions,
+  markPresenceStarted,
+  markRunStarted,
+  saveRememberedEmail,
+  saveSignInOptions,
+} from "./remember"
 
 export type AuthMode = "signin" | "signup"
 
@@ -103,6 +110,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         if (!res.ok) return setFormError(res.message)
         if (res.needsConfirmation) return setNotice(MSG_CONFIRM_EMAIL)
         markRunStarted()
+        // A brand-new account starts Available, whatever this device chose before.
+        markPresenceStarted()
         router.replace("/")
       }
     } finally {

@@ -38,3 +38,17 @@ export function mapRecoveryError(error: { code?: string | null; message?: string
   }
   return MSG_GENERIC
 }
+
+export const MSG_PASSWORD_REUSED = "Pick a password you haven't used here before."
+export const MSG_PASSWORD_WEAK = "That password is too easy to guess. Try a longer one."
+
+/**
+ * Maps an error from saving the new password. The code was already accepted
+ * at that point, so this never says the code failed.
+ */
+export function mapNewPasswordError(error: { code?: string | null; message?: string | null }): string {
+  const code = (error.code ?? "").toLowerCase()
+  if (code === "same_password") return MSG_PASSWORD_REUSED
+  if (code === "weak_password") return MSG_PASSWORD_WEAK
+  return MSG_GENERIC
+}

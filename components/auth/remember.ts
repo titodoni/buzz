@@ -60,3 +60,22 @@ export function hasRunStarted(): boolean {
     return true // fail toward keeping the user signed in
   }
 }
+
+const PRESENCE_KEY = "buzz.presenceStarted"
+
+/** Marks that the Buddy List has started presence in this run (see shouldStartInvisible). */
+export function markPresenceStarted(): void {
+  try {
+    window.sessionStorage.setItem(PRESENCE_KEY, "1")
+  } catch {
+    // Unavailable: Invisible may apply again after a reload, which is harmless.
+  }
+}
+
+export function hasPresenceStarted(): boolean {
+  try {
+    return window.sessionStorage.getItem(PRESENCE_KEY) === "1"
+  } catch {
+    return false
+  }
+}

@@ -5,7 +5,7 @@ import type { Session, User } from "@supabase/supabase-js"
 
 import { getSupabase } from "@/lib/supabase/browser-client"
 import { MSG_GENERIC, MSG_EMAIL_IN_USE, mapAuthError, mapThrownError } from "./errors"
-import { mapRecoveryError } from "./recovery"
+import { mapNewPasswordError, mapRecoveryError } from "./recovery"
 
 export type AuthResult = { ok: true } | { ok: false; message: string }
 export type SignUpResult =
@@ -113,14 +113,25 @@ export async function sendRecoveryCode(email: string): Promise<AuthResult> {
   }
 }
 
-/** Checks the emailed code, then sets the new password; the user ends up signed in (Req 13.6). */
-export async function resetPasswordWithCode(email: string, code: string, password: string): Promise<AuthResult> {
+/**
+ * Checks the emailed code (Req 13.6). On success the user is signed in, which
+ * is what lets them set the new password; the code can't be used twice.
+ */
+export async function verifyRecoveryCode(email: string, code: string): Promise<AuthResult> {
   try {
-    const supabase = getSupabase()
-    const verified = await supabase.auth.verifyOtp({ email, token: code, type: "recovery" })
-    if (verified.error) return { ok: false, message: mapRecoveryError(verified.error) }
-    const updated = await supabase.auth.updateUser({ password })
-    if (updated.error) return { ok: false, message: mapRecoveryError(updated.error) }
+    const { error } = await getSupabase().auth.verifyOtp({ email, token: code, type: "recovery" })
+    if (error) return { ok: false, message: mapRecoveryError(error) }
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, message: mapThrownError(e) }
+  }
+}
+
+/** Sets the new password for the signed-in user, after the code was accepted. */
+export async function setNewPassword(password: string): Promise<AuthResult> {
+  try {
+    const { error } = await getSupabase().auth.updateUser({ password })
+    if (error) return { ok: false, message: mapNewPasswordError(error) }
     return { ok: true }
   } catch (e) {
     return { ok: false, message: mapThrownError(e) }

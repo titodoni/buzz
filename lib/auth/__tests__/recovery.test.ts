@@ -48,3 +48,19 @@ describe("mapRecoveryError (Req 13.7)", () => {
     expect(mapRecoveryError({ message: "boom" })).toBe("Something went wrong. Please try again.")
   })
 })
+
+import { MSG_PASSWORD_REUSED, MSG_PASSWORD_WEAK, mapNewPasswordError } from "../recovery"
+
+describe("mapNewPasswordError (after the code was accepted)", () => {
+  it("explains a reused password", () => {
+    expect(mapNewPasswordError({ code: "same_password", message: "New password should be different" })).toBe(MSG_PASSWORD_REUSED)
+  })
+
+  it("explains a password the server finds too weak", () => {
+    expect(mapNewPasswordError({ code: "weak_password", message: "Password is too weak" })).toBe(MSG_PASSWORD_WEAK)
+  })
+
+  it("never says the code failed, because it already worked", () => {
+    expect(mapNewPasswordError({ message: "invalid something" })).toBe("Something went wrong. Please try again.")
+  })
+})

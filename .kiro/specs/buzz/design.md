@@ -588,6 +588,14 @@ under the title bar.
 - **Forgot password** is code-based because a desktop app has no web address for
   an emailed link to open: `resetPasswordForEmail(email)`, then
   `verifyOtp({ email, token, type: "recovery" })`, then `updateUser({ password })`.
+  Checking the code signs the user in and spends it, so if saving the new
+  password then fails (reused or weak password), the form stays on a
+  password-only step instead of asking for the code again. The "too many
+  requests" answer is shown like a success, because Supabase only rate-limits
+  resends for existing accounts and a different message would reveal one.
+  "Sign in as invisible" applies once per run, when the Buddy List first
+  starts; after a reload the user's own choice wins, and a brand-new account
+  starts Available.
   This needs the Supabase "Reset password" email template to contain
   `{{ .Token }}`; that is a dashboard setting and is recorded in
   `supabase/README.md`.

@@ -3,9 +3,9 @@ import { useId, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { WindowFrame } from "@/components/WindowFrame"
-import { normalizeRecoveryCode, recoveryFormErrors } from "@/lib/auth/recovery"
-import { resetPasswordWithCode, sendRecoveryCode } from "@/lib/auth/session"
-import { isValidEmail } from "@/lib/validation/profile"
+import { MSG_PASSWORD, MSG_TOO_MANY, normalizeRecoveryCode, recoveryFormErrors } from "@/lib/auth/recovery"
+import { sendRecoveryCode, setNewPassword, verifyRecoveryCode } from "@/lib/auth/session"
+import { isValidEmail, isValidPassword } from "@/lib/validation/profile"
 import { markRunStarted } from "./remember"
 
 /**
@@ -15,7 +15,8 @@ import { markRunStarted } from "./remember"
 export function ForgotPasswordForm() {
   const router = useRouter()
   const uid = useId()
-  const [step, setStep] = useState<"email" | "code">("email")
+  // "password": the code was accepted but the new password wasn't saved yet.
+  const [step, setStep] = useState<"email" | "code" | "password">("email")
   const [email, setEmail] = useState("")
   const [code, setCode] = useState("")
   const [password, setPassword] = useState("")
@@ -37,23 +38,41 @@ export function ForgotPasswordForm() {
     setBusy(true)
     const res = await sendRecoveryCode(trimmed)
     setBusy(false)
-    if (!res.ok) return setFormError(res.message)
+    // Supabase only rate-limits resends for real accounts, so "too many" is
+    // answered like a success: the same words whether or not the email has an
+    // account, so nobody can probe for one.
+    if (!res.ok && res.message !== MSG_TOO_MANY) return setFormError(res.message)
     setStep("code")
-    // Same words whether or not the email has an account, so nobody can probe for one.
-    setNotice(`If ${trimmed} has a Buzz account, we've emailed it a code.`)
+    setNotice(
+      `If ${trimmed} has a Buzz account, we've emailed it a code. If you just asked for one, wait a minute before asking again.`,
+    )
   }
 
   async function reset(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (busy) return
     setFormError("")
-    const fieldErrors = recoveryFormErrors(code, password)
-    setErrors(fieldErrors)
-    if (fieldErrors.code || fieldErrors.password) return
+    if (step === "password") {
+      if (!isValidPassword(password)) return setErrors({ password: MSG_PASSWORD })
+      setErrors({})
+    } else {
+      const fieldErrors = recoveryFormErrors(code, password)
+      setErrors(fieldErrors)
+      if (fieldErrors.code || fieldErrors.password) return
+    }
     setBusy(true)
-    const res = await resetPasswordWithCode(email.trim(), normalizeRecoveryCode(code), password)
+    if (step === "code") {
+      const verified = await verifyRecoveryCode(email.trim(), normalizeRecoveryCode(code))
+      if (!verified.ok) {
+        setBusy(false)
+        return setFormError(verified.message)
+      }
+      // The code is spent now; from here on only the password can be retried.
+      setStep("password")
+    }
+    const saved = await setNewPassword(password)
     setBusy(false)
-    if (!res.ok) return setFormError(res.message)
+    if (!saved.ok) return setFormError(saved.message)
     markRunStarted()
     router.replace("/")
   }
@@ -100,8 +119,9 @@ export function ForgotPasswordForm() {
         ) : (
           <form onSubmit={reset} noValidate className="flex w-full max-w-sm flex-col gap-3">
             <p role="status" className="m-0 text-sm">
-              {notice}
+              {step === "password" ? "Your code worked. Now choose your new password." : notice}
             </p>
+            {step === "code" ? (
             <div className="flex flex-col gap-1">
               <label htmlFor={id("code")} className="text-sm font-bold">
                 Code from the email
@@ -123,6 +143,7 @@ export function ForgotPasswordForm() {
                 </p>
               )}
             </div>
+            ) : null}
             <div className="flex flex-col gap-1">
               <label htmlFor={id("password")} className="text-sm font-bold">
                 New password
@@ -150,9 +171,11 @@ export function ForgotPasswordForm() {
               {busy ? "Saving..." : "Set New Password"}
             </button>
             <p className="m-0 flex flex-wrap gap-x-3 text-sm">
+              {step === "code" ? (
               <button type="button" className="text-ym-blue cursor-pointer border-0 bg-transparent p-0 underline" onClick={() => void sendCode()}>
                 Send a new code
               </button>
+              ) : null}
               <Link href="/login/" className="text-ym-blue underline">
                 Back to sign in
               </Link>

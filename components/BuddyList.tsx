@@ -6,7 +6,8 @@ import { useSignOut } from "@/components/AuthGuard"
 import { WindowFrame } from "@/components/WindowFrame"
 import { AboutDialog } from "@/components/AboutDialog"
 import { PresenceDot } from "@/components/PresenceDot"
-import { loadSignInOptions } from "@/components/auth/remember"
+import { hasPresenceStarted, loadSignInOptions, markPresenceStarted } from "@/components/auth/remember"
+import { shouldStartInvisible } from "@/lib/auth/options"
 import { StatusSelector } from "@/components/StatusSelector"
 import { FriendList } from "@/components/friends/FriendList"
 import { FriendSearch } from "@/components/friends/FriendSearch"
@@ -36,8 +37,18 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
   const [note, setNote] = useState<string | null>(null)
   const [statusMenu, setStatusMenu] = useState(false)
   const friendIds = useMemo(() => friends.map((f) => f.id), [friends])
-  // "Sign in as invisible to everyone" is a sign-in choice saved on this device (Req 13.4).
-  const [startInvisible] = useState(() => loadSignInOptions().signInInvisible)
+  // "Sign in as invisible to everyone" applies once per run (Req 13.4); after a
+  // reload the user's own last choice wins. Marked in an effect, not here,
+  // because React may call this initializer twice in development.
+  const [startInvisible] = useState(() =>
+    shouldStartInvisible({
+      signInInvisible: loadSignInOptions().signInInvisible,
+      presenceStartedThisRun: hasPresenceStarted(),
+    }),
+  )
+  useEffect(() => {
+    markPresenceStarted()
+  }, [])
   const { myState, setAvailable, setBusy, setInvisible, friendsPresence } = usePresenceTracker(me, friendIds, {
     startInvisible,
   })

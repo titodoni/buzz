@@ -5,21 +5,40 @@ import { APP_VERSION } from "@/lib/app/version"
 /** About Buzz (Req 13.8): version, copyright, and that Buzz is not Yahoo's. */
 export function AboutDialog({ onClose }: { onClose: () => void }) {
   const okRef = useRef<HTMLButtonElement>(null)
+  // Callers pass a new function each render; keep the latest without re-running the effect.
+  const onCloseRef = useRef(onClose)
   useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+  useEffect(() => {
+    // Remember where focus was, and put it back when the dialog closes.
+    const before = document.activeElement instanceof HTMLElement ? document.activeElement : null
     okRef.current?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault()
+        onCloseRef.current()
+      } else if (e.key === "Tab") {
+        // OK is the only control, so Tab keeps focus inside the dialog.
+        e.preventDefault()
+        okRef.current?.focus()
+      }
+    }
+    document.addEventListener("keydown", onKey)
+    return () => {
+      document.removeEventListener("keydown", onKey)
+      before?.focus()
+    }
   }, [])
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="about-buzz-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-3"
       style={{ background: "rgb(0 0 0 / 0.25)" }}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") onClose()
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="ym-window w-full max-w-xs shadow">
+      <div role="dialog" aria-modal="true" aria-labelledby="about-buzz-title" className="ym-window w-full max-w-xs shadow">
         <div className="ym-titlebar">
           <span id="about-buzz-title">About Buzz</span>
         </div>

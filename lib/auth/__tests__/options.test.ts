@@ -48,3 +48,19 @@ describe("shouldDiscardSession (Req 13.2, 13.3)", () => {
     expect(shouldDiscardSession({ autoSignIn: false, startedThisRun: true })).toBe(false)
   })
 })
+
+import { shouldStartInvisible } from "../options"
+
+describe("shouldStartInvisible (Req 13.4)", () => {
+  it("starts Invisible on the first Buddy List start of a run when the option is on", () => {
+    expect(shouldStartInvisible({ signInInvisible: true, presenceStartedThisRun: false })).toBe(true)
+  })
+
+  it("does not force Invisible again after a reload, so a manual change to Available sticks", () => {
+    expect(shouldStartInvisible({ signInInvisible: true, presenceStartedThisRun: true })).toBe(false)
+  })
+
+  it("never starts Invisible when the option is off", () => {
+    expect(shouldStartInvisible({ signInInvisible: false, presenceStartedThisRun: false })).toBe(false)
+  })
+})

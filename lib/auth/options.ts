@@ -16,9 +16,10 @@ export function parseSignInOptions(raw: string | null): SignInOptions {
   } catch {
     value = null
   }
-  const obj = value !== null && typeof value === "object" && !Array.isArray(value) ? value : {}
+  const obj: object = value !== null && typeof value === "object" && !Array.isArray(value) ? value : {}
   const pick = (key: keyof SignInOptions): boolean => {
-    const v: unknown = (obj as Record<string, unknown>)[key]
+    // Read an own property without casting the parsed JSON.
+    const v: unknown = Object.getOwnPropertyDescriptor(obj, key)?.value
     return typeof v === "boolean" ? v : DEFAULT_SIGN_IN_OPTIONS[key]
   }
   return { autoSignIn: pick("autoSignIn"), signInInvisible: pick("signInInvisible") }
@@ -31,4 +32,13 @@ export function parseSignInOptions(raw: string | null): SignInOptions {
  */
 export function shouldDiscardSession(input: { autoSignIn: boolean; startedThisRun: boolean }): boolean {
   return !input.autoSignIn && !input.startedThisRun
+}
+
+/**
+ * "Sign in as invisible" applies once per run, when the Buddy List first
+ * starts (Req 13.4). After that the user's own choices win, so a reload never
+ * turns them Invisible again.
+ */
+export function shouldStartInvisible(input: { signInInvisible: boolean; presenceStartedThisRun: boolean }): boolean {
+  return input.signInInvisible && !input.presenceStartedThisRun
 }
