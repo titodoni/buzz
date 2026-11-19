@@ -29,6 +29,8 @@ Avatar images, a native mobile app, and any end-to-end encryption claim.
 - **Emoticon_Service**: the Emoticon picker and Shortcode-to-image rendering.
 - **Typing_Indicator**: a real-time broadcast event showing that a friend is typing.
 - **Offline_Message_Service**: stores a message when the recipient is offline and delivers the stored messages when the recipient returns.
+- **Alert_Service**: sounds, toasts, taskbar flashing, and the tray icon that tell the user something happened while Buzz is in the background.
+- **Preferences_Service**: the Preferences window and the per-device settings it saves.
 - **Presence**: a friend's live state: online, away, busy, or offline.
 - **Status**: a short custom message shown under a friend's name.
 - **Now_Playing**: a manually typed song or artist line shown like a Status, with a music note.
@@ -39,6 +41,12 @@ Avatar images, a native mobile app, and any end-to-end encryption claim.
 - **Skin**: the YM-era visual theme: purple, rounded corners, slightly glossy, with readable contrast.
 - **Emoticon**: a classic-style image rendered from a Shortcode.
 - **Shortcode**: a text token such as `:)` that maps to an Emoticon image.
+- **Availability**: the state a user chose or was given: Available, Busy, Away, Invisible, or Offline.
+- **Status_Icon**: the small picture that shows an Availability: a yellow smiley for Available, an orange busy sign for Busy, a clock for Away, and a faded smiley for Offline.
+- **Preset_Status**: one of the ready-made status lines: Be Right Back, Not at My Desk, Not in Office, On the Phone, On Vacation, Out to Lunch, Stepped Out.
+- **Group**: a named, collapsible section of the Buddy List that one user keeps their friends in.
+- **Ignore_List**: the people a user has blocked.
+- **Toast**: a small notice that slides in at the bottom-right of the screen.
 
 ## Requirements
 
@@ -181,3 +189,131 @@ Avatar images, a native mobile app, and any end-to-end encryption claim.
 4. WHILE a window is shorter than 340 px, THE Buzz SHALL reduce vertical spacing so the newest message and the message input stay visible.
 5. WHEN the Emoticon picker opens in a window narrower than the picker, THE Emoticon_Service SHALL fit the picker inside the window width.
 6. IF a Display_Name, Status, or Now_Playing line is longer than the space available, THEN THE Buzz SHALL truncate it with an ellipsis instead of wrapping it or overflowing the window.
+
+### Requirement 12: Availability and Status_Icon
+
+**User Story:** As a user, I want my Availability to change my icon everywhere, so that friends can tell whether to expect a reply.
+
+#### Acceptance Criteria
+
+1. THE Presence_Service SHALL support the Availability values Available, Busy, Away, Invisible, and Offline.
+2. WHEN a user chooses Available or Busy, THE Presence_Service SHALL show the matching Status_Icon for that user in the user's own Buddy List header, in each friend's Buddy List, and in the title bar of each chat window with that user within 5 seconds.
+3. WHEN a user chooses a Preset_Status, THE Profile_Service SHALL set the Status to the Preset_Status text and THE Presence_Service SHALL set the Availability to Busy.
+4. WHEN a user saves a custom Status, THE Profile_Service SHALL let the user choose Available or Busy for it and SHALL save the Status text and the Availability together.
+5. WHEN a user chooses Available while the Status is a Preset_Status text, THE Profile_Service SHALL clear that Status.
+6. WHEN a user signs in, THE Presence_Service SHALL set the user's Availability to Available, or to Invisible when the user chose to sign in as invisible.
+7. WHILE a user is Invisible, THE Presence_Service SHALL show the user as Offline to every friend and SHALL keep delivering friends' presence and messages to that user.
+8. WHILE a user is Invisible, THE Buzz SHALL show the user's own Status_Icon with a marker that tells the user that friends see them as Offline.
+9. THE Buzz SHALL show the same Status_Icon for the same Availability in the Buddy List, in chat window title bars, in chat window headers, and in the tray icon.
+
+### Requirement 13: Sign-in options
+
+**User Story:** As a user, I want to choose how Buzz signs me in, so that I can skip typing and control how I appear.
+
+#### Acceptance Criteria
+
+1. WHEN a user signs in with "Remember my ID" checked, THE Auth_Service SHALL fill in the email on the next start and SHALL NOT store the password.
+2. WHEN a user signs in with "Sign in automatically" checked, THE Auth_Service SHALL restore the session on the next start and SHALL skip the sign-in window.
+3. WHEN a user signs in with "Sign in automatically" unchecked, THE Auth_Service SHALL end the session when the last Buzz window closes.
+4. WHEN a user signs in with "Sign in as invisible to everyone" checked, THE Presence_Service SHALL start the user as Invisible.
+5. WHEN a user chooses "Forgot your password?" and enters an email address, THE Auth_Service SHALL send a recovery email that contains a 6-digit code.
+6. WHEN a user enters a valid recovery code and a new password of 8 to 128 characters, THE Auth_Service SHALL set the new password and sign the user in.
+7. IF a user enters a wrong or expired recovery code, THEN THE Auth_Service SHALL reject it and show a message that the code did not work.
+8. WHEN a user chooses About Buzz from the Messenger menu, THE Buzz SHALL show the version, the copyright line, and a statement that Buzz is not affiliated with Yahoo.
+
+### Requirement 14: Buddy List groups and contacts
+
+**User Story:** As a user, I want my friends sorted into groups I control, so that I can find people quickly.
+
+#### Acceptance Criteria
+
+1. THE Friend_Service SHALL show friends inside collapsible Groups, each headed by the Group name and "(online/total)" counts.
+2. WHEN a user creates, renames, or deletes a Group, THE Friend_Service SHALL save the change for that user only.
+3. WHEN a user deletes a Group, THE Friend_Service SHALL move that Group's friends to the default Group named "Friends".
+4. WHEN a user moves a friend to a Group, THE Friend_Service SHALL show the friend under that Group for that user only.
+5. THE Friend_Service SHALL list Available, Busy, and Away friends before Offline friends within each Group.
+6. THE Friend_Service SHALL show Available, Busy, and Away friends in bold with their Status_Icon, and Offline friends in normal weight, dimmed.
+7. WHEN a user collapses or expands a Group, THE Buzz SHALL remember that state on that device.
+8. WHEN a user turns off "Show Offline Contacts", THE Friend_Service SHALL hide Offline friends and SHALL keep the total in each Group's count.
+9. WHEN a user types in the Buddy List search box, THE Friend_Service SHALL show only friends whose Display_Name contains the text, ignoring case.
+10. WHEN a user types an email address into the search box and presses Enter, THE Friend_Service SHALL open the add-a-friend search with that address filled in.
+11. THE Buzz SHALL show an Add a Friend button at the start of the Buddy List toolbar.
+12. THE Buzz SHALL show the user's Display_Name, Availability, Status, and Now_Playing in the Buddy List header, with a menu to change the Availability.
+
+### Requirement 15: Ignore list
+
+**User Story:** As a user, I want to block someone, so that they can't bother me.
+
+#### Acceptance Criteria
+
+1. WHEN a user ignores a person, THE Friend_Service SHALL add the person to that user's Ignore_List.
+2. WHILE a person is on a user's Ignore_List, THE Chat_Service SHALL reject messages from that person to that user.
+3. WHILE a person is on a user's Ignore_List, THE Nudge_Service SHALL drop Nudges from that person to that user.
+4. WHILE a person is on a user's Ignore_List, THE Friend_Service SHALL reject friend requests from that person to that user.
+5. WHILE a person is on a user's Ignore_List, THE Buzz SHALL show that user as Offline to that person.
+6. WHEN a user removes a person from the Ignore_List, THE Friend_Service SHALL let that person contact the user again.
+7. THE Buzz SHALL NOT tell a person that they have been ignored.
+8. THE Preferences_Service SHALL list the Ignore_List with a Remove button for each person.
+
+### Requirement 16: Incoming messages and alerts
+
+**User Story:** As a user, I want Buzz to tell me when something arrives, so that I don't miss a conversation.
+
+#### Acceptance Criteria
+
+1. WHEN a message arrives from a friend whose chat window is closed, THE Alert_Service SHALL open that chat window behind the other windows without taking keyboard focus, flash its taskbar entry, and play the message sound.
+2. WHEN a message arrives in a chat window that is not focused, THE Alert_Service SHALL flash the taskbar entry and play the message sound.
+3. WHEN a chat window gains focus, THE Alert_Service SHALL stop flashing it.
+4. WHEN a friend changes from Offline to Available, THE Alert_Service SHALL show a Toast "<Display_Name> is now online" at the bottom-right of the screen for 5 seconds and play the friend-online sound.
+5. WHEN a user clicks a Toast, THE Alert_Service SHALL open the chat window with that friend.
+6. THE Alert_Service SHALL show a tray icon that uses the Status_Icon of the user's Availability.
+7. WHEN a user closes the Buddy List window, THE Buzz SHALL hide it to the tray and keep running.
+8. WHEN a user chooses Exit from the tray menu, THE Buzz SHALL set the user Offline and close every window.
+9. WHEN a user clicks the tray icon, THE Buzz SHALL show the Buddy List window.
+10. WHILE a preference turns a sound or Toast off, THE Alert_Service SHALL NOT play or show it.
+
+### Requirement 17: Chat window menus, formatting, and history
+
+**User Story:** As a user, I want the chat window to have the tools I remember, so that I can style my words and find old messages.
+
+#### Acceptance Criteria
+
+1. THE Buzz SHALL show the menus Conversation, Edit, View, Actions, and Help at the top of each chat window.
+2. WHEN a user chooses a font, a size from 10 to 24, a color, or bold, italic, or underline in the formatting bar, THE Chat_Service SHALL apply that formatting to the messages the user sends.
+3. WHEN a message with formatting arrives, THE Chat_Service SHALL show it with that formatting unless the user turned off "Show my friends' fonts".
+4. IF a message carries a font, size, or color that Buzz does not allow, THEN THE Chat_Service SHALL show the message in the default format.
+5. WHEN a user chooses View then Show Timestamps, THE Chat_Service SHALL show or hide the time next to each message.
+6. WHEN a user chooses View then Show Earlier Messages or presses F3, THE Chat_Service SHALL load the 50 messages before the oldest one on screen.
+7. WHEN a user chooses Conversation then Copy Conversation, THE Chat_Service SHALL copy the messages on screen to the clipboard as plain text.
+8. WHEN a user chooses Edit then Clear Window, THE Chat_Service SHALL remove the messages from the window and SHALL keep them in the stored history.
+9. WHILE the friend is Offline, THE Chat_Service SHALL show a line in the chat window that says the friend is offline and will receive the messages when they sign in.
+10. THE Buzz SHALL show the friend's Status_Icon, Display_Name, and Status in the chat window header and the friend's Status_Icon in its title bar.
+
+### Requirement 18: Buzz! options
+
+**User Story:** As a user, I want control over Buzz! so that it stays fun for me and my friends.
+
+#### Acceptance Criteria
+
+1. WHEN a Buzz arrives while the chat window is minimized or behind other windows, THE Nudge_Service SHALL bring the window to the front before shaking it.
+2. WHERE "Allow Buzz!" is turned off, THE Nudge_Service SHALL drop every Buzz that arrives for that user.
+3. WHERE "Play the Buzz! sound" is turned off, THE Nudge_Service SHALL shake the window without playing the sound.
+4. WHERE "Shake the window for a Buzz!" is turned off, THE Nudge_Service SHALL play the sound and show the BUZZ!!! line without shaking.
+5. IF a second Buzz from the same friend arrives less than 10 seconds after the previous one, THEN THE Nudge_Service SHALL drop it.
+6. WHEN a user chooses Actions then Buzz! in the chat window, THE Nudge_Service SHALL send a Buzz with the same rules as the Buzz! button and Ctrl+G.
+7. THE Nudge_Service SHALL NOT send a Buzz to a friend who is Offline or Invisible.
+
+### Requirement 19: Preferences
+
+**User Story:** As a user, I want one Preferences window for my settings, so that I can tune Buzz in one place.
+
+#### Acceptance Criteria
+
+1. WHEN a user chooses Preferences from the Messenger menu, THE Preferences_Service SHALL open a Preferences window with the categories General, Alerts and Sounds, Messages, Buzz!, and Ignore List.
+2. THE Preferences_Service SHALL offer, under General, "Sign in automatically" and "Show Offline Contacts".
+3. THE Preferences_Service SHALL offer, under Alerts and Sounds, on-off switches for the message sound, the friend-online sound, the friend-online Toast, and a master switch for all sounds.
+4. THE Preferences_Service SHALL offer, under Messages, the default font, size, and color, "Show Timestamps", and "Show my friends' fonts".
+5. THE Preferences_Service SHALL offer, under Buzz!, the switches "Allow Buzz!", "Play the Buzz! sound", and "Shake the window for a Buzz!".
+6. WHEN a user changes a preference, THE Preferences_Service SHALL apply it to every open window without a restart.
+7. IF the saved preferences are missing or damaged, THEN THE Preferences_Service SHALL use the defaults.
+8. THE Preferences_Service SHALL save preferences on the user's device, except the Ignore_List, which belongs to the user's account.

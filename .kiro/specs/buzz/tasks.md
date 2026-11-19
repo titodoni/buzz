@@ -257,6 +257,124 @@ running desktop app instances (or two app windows), per `tech.md`.
   - [x] 20.4 Check every window at its minimum, default, and maximized sizes with screenshots (no horizontal scrollbar, nothing clipped) and record the sizes checked in `docs/responsive-checks.md`
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
 
+- [ ] 21. Availability model and status icons
+  - [ ] 21.1 Extend the pure presence state machine with the user's own Invisible state: add `invisible` for `myState`, a `setInvisible` event that, like Busy, is not ended by `activity` or `idleTimeout`, and keep friends' states limited to online, away, busy, and offline
+    - _Requirements: 12.1, 12.7_
+  - [ ]* 21.2 Write tests for Invisible: persists through activity and idle events, ends only on `setOnline` or `setBusy`, never appears in a friend's merged presence
+    - _Requirements: 12.1, 12.7_
+  - [ ] 21.3 Implement `lib/status/presets.ts`: the seven Preset_Statuses, `applyPreset(name)` returning the Status text with Availability Busy, `chooseAvailable(currentStatus)` clearing a status that came from a preset, and `customStatus(text, availability)`
+    - No I/O; pure functions only
+    - _Requirements: 12.3, 12.4, 12.5_
+  - [ ]* 21.4 Write tests: every preset yields Busy and its exact text, Available clears only preset text and keeps a custom text, and a custom status keeps the chosen Availability
+    - _Requirements: 12.3, 12.4, 12.5_
+  - [ ] 21.5 Rework `StatusSelector` into the header Availability dropdown: Available, Busy, Invisible, the seven presets, and Custom Status with a Busy or Available choice; saving the text and changing the Availability happen together
+    - _Requirements: 12.2, 12.3, 12.4, 12.5, 14.12_
+  - [ ] 21.6 Make `usePresenceTracker` honour Invisible: call `untrack()` while Invisible but keep listening, re-track on leaving it, and start Invisible when "Sign in as invisible" was chosen
+    - _Requirements: 12.6, 12.7_
+  - [ ] 21.7 Use `PresenceDot` for every Availability picture: Buddy List header and title bar, friend rows, chat window header and title bar (`TitleBar` `icon`), with a ghost marker on the user's own Invisible icon
+    - _Requirements: 12.2, 12.8, 12.9, 17.10_
+
+- [ ] 22. Sign-in options
+  - [ ] 22.1 Add to the sign-in window the checkboxes "Remember my ID", "Sign in automatically", and "Sign in as invisible to everyone", the links "Get a new account" and "Forgot your password?", and the Messenger and Help menus
+    - _Requirements: 13.1, 13.2, 13.4_
+  - [ ] 22.2 Implement "Sign in automatically": when unchecked, end the session when the last window closes, and on the next start if the app was killed; when checked, restore the session and skip the sign-in window
+    - _Requirements: 13.2, 13.3_
+  - [ ] 22.3 Implement the password recovery flow: ask for the email, call `resetPasswordForEmail`, accept the 6-digit code and a new password of 8 to 128 characters through `verifyOtp` and `updateUser`, and map a wrong or expired code to a plain message; record the required email template change (`{{ .Token }}`) in `supabase/README.md`
+    - _Requirements: 13.5, 13.6, 13.7_
+  - [ ] 22.4 Add the About Buzz dialog: version, copyright line, and the not-affiliated statement
+    - _Requirements: 13.8_
+  - [ ]* 22.5 Write tests for the pure code and password checks used by the recovery form
+    - _Requirements: 13.6, 13.7_
+
+- [ ] 23. Groups and contacts
+  - [ ] 23.1 Write migration `20250101000800`: `contact_groups`, `contact_group_members`, and `ignored_users` with RLS limiting every row to its owner, and regenerate `database.types.ts`
+    - _Requirements: 14.2, 14.3, 14.4, 15.1_
+  - [ ] 23.2 Implement the pure `lib/friends/arrange.ts`: from friends, groups, memberships, presence, "Show Offline Contacts", and a search text, return the Groups in order with their friends, "(online/total)" counts, sorting, and bold flags
+    - No I/O; pure functions only
+    - _Requirements: 14.1, 14.5, 14.6, 14.8, 14.9_
+  - [ ]* 23.3 Write tests: counts always count the whole group, online friends sort first, hiding Offline friends keeps the total, search ignores case and keeps groups with no match out
+    - _Requirements: 14.1, 14.5, 14.6, 14.8, 14.9_
+  - [ ] 23.4 Build the Groups UI and API: create, rename, delete (members return to "Friends"), move a friend through "Move to", and remember collapsed groups on the device
+    - _Requirements: 14.2, 14.3, 14.4, 14.7_
+  - [ ] 23.5 Build the Buddy List toolbar and header: the Add a Friend button, the search box (filter as you type; Enter on an email opens add-a-friend), and the header with Display_Name, Availability dropdown, Status, and Now_Playing
+    - _Requirements: 14.9, 14.10, 14.11, 14.12_
+  - [ ]* 23.6 Extend `npm run test:rls` with checks for the three new tables: only the owner can read or change their rows, and a group delete returns friends to "Friends"
+    - _Requirements: 14.2, 14.3, 15.1_
+
+- [ ] 24. Ignore list
+  - [ ] 24.1 Write the migration that adds "the receiver has not ignored the sender" to the `messages` insert policy, the friend-request insert policy, and the chat and inbox Realtime authorization policies
+    - _Requirements: 15.2, 15.3, 15.4_
+  - [ ] 24.2 Build the Ignore API and its entry points: Ignore in the friend context menu and in the chat Actions menu, with the list and a Remove button in Preferences
+    - _Requirements: 15.1, 15.6, 15.8_
+  - [ ] 24.3 Enforce on the client what the database cannot: show an ignored person's presence as Offline to that person, drop their Nudges, and never reveal that they were ignored
+    - _Requirements: 15.3, 15.5, 15.7_
+  - [ ]* 24.4 Extend `npm run test:rls`: an ignored sender cannot insert a message or friend request, and removing the person from the list restores both
+    - _Requirements: 15.2, 15.4, 15.6_
+
+- [ ] 25. Incoming messages and alerts
+  - [ ] 25.1 Implement the pure `lib/alerts/plan.ts`: `incomingMessagePlan` (open window, flash, sound, from window state, focus, and preferences) and `friendOnlinePlan` (Toast and sound when a friend goes from Offline to Available)
+    - No I/O; pure functions only
+    - _Requirements: 16.1, 16.2, 16.4, 16.10_
+  - [ ]* 25.2 Write tests: a closed window opens unfocused with a flash, a focused window does nothing, switches off suppress each sound and the Toast, and only Offline to Available triggers the online alert
+    - _Requirements: 16.1, 16.2, 16.4, 16.10_
+  - [ ] 25.3 Extend the Rust `open_chat_window` with a `focus` option: build the window unfocused, call `request_user_attention`, and add the capability permission; clear the flash when the window gains focus
+    - _Requirements: 16.1, 16.2, 16.3_
+  - [ ] 25.4 Wire the Buddy List: on an incoming message for a friend with no open chat window, follow `incomingMessagePlan`; an open but unfocused chat window flashes and plays the sound
+    - _Requirements: 16.1, 16.2, 16.3_
+  - [ ] 25.5 Add the original Web Audio sounds for a message, a friend coming online, and signing in
+    - _Requirements: 16.1, 16.4_
+  - [ ] 25.6 Build the Toast: a small frameless always-on-top window at the bottom-right of the screen for 5 seconds, "<Display_Name> is now online", and a click opens the chat; no new dependency
+    - _Requirements: 16.4, 16.5_
+  - [ ] 25.7 Build the tray icon from the `tauri` crate's built-in `tray-icon` and `image-png` features with four original PNGs: swap it with the Availability, hide the Buddy List on close, show it on click, and make Exit set the user Offline first
+    - _Requirements: 16.6, 16.7, 16.8, 16.9_
+
+- [ ] 26. Chat window menus, formatting, and history
+  - [ ] 26.1 Write the migration that adds `messages.format jsonb` with a `CHECK` allowing only the four fonts, sizes 10 to 24, a `#rrggbb` color, and boolean bold, italic, and underline
+    - _Requirements: 17.2, 17.4_
+  - [ ] 26.2 Implement the pure `lib/chat/format.ts`: `parseFormat(value)` returning the default for anything invalid, and `formatToStyle(format)` returning only validated inline style values
+    - No I/O; pure functions only
+    - _Requirements: 17.2, 17.3, 17.4_
+  - [ ]* 26.3 Write tests: every allowed combination round-trips, every invalid font, size, or color falls back to the default, and no style value ever contains text from the input
+    - _Requirements: 17.3, 17.4_
+  - [ ] 26.4 Build the formatting bar (font, size, color, bold, italic, underline), send the format with each message, and render received messages with it unless "Show my friends' fonts" is off
+    - _Requirements: 17.2, 17.3_
+  - [ ] 26.5 Build the chat `ChatMenuBar` with Conversation, Edit, View, Actions, and Help, Copy Conversation, Clear Window, the Show Timestamps toggle, and the F3 shortcut
+    - _Requirements: 17.1, 17.5, 17.7, 17.8_
+  - [ ] 26.6 Add the `earlierLoaded` event to the conversation reducer and a `loadEarlier` API: fetch the 50 messages before the oldest on screen and merge them by id
+    - _Requirements: 17.6_
+  - [ ]* 26.7 Write tests for `earlierLoaded`: merges without duplicates, keeps order, and a short page marks that no earlier messages remain
+    - _Requirements: 17.6_
+  - [ ] 26.8 Show the offline line while the friend is Offline and put the friend's Status_Icon, Display_Name, and Status in the chat header and the Status_Icon in the title bar
+    - _Requirements: 17.9, 17.10_
+
+- [ ] 27. Buzz! options
+  - [ ] 27.1 Implement the pure `shouldAcceptNudge(prefs, lastAt, now)`: reject when "Allow Buzz!" is off or when the previous Buzz from that friend was under 10 seconds ago
+    - No I/O; pure functions only
+    - _Requirements: 18.2, 18.5_
+  - [ ]* 27.2 Write tests for `shouldAcceptNudge`, including exactly 10 seconds and 9.999 seconds
+    - _Requirements: 18.2, 18.5_
+  - [ ] 27.3 Apply the Buzz! preferences in the receive path: skip the sound or the shake when switched off, and raise a minimized or hidden window to the front before it shakes
+    - _Requirements: 18.1, 18.3, 18.4_
+  - [ ] 27.4 Add Actions then Buzz! to the chat menu using the same send path as the button and Ctrl+G, disabled for an Offline or Invisible friend
+    - _Requirements: 18.6, 18.7_
+
+- [ ] 28. Preferences
+  - [ ] 28.1 Implement the pure `lib/prefs/prefs.ts`: the preference types, the defaults, and `parsePrefs(raw)` that returns the defaults for anything missing or damaged
+    - No I/O; pure functions only
+    - _Requirements: 19.7_
+  - [ ]* 28.2 Write tests: damaged JSON, wrong types, and unknown keys all fall back safely, and a valid object round-trips
+    - _Requirements: 19.7_
+  - [ ] 28.3 Implement `usePrefs`: read and write `buzz:prefs`, and apply a change in every open window through the `storage` event
+    - _Requirements: 19.6, 19.8_
+  - [ ] 28.4 Build the Preferences window at `/preferences` with General, Alerts and Sounds, Messages, Buzz!, and Ignore List, and the Tauri command that opens it from Messenger then Preferences
+    - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.8_
+
+- [ ] 29. Verify and document
+  - [ ]* 29.1 Add the two-user browser check to the repo (a script that signs in two test users in headless Chrome, changes status, sends a message, and sends a Buzz!); it needs `puppeteer-core` as a dev dependency, which must be approved first
+    - _Requirements: 12.2, 16.1, 18.1_
+  - [ ] 29.2 Update the README status table and `docs/responsive-checks.md` for the Preferences and Toast windows, and the ADRs for any decision made while building
+    - _Requirements: 11.1, 19.1_
+
 ## Notes
 
 - The design uses TypeScript throughout (Next.js App Router + TypeScript strict) as a static export, so all code examples and tasks are TypeScript; no language selection step was needed.
@@ -267,6 +385,7 @@ running desktop app instances (or two app windows), per `tech.md`.
 - Each implementation task references the granular requirement clauses it satisfies; each property test references its design property number and the requirements it validates.
 - Nudge is an ephemeral Realtime broadcast with client-side cooldown; there is no `nudges` table. Presence is never stored in Postgres.
 - Build order: Tauri shell + Next.js static-export scaffold + Supabase schema/RLS foundation -> pure-logic `lib/` modules + property tests -> Skin/window chrome + shared UI -> auth (client-side) -> profile -> friends -> presence -> chat (leaf components, `useChatChannel`, `ChatWindow` composition, multi-window) -> nudge -> typing -> offline delivery -> Tauri build config -> final integration tests.
+- Sections 21 to 29 come from the reference Yahoo Messenger windows (`screenshoot/`, not in version control). Out of scope and not built: sending or receiving files and photos, voice and video calls, SMS, phone calls, mail and voicemail icons, Activities and games, plug-ins, advertising, the web search box, group chat, and tabbed chats. Tasks that touch the same file (`ChatWindow`, `BuddyList`, `presence.ts`) must not run at the same time even when they share a wave.
 - This plan contains only coding tasks (writing, modifying, and testing code, plus Tauri build config). Deployment to app stores, the Devpost write-up, and the demo video are intentionally excluded.
 
 ## Task Dependency Graph
@@ -282,7 +401,14 @@ running desktop app instances (or two app windows), per `tech.md`.
     { "id": 5, "tasks": ["12.6", "13.3", "14.2", "15.2", "18.1"] },
     { "id": 6, "tasks": ["18.2", "20.1"] },
     { "id": 7, "tasks": ["20.2", "20.3"] },
-    { "id": 8, "tasks": ["20.4"] }
+    { "id": 8, "tasks": ["20.4"] },
+    { "id": 9, "tasks": ["21.1", "21.3", "22.1", "23.1", "23.2", "25.1", "25.5", "26.1", "26.2", "27.1", "28.1"] },
+    { "id": 10, "tasks": ["21.2", "21.4", "21.6", "22.2", "22.3", "23.3", "23.6", "24.1", "25.2", "25.3", "26.3", "26.6", "27.2", "28.2", "28.3"] },
+    { "id": 11, "tasks": ["21.5", "22.4", "22.5", "23.4", "24.2", "24.4", "25.6", "26.7", "27.3"] },
+    { "id": 12, "tasks": ["21.7", "23.5", "24.3", "25.4", "26.4", "28.4"] },
+    { "id": 13, "tasks": ["25.7", "26.5"] },
+    { "id": 14, "tasks": ["26.8", "27.4"] },
+    { "id": 15, "tasks": ["29.1", "29.2"] }
   ]
 }
 ```

@@ -12,6 +12,14 @@ _Avoid_: Contact, buddy, connection
 An invitation from one user to another to become friends; it is pending until the other person accepts or declines it. Either person may send a new request after a decline or a removal.
 _Avoid_: Invite, add request
 
+**Group**:
+A named, collapsible section of the Buddy List that one user keeps their friends in. Groups are private to the user who made them.
+_Avoid_: Folder, category, list
+
+**Ignore List**:
+The people a user has blocked from messaging, Nudging, or requesting them.
+_Avoid_: Block list, blacklist
+
 **Buddy List**:
 The home window listing your friends with their presence, status, and now playing.
 _Avoid_: Contact list, friend list (for the window), home screen
@@ -19,7 +27,7 @@ _Avoid_: Contact list, friend list (for the window), home screen
 ## Presence
 
 **Presence**:
-A friend's live availability: Available, Away, Busy, or Offline. It is never history; only the current state exists.
+A friend's live availability: Available, Away, Busy, or Offline. It is never history; only the current state exists. Invisible is how a user chooses to appear, and friends see it as Offline.
 _Avoid_: Online status, activity
 
 **Available**:
@@ -31,12 +39,24 @@ Signed in but with no activity for five minutes.
 _Avoid_: Idle, inactive
 
 **Busy**:
-A state the user chooses to say "don't expect a quick reply"; it stays until the user picks Available or signs off, even while they keep working.
+A state the user chooses to say "don't expect a quick reply"; it stays until the user picks Available or signs off, even while they keep working. Picking a Preset Status or a Busy custom status also sets it.
 _Avoid_: Do not disturb, DND
 
 **Offline**:
 Not signed in or not reachable.
-_Avoid_: Invisible, signed out
+_Avoid_: Signed out
+
+**Invisible**:
+A way of signing in or staying signed in where every friend sees you as Offline while you still see them. Only the user sees their own Invisible state.
+_Avoid_: Stealth, hidden
+
+**Status Icon**:
+The small picture for an Availability, used identically in the Buddy List, chat windows, and the tray.
+_Avoid_: Presence dot, smiley, emoticon (an Emoticon is a different thing, inside messages)
+
+**Preset Status**:
+One of the ready-made Status lines (Be Right Back, Not at My Desk, Not in Office, On the Phone, On Vacation, Out to Lunch, Stepped Out); each sets the user Busy.
+_Avoid_: Away message, canned status
 
 ## Profile
 
@@ -87,6 +107,10 @@ _Avoid_: Emoji, smiley, sticker
 **Shortcode**:
 The characters that stand for an emoticon, such as `:)`.
 _Avoid_: Emoticon code, text face
+
+**Toast**:
+A small notice at the bottom-right of the screen, such as "Ann is now online".
+_Avoid_: Popup, notification
 
 **Skin**:
 The overall YM-era look: purple glossy title bars, light-gray windows, classic smiley status icons.

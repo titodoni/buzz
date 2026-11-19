@@ -176,8 +176,9 @@ In: email sign-in, profiles, friends, live presence, custom status and
 now playing, 1:1 real-time chat, Nudge, classic emoticons and YM-era
 skin, offline messages, typing indicator.
 
-Out: voice/video calls, group chat, file sharing beyond avatars,
-games, invisible mode, tabbed chats, a mobile app, and any end-to-end
-encryption claim.
+Out: sending or receiving files and photos, voice/video calls, SMS,
+phone calls, games and plug-ins, advertising, group chat and chat rooms,
+tabbed chats, a mobile app, and any end-to-end encryption claim. Buzz is
+chat and Buzz! only.
 
 All art and sound are original; Buzz is not affiliated with Yahoo.

@@ -517,13 +517,158 @@ Rules that apply at every size (Req 11.1, 11.5, 11.6):
 - Window controls and the Send, Buzz!, and Emoticons buttons keep their
   size and stay clickable.
 
+### Status model and icons (Requirements 12, 13)
+
+The reference Yahoo Messenger windows (the `screenshoot/` folder, kept out of
+version control) show one status control in the Buddy List header, the same
+small face used for a person everywhere, and a login window with three
+checkboxes. Buzz follows that shape with its own artwork.
+
+| Availability | Icon | How it is reached | What friends see |
+| --- | --- | --- | --- |
+| Available | yellow smiley | chosen, or at sign-in | Available |
+| Busy | orange busy sign | chosen, a Preset_Status, or a custom Status set to Busy | Busy |
+| Away | clock | automatic after 5 minutes without activity | Away |
+| Invisible | smiley with a ghost marker (own view only) | chosen, or "Sign in as invisible" | Offline |
+| Offline | faded smiley | signed out, or not reachable | Offline |
+
+- **Presets set Busy.** Be Right Back, Not at My Desk, Not in Office, On the
+  Phone, On Vacation, Out to Lunch, and Stepped Out each write their text to
+  the Status and switch the Availability to Busy (Req 12.3). Yahoo's own help
+  says the status text should match the Availability you pick (Busy or
+  Available), which is why the text and the icon move together. Choosing
+  Available clears a Status that came from a preset (Req 12.5).
+- **Custom status** has a Busy/Available choice beside the text (Req 12.4).
+- **Where the state lives.** Available, Busy, and Away stay in the tracked
+  payload of `presence:global` as today. **Invisible is "do not track"**: the
+  Buddy List calls `untrack()` and keeps listening, so friends see no entry.
+  Only the user's own `myState` can be `invisible`; the pure state machine
+  gains `setInvisible`, and like Busy it is not ended by activity or idle.
+- **One icon component.** `PresenceDot` is the only place that maps an
+  Availability to a picture; the Buddy List header, friend rows, chat window
+  header, chat window title bar (`TitleBar` `icon` prop), and the tray icon all
+  use it, so they cannot disagree (Req 12.9).
+- **Defects found by the two-user test** (fixed): presence never announced
+  itself at start-up, so friends looked Offline until someone changed status.
+
+### Sign-in window (Requirement 13)
+
+Fields: email, password. Checkboxes: "Remember my ID" (stores the email only),
+"Sign in automatically", "Sign in as invisible to everyone". Links: "Get a new
+account" (sign-up) and "Forgot your password?". The Messenger and Help menus sit
+under the title bar.
+
+- **Sign in automatically** unchecked: the session is removed when the last
+  window closes, via `supabase.auth.signOut({ scope: "local" })` from the Rust
+  `ExitRequested`/last-window-closed hook calling into the page, or on the next
+  start if the app was killed (the stored `autoSignIn=false` flag makes the
+  sign-in page sign out first).
+- **Forgot password** is code-based because a desktop app has no web address for
+  an emailed link to open: `resetPasswordForEmail(email)`, then
+  `verifyOtp({ email, token, type: "recovery" })`, then `updateUser({ password })`.
+  This needs the Supabase "Reset password" email template to contain
+  `{{ .Token }}`; that is a dashboard setting and is recorded in
+  `supabase/README.md`.
+- **About Buzz** is a small dialog: version, copyright, "Buzz is not affiliated
+  with Yahoo".
+
+### Buddy List structure (Requirement 14)
+
+Top to bottom: title bar (own Status_Icon), menu bar (Messenger, Contacts,
+Actions, Help), header (Display_Name, an Availability dropdown, Status,
+Now_Playing), toolbar (Add a Friend button, search box), then Groups. A group
+header reads "Family (2/4)": online over total, with a collapse triangle.
+
+New tables (migration `20250101000800`), all with RLS `owner_id = auth.uid()`:
+
+| Table | Columns | Notes |
+| --- | --- | --- |
+| `contact_groups` | `id`, `owner_id`, `name` (1 to 40 chars), `position`, `created_at` | unique `(owner_id, lower(name))` |
+| `contact_group_members` | `owner_id`, `friend_id`, `group_id` | unique `(owner_id, friend_id)`; no row means the default "Friends" group; deleting a group deletes its rows, which moves its friends back |
+| `ignored_users` | `owner_id`, `ignored_id`, `created_at` | primary key `(owner_id, ignored_id)` |
+
+Collapsed state and "Show Offline Contacts" are per-device preferences
+(localStorage), not database rows.
+
+### Ignore list (Requirement 15)
+
+Enforced by Postgres where the database can enforce it: the `messages` insert
+policy, the friend-request insert policy, and the inbox/chat Realtime
+authorization policies each add "the receiver has not ignored the sender". An
+ignored person gets a generic "couldn't send" and never a reason (15.7).
+**Hiding presence cannot be enforced**: `presence:global` is a public channel
+(docs/adr/0003), so the ignored person's app is simply told to show the user as
+Offline, and a modified client could still see them. See `docs/adr/0009`.
+
+### Incoming messages and alerts (Requirement 16)
+
+- The Buddy List already receives every incoming `messages` INSERT
+  (`useOfflineDelivery`). When one arrives for a friend with no open chat
+  window, it calls `open_chat_window(friend_id, nudge: false, focus: false)`;
+  Rust builds the window with `.focused(false)` and calls
+  `request_user_attention` so the taskbar entry flashes. An open but unfocused
+  chat window flashes itself on arrival; focus clears it.
+- **Toast** is a small frameless always-on-top Tauri window (`toast`) placed at
+  the bottom-right of the primary monitor's work area, closed after 5 s, styled
+  like the other windows. It uses no plugin and no new dependency. Clicking it
+  opens the chat.
+- **Tray icon** uses Tauri's built-in tray (`tray-icon` and `image-png` features
+  of the `tauri` crate; no new crate). Menu: Open Buzz, status items, Exit. The
+  icon is one of four original PNGs generated by the same script as the other
+  art, swapped when `myState` changes. Closing the Buddy List window is
+  intercepted (`CloseRequested`) and hides it; Exit untracks presence first.
+- **Sounds** are short original Web Audio cues (message, friend online, sign
+  in), like the Buzz sound.
+
+### Chat window menus, formatting, history (Requirement 17)
+
+| Menu | Items |
+| --- | --- |
+| Conversation | Copy Conversation, Close |
+| Edit | Copy, Select All, Clear Window |
+| View | Show Timestamps, Show Earlier Messages (F3), Show Friends' Fonts |
+| Actions | Buzz! (Ctrl+G), View Profile, Ignore |
+| Help | About Buzz |
+
+- **Formatting** is stored on the message as `messages.format jsonb`:
+  `{ font, size, color, bold, italic, underline }`. A `CHECK` allows only the
+  four fonts Tahoma, Verdana, Arial, and Times New Roman, sizes 10 to 24, and a
+  `#rrggbb` color. The renderer builds inline style from these validated values
+  only, never from raw text, and a pure `parseFormat()` returns the default
+  format for anything invalid (Req 17.4).
+- **Earlier messages** (F3) page backwards by `created_at` with `limit 50`; the
+  conversation reducer already merges by id.
+- **Offline line**: "<name> is offline. Your messages will be waiting when they
+  sign in." appears while the friend's presence is Offline.
+- **Save to file is not offered** (it needs a file-dialog plugin); Copy
+  Conversation covers the need without a new dependency.
+
+### Buzz! options (Requirement 18)
+
+Beyond the Nudge flow above: preferences `buzz.allow`, `buzz.sound`,
+`buzz.shake`; the receiver drops a second Buzz from the same friend inside 10 s,
+so the sender-side cooldown cannot be bypassed by a modified client; a Buzz to
+a minimized or hidden chat window raises it first (`unminimize`, `show`,
+`set_focus`) and then shakes; Actions then Buzz! calls the same send path as the
+button and Ctrl+G.
+
+### Preferences (Requirement 19)
+
+A Preferences window (its own Tauri window, `/preferences`) with five
+categories. Settings live in `localStorage` under `buzz:prefs` as one JSON
+object, read through a pure `parsePrefs(raw)` that falls back to the defaults
+for anything missing or damaged (Req 19.7). Changes are broadcast to the other
+windows through the `storage` event, as activity already is (docs/adr/0008).
+The Ignore List category reads and writes `ignored_users`.
+
 ### Out-of-scope YM features (deliberately omitted)
 
-To stay within the locked scope, the following classic-YM features are NOT
-implemented (and not shown as disabled controls): voice/video calls, file
-sharing, group chat / chat rooms, games, Doodle, plug-ins, Invisible /
-stealth settings, and tabbed IMs. Buzz copies the YM **look and the
-1:1 / presence / nudge / emoticon experience**, not those features.
+Buzz copies the YM look and its **chat, presence, and Buzz!** experience. These
+parts of the reference windows are NOT built, and are not shown as disabled
+controls: sending or receiving files, photo sharing, voice and video calls, SMS,
+phone-in and phone-out, mail and voicemail icons, Activities and games, plug-ins,
+advertising and promotions, the web search box, group chat and chat rooms, and
+tabbed chats. The IMVironment backdrop is optional and low priority.
 
 ## Data Models
 
