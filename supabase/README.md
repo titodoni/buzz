@@ -53,3 +53,16 @@ adds the RLS policies on `realtime.messages` that decide who may join and
 broadcast. Private channels need no extra dashboard setting; leaving
 "Allow public access" on keeps `presence:global` working (see
 `docs/adr/0003` for its known gap).
+
+## Checking RLS
+
+`npm run test:rls` runs `supabase/tests/rls-check.mjs` against the database
+in `SUPABASE_DB_URL`. It creates three throwaway users inside a transaction,
+exercises the policies and triggers as each of them, prints PASS/FAIL per
+check, and rolls everything back. `supabase/tests/rls.sql` holds the same
+scenarios as commented SQL for running by hand.
+
+The Realtime Authorization policies (`realtime.messages`) are not covered by
+this script, because they only apply to live Realtime connections. Check
+them with two signed-in app instances: a non-friend must fail to join
+`chat:<pair>` or send to `inbox:<id>`.

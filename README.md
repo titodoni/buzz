@@ -19,11 +19,18 @@ Buzz does not use end-to-end encryption and does not claim to.
 | Nudge ("Buzz!"): sound, window shake, cooldown | Built |
 | Offline messages and unread badges | Built |
 | Live profile updates in the Buddy List (task 18.1) | Not yet |
+| Supabase schema, RLS, Realtime policies | Applied and checked |
 | Installer config (task 17.1) and two-user integration tests | Not yet |
 
-Nothing has run against a live Supabase project yet. The database
-migrations and RLS policies are written but unverified; see
-[Set up Supabase](#set-up-supabase).
+The eight migrations are applied to a real Supabase project, and
+`npm run test:rls` (15 two-user checks: signup trigger, friends vs
+strangers, message and receipt rules, search, unfriend, re-request)
+passes against it. The Realtime parts (presence, chat delivery, Nudge,
+private-channel policies) and the desktop app have **not** been run
+end to end yet; that needs two signed-in app instances.
+
+Known gap: `presence:global` is a public channel, so a malicious signed-in
+user could fake someone else's presence ([ADR 0003](docs/adr/0003-chat-windows-read-presence-without-tracking.md)).
 
 ## Stack
 
@@ -64,12 +71,20 @@ Why it's built this way: see [`docs/adr/`](docs/adr/).
 
 3. Enable the `pg_cron` extension if `db push` reports it missing
    (it purges undelivered messages older than 30 days).
-4. Verify RLS with two test users using the checks in
-   [`supabase/tests/rls.sql`](supabase/tests/rls.sql).
-5. Regenerate the hand-written types once linked:
+4. Verify RLS with the two-user checks. They run in one transaction and
+   roll back, so they leave no data behind. Use the database connection
+   string from Project Settings → Database; never commit it:
 
    ```sh
-   supabase gen types typescript --linked > lib/supabase/database.types.ts
+   SUPABASE_DB_URL='postgresql://postgres:<password>@db.<ref>.supabase.co:5432/postgres' \
+     npm run test:rls
+   ```
+
+5. Regenerate the types after any schema change:
+
+   ```sh
+   supabase gen types typescript --db-url "$SUPABASE_DB_URL" --schema public \
+     > lib/supabase/database.types.ts
    ```
 
 More detail: [`supabase/README.md`](supabase/README.md).
