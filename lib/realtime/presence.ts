@@ -2,8 +2,9 @@
 
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { nextPresenceState, type PresenceEvent, type PresenceState } from "@/lib/presence/state"
+import { nextPresenceState, type Availability, type PresenceEvent, type PresenceState } from "@/lib/presence/state"
 import { onRemoteActivity } from "@/lib/realtime/activity"
+import { planPresenceSend } from "@/lib/realtime/presenceBudget"
 import { mergePresence, type PresencePayload } from "@/lib/realtime/presenceMerge"
 import { closeChannel, openChannel } from "@/lib/realtime/channel"
 
@@ -25,8 +26,9 @@ interface Connection {
 }
 
 /**
- * Opens the shared presence channel and keeps it open: on CHANNEL_ERROR or
- * TIMED_OUT it removes the channel and tries again after 1s, 2s, 5s, then 10s.
+ * Opens the shared presence channel and keeps it open: on CHANNEL_ERROR,
+ * TIMED_OUT, or a close by the server it removes the channel and tries again
+ * after 1s, 2s, 5s, then 10s.
  * `key` is the presence key (the user id) for the tracker; read-only
  * listeners pass nothing and never track.
  */
@@ -59,7 +61,9 @@ function openPresence(opts: {
         if (status === "SUBSCRIBED") {
           attempt = 0
           opts.onSubscribed?.(ch)
-        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          // CLOSED here means the server ended it (we only remove channels after
+          // setting `closed`), for example when its presence rate limit is hit.
           channel = null
           void closeChannel(PRESENCE_CHANNEL, ch)
           const delay = RECONNECT_BACKOFF_MS[Math.min(attempt, RECONNECT_BACKOFF_MS.length - 1)]
@@ -85,9 +89,11 @@ function openPresence(opts: {
 }
 
 export interface PresenceTracker {
-  myState: PresenceState
+  /** What the user chose for themselves; friends never see "invisible" (they see offline). */
+  myState: Availability
   setBusy(): void
   setAvailable(): void
+  setInvisible(): void
   friendsPresence: Record<string, PresenceState>
 }
 
@@ -95,10 +101,15 @@ export interface PresenceTracker {
  * Buddy List window ONLY. Tracks my presence and reports my friends' presence.
  * Chat windows must use `useFriendPresence` so one user keeps one presence entry.
  */
-export function usePresenceTracker(me: string, friendIds: string[]): PresenceTracker {
-  const [myState, setMyState] = useState<PresenceState>("online")
+export function usePresenceTracker(
+  me: string,
+  friendIds: string[],
+  options: { startInvisible?: boolean } = {},
+): PresenceTracker {
+  const initial: Availability = options.startInvisible ? "invisible" : "online"
+  const [myState, setMyState] = useState<Availability>(initial)
   const [payload, setPayload] = useState<PresencePayload>({})
-  const stateRef = useRef<PresenceState>("online")
+  const stateRef = useRef<Availability>(initial)
   const lastActivityRef = useRef<number>(0)
   const lastEmitRef = useRef<number>(0)
   const trackRef = useRef<(() => void) | null>(null)
@@ -114,18 +125,51 @@ export function usePresenceTracker(me: string, friendIds: string[]): PresenceTra
 
   useEffect(() => {
     let conn: Connection | null = null
+    // Supabase closes the channel after 5 presence updates in 30 s, so sends are
+    // budgeted (lib/realtime/presenceBudget.ts) and coalesced: while over budget
+    // we wait, then send only the latest state. The send history outlives
+    // reconnects, because the limit counts this client.
+    let sentAt: number[] = []
+    let lastSent: Availability | null = null
+    let retry: ReturnType<typeof setTimeout> | null = null
     const track = () => {
       const ch = conn?.current()
       if (!ch) return
-      const body: TrackedPayload = { user_id: me, presence_state: stateRef.current }
+      const want = stateRef.current
+      if (want === lastSent) return
+      const plan = planPresenceSend(sentAt, Date.now())
+      sentAt = plan.recent
+      if (!plan.sendNow) {
+        if (!retry) {
+          retry = setTimeout(() => {
+            retry = null
+            track()
+          }, plan.waitMs)
+        }
+        return
+      }
+      sentAt.push(Date.now())
+      lastSent = want
+      // Invisible means "no presence entry": friends then see Offline (Req 12.7),
+      // while this window keeps listening to its friends.
+      if (want === "invisible") {
+        void ch.untrack()
+        return
+      }
+      const body: TrackedPayload = { user_id: me, presence_state: want }
       void ch.track(body)
+    }
+    // A fresh channel has no entry for us yet, so the next track always goes out.
+    const onSubscribed = () => {
+      lastSent = null
+      track()
     }
     trackRef.current = track
     lastActivityRef.current = Date.now()
     conn = openPresence({
       key: me,
       onPayload: setPayload,
-      onSubscribed: () => track(),
+      onSubscribed,
     })
 
     const onActivity = () => {
@@ -155,6 +199,7 @@ export function usePresenceTracker(me: string, friendIds: string[]): PresenceTra
       window.removeEventListener("beforeunload", onUnload)
       for (const name of ACTIVITY_EVENTS) window.removeEventListener(name, onActivity)
       clearInterval(idle)
+      if (retry) clearTimeout(retry)
       stopRemote()
       trackRef.current = null
       void conn?.close()
@@ -162,6 +207,7 @@ export function usePresenceTracker(me: string, friendIds: string[]): PresenceTra
   }, [me, dispatch])
 
   const setBusy = useCallback(() => dispatch({ type: "setBusy" }), [dispatch])
+  const setInvisible = useCallback(() => dispatch({ type: "setInvisible" }), [dispatch])
   const setAvailable = useCallback(() => {
     lastActivityRef.current = Date.now()
     dispatch({ type: "setOnline" })
@@ -173,7 +219,7 @@ export function usePresenceTracker(me: string, friendIds: string[]): PresenceTra
     [payload, idsKey],
   )
 
-  return { myState, setBusy, setAvailable, friendsPresence }
+  return { myState, setBusy, setAvailable, setInvisible, friendsPresence }
 }
 
 /**

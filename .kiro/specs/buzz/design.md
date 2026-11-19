@@ -548,8 +548,18 @@ checkboxes. Buzz follows that shape with its own artwork.
   Availability to a picture; the Buddy List header, friend rows, chat window
   header, chat window title bar (`TitleBar` `icon` prop), and the tray icon all
   use it, so they cannot disagree (Req 12.9).
+- **Presence send budget.** Supabase closes a client's channel after 5
+  presence updates (`track` or `untrack`) in 30 seconds
+  ([Supabase KB](https://supabase.com/kb/troubleshooting/realtime-client-presence-rate-limit-reached)).
+  The tracker sends at most 4 per 30 s (`lib/realtime/presenceBudget.ts`) and
+  coalesces: while over budget it waits and then sends only the newest state.
+  So friends always end on the latest choice, but a burst of more than four
+  changes can reach them up to 30 s late. The channel also reconnects when the
+  server closes it.
 - **Defects found by the two-user test** (fixed): presence never announced
-  itself at start-up, so friends looked Offline until someone changed status.
+  itself at start-up, so friends looked Offline until someone changed status;
+  and a fast run of status changes tripped the rate limit above, after which
+  the channel stayed closed and no later change reached friends.
 
 ### Sign-in window (Requirement 13)
 

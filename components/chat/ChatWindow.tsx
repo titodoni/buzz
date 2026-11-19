@@ -171,7 +171,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   }, []);
 
   return (
-    <WindowFrame title={`${friendName} - Instant Message`}>
+    <WindowFrame title={`${friendName} - Instant Message`} icon={<PresenceDot state={presence} size={14} />}>
       <ChatLayout
         rootRef={rootRef}
         header={

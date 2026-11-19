@@ -1,22 +1,26 @@
 "use client";
 
-import type { PresenceState } from "../lib/presence/state";
+import type { Availability } from "../lib/presence/state";
 import { skinTokens } from "../lib/skin/tokens";
 
-const LABELS: Record<PresenceState, string> = {
+const LABELS: Record<Availability, string> = {
   online: "Online",
   away: "Away",
   busy: "Busy",
   offline: "Offline",
+  invisible: "Invisible: friends see you as offline",
 };
 
-export function presenceLabel(state: PresenceState): string {
+export function presenceLabel(state: Availability): string {
   return LABELS[state];
 }
 
 export interface PresenceDotProps {
-  state: PresenceState;
+  /** Friends only ever have the first four; Invisible is the user's own choice. */
+  state: Availability;
   size?: number;
+  /** Hide from screen readers when a text label sits right next to the icon. */
+  decorative?: boolean;
   title?: string;
 }
 
@@ -40,12 +44,20 @@ function Smiley({ fill, opacity = 1 }: { fill: string; opacity?: number }) {
   );
 }
 
-function Glyph({ state }: { state: PresenceState }) {
+function Glyph({ state }: { state: Availability }) {
   switch (state) {
     case "online":
       return <Smiley fill={skinTokens.smiley} />;
     case "offline":
       return <Smiley fill={skinTokens.offline} opacity={0.55} />;
+    case "invisible":
+      // A faded smiley inside a dashed ring: "there, but not shown" (original art).
+      return (
+        <g>
+          <Smiley fill={skinTokens.smiley} opacity={0.5} />
+          <circle cx="8" cy="8" r="7.4" fill="none" stroke={INK} strokeWidth="1" strokeDasharray="2 1.6" />
+        </g>
+      );
     case "away":
       return (
         <g>
@@ -71,18 +83,19 @@ function Glyph({ state }: { state: PresenceState }) {
   }
 }
 
-export function PresenceDot({ state, size = 16, title }: PresenceDotProps) {
+export function PresenceDot({ state, size = 16, title, decorative = false }: PresenceDotProps) {
   const label = presenceLabel(state);
   return (
     <svg
-      role="img"
-      aria-label={label}
+      role={decorative ? undefined : "img"}
+      aria-label={decorative ? undefined : label}
+      aria-hidden={decorative ? true : undefined}
       width={size}
       height={size}
       viewBox="0 0 16 16"
       style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}
     >
-      <title>{title ?? label}</title>
+      {decorative ? null : <title>{title ?? label}</title>}
       <Glyph state={state} />
     </svg>
   );

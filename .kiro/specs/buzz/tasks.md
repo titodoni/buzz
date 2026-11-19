@@ -257,21 +257,21 @@ running desktop app instances (or two app windows), per `tech.md`.
   - [x] 20.4 Check every window at its minimum, default, and maximized sizes with screenshots (no horizontal scrollbar, nothing clipped) and record the sizes checked in `docs/responsive-checks.md`
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
 
-- [ ] 21. Availability model and status icons
-  - [ ] 21.1 Extend the pure presence state machine with the user's own Invisible state: add `invisible` for `myState`, a `setInvisible` event that, like Busy, is not ended by `activity` or `idleTimeout`, and keep friends' states limited to online, away, busy, and offline
+- [x] 21. Availability model and status icons
+  - [x] 21.1 Extend the pure presence state machine with the user's own Invisible state: add `invisible` for `myState`, a `setInvisible` event that, like Busy, is not ended by `activity` or `idleTimeout`, and keep friends' states limited to online, away, busy, and offline
     - _Requirements: 12.1, 12.7_
-  - [ ]* 21.2 Write tests for Invisible: persists through activity and idle events, ends only on `setOnline` or `setBusy`, never appears in a friend's merged presence
+  - [x]* 21.2 Write tests for Invisible: persists through activity and idle events, ends only on `setOnline` or `setBusy`, never appears in a friend's merged presence
     - _Requirements: 12.1, 12.7_
-  - [ ] 21.3 Implement `lib/status/presets.ts`: the seven Preset_Statuses, `applyPreset(name)` returning the Status text with Availability Busy, `chooseAvailable(currentStatus)` clearing a status that came from a preset, and `customStatus(text, availability)`
+  - [x] 21.3 Implement `lib/status/presets.ts`: the seven Preset_Statuses, `applyPreset(name)` returning the Status text with Availability Busy, `chooseAvailable(currentStatus)` clearing a status that came from a preset, and `customStatus(text, availability)`
     - No I/O; pure functions only
     - _Requirements: 12.3, 12.4, 12.5_
-  - [ ]* 21.4 Write tests: every preset yields Busy and its exact text, Available clears only preset text and keeps a custom text, and a custom status keeps the chosen Availability
+  - [x]* 21.4 Write tests: every preset yields Busy and its exact text, Available clears only preset text and keeps a custom text, and a custom status keeps the chosen Availability
     - _Requirements: 12.3, 12.4, 12.5_
-  - [ ] 21.5 Rework `StatusSelector` into the header Availability dropdown: Available, Busy, Invisible, the seven presets, and Custom Status with a Busy or Available choice; saving the text and changing the Availability happen together
+  - [x] 21.5 Rework `StatusSelector` into the header Availability dropdown: Available, Busy, Invisible, the seven presets, and Custom Status with a Busy or Available choice; saving the text and changing the Availability happen together
     - _Requirements: 12.2, 12.3, 12.4, 12.5, 14.12_
-  - [ ] 21.6 Make `usePresenceTracker` honour Invisible: call `untrack()` while Invisible but keep listening, re-track on leaving it, and start Invisible when "Sign in as invisible" was chosen
+  - [x] 21.6 Make `usePresenceTracker` honour Invisible: call `untrack()` while Invisible but keep listening, re-track on leaving it, and start Invisible when "Sign in as invisible" was chosen
     - _Requirements: 12.6, 12.7_
-  - [ ] 21.7 Use `PresenceDot` for every Availability picture: Buddy List header and title bar, friend rows, chat window header and title bar (`TitleBar` `icon`), with a ghost marker on the user's own Invisible icon
+  - [x] 21.7 Use `PresenceDot` for every Availability picture: Buddy List header and title bar, friend rows, chat window header and title bar (`TitleBar` `icon`), with a ghost marker on the user's own Invisible icon
     - _Requirements: 12.2, 12.8, 12.9, 17.10_
 
 - [ ] 22. Sign-in options

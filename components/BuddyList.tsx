@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { useSignOut } from "@/components/AuthGuard"
 import { WindowFrame } from "@/components/WindowFrame"
+import { PresenceDot } from "@/components/PresenceDot"
 import { StatusSelector } from "@/components/StatusSelector"
 import { FriendList } from "@/components/friends/FriendList"
 import { FriendSearch } from "@/components/friends/FriendSearch"
@@ -33,7 +34,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
   const [note, setNote] = useState<string | null>(null)
   const [statusMenu, setStatusMenu] = useState(false)
   const friendIds = useMemo(() => friends.map((f) => f.id), [friends])
-  const { myState, setAvailable, setBusy, friendsPresence } = usePresenceTracker(me, friendIds)
+  const { myState, setAvailable, setBusy, setInvisible, friendsPresence } = usePresenceTracker(me, friendIds)
   const { unreadBySender } = useOfflineDelivery(me)
   // A nudge from an accepted friend pops their chat window open and shakes it.
   useNudgeInbox(me, (sender) => {
@@ -68,7 +69,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
   ]
 
   return (
-    <WindowFrame title="Buzz" menuBar={<MenuBar menus={menus} />}>
+    <WindowFrame title="Buzz" icon={<PresenceDot state={myState} size={14} />} menuBar={<MenuBar menus={menus} />}>
       <header className="flex items-start gap-2 border-b px-2 py-2">
         <StatusSelector
           me={me}
@@ -76,6 +77,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
           profile={mine}
           onAvailable={setAvailable}
           onBusy={setBusy}
+          onInvisible={setInvisible}
           onStatusSaved={(status) => setMine((m) => (m ? { ...m, statusMessage: status } : m))}
           menuOpen={statusMenu}
           onMenuOpenChange={setStatusMenu}

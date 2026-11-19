@@ -3,6 +3,7 @@ import fc from "fast-check";
 import {
   IDLE_TIMEOUT_MS,
   nextPresenceState,
+  type Availability,
   type PresenceEvent,
   type PresenceState,
 } from "../state";
@@ -117,7 +118,7 @@ describe("Property 9: Presence state machine", () => {
     );
     fc.assert(
       fc.property(fc.array(persisting, { maxLength: 30 }), (events) => {
-        let s: PresenceState = "busy";
+        let s: Availability = "busy";
         for (const e of events) s = nextPresenceState(s, e);
         expect(s).toBe("busy");
       }),
@@ -131,11 +132,11 @@ describe("Property 9: Presence state machine", () => {
         stateArb,
         fc.array(eventArb, { maxLength: 50 }),
         (init, events) => {
-          let s = init;
+          let s: Availability = init;
           for (const e of events) {
             const prev = s;
             s = nextPresenceState(prev, e);
-            let expected: PresenceState;
+            let expected: Availability;
             switch (e.type) {
               case "activity":
                 expected = prev === "busy" ? "busy" : "online";
@@ -145,6 +146,9 @@ describe("Property 9: Presence state machine", () => {
                 break;
               case "setBusy":
                 expected = "busy";
+                break;
+              case "setInvisible":
+                expected = "invisible";
                 break;
               case "disconnect":
               case "heartbeatMissed":
