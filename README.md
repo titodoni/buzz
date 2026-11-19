@@ -57,6 +57,8 @@ Why it's built this way: see [`docs/adr/`](docs/adr/).
   For Windows and macOS see the
   [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
 - A Supabase project and the [Supabase CLI](https://supabase.com/docs/guides/cli)
+- On Linux, a compositing window manager (the default on GNOME, KDE, and
+  most desktops): Buzz's windows are transparent so their corners are round.
 
 ## Set up Supabase
 

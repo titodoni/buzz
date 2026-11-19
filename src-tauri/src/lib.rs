@@ -62,6 +62,7 @@ fn open_chat_window(app: AppHandle, friend_id: String, nudge: Option<bool>) -> R
         .min_inner_size(320.0, 280.0)
         .resizable(true)
         .decorations(false)
+        .transparent(true)
         .build()
         .map_err(|e| e.to_string())?;
 
