@@ -53,6 +53,7 @@ export function FriendList({
     if (!menuOpen) return
     menuRef.current?.querySelector<HTMLElement>("[role=menuitem]")?.focus()
     const onMouse = (e: MouseEvent) => {
+      // event targets are typed EventTarget; a mousedown target is always a Node
       if (!menuRef.current?.contains(e.target as Node)) setOverlay(null)
     }
     const onKey = (e: KeyboardEvent) => {

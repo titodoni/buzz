@@ -121,6 +121,7 @@ Avatar images, a native mobile app, and any end-to-end encryption claim.
 3. WHILE fewer than 10 seconds have passed since the last Nudge in that chat, THE Nudge_Service SHALL disable the Nudge button for that chat until the cooldown ends.
 4. IF the friend is offline, THEN THE Nudge_Service SHALL disable the Nudge button and show a message indicating the friend is offline.
 5. IF a Nudge cannot be delivered due to a connection failure, THEN THE Nudge_Service SHALL show a message indicating the nudge was not delivered and leave the Nudge button enabled without starting the cooldown.
+6. WHEN a Nudge is received while the friend's chat window is closed and the recipient is signed in, THE Nudge_Service SHALL open that chat window and shake it with the Nudge sound.
 
 ### Requirement 7: Status and Now_Playing
 

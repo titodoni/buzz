@@ -9,6 +9,7 @@ function getAudioContext(): AudioContext | null {
   if (audioCtx) return audioCtx;
   const Ctor: typeof AudioContext | undefined =
     window.AudioContext ??
+    // Cast: older WebKit exposes only the prefixed constructor, absent from lib.dom types.
     (window as unknown as { webkitAudioContext?: typeof AudioContext })
       .webkitAudioContext;
   if (!Ctor) return null;

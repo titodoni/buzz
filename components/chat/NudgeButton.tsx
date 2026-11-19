@@ -2,26 +2,41 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  NUDGE_COOLDOWN_MS,
-  isInCooldown,
+  cooldownRemainingMs,
   isNudgeEnabled,
   onNudgeResult,
+  readStoredCooldown,
   type NudgeCooldown,
 } from "@/lib/nudge/cooldown";
 import type { PresenceState } from "@/lib/presence/state";
 
+/** localStorage key holding when I last nudged this friend (ms timestamp string). */
+function cooldownKey(friendId: string): string {
+  return `buzz:nudgeCooldown:${friendId}`;
+}
+
 export function NudgeButton(props: {
+  friendId: string;
   friendPresence: PresenceState;
   onBuzz: () => Promise<boolean>;
 }) {
-  const { friendPresence, onBuzz } = props;
-  const [cooldown, setCooldown] = useState<NudgeCooldown>({ lastNudgeAt: null });
+  const { friendId, friendPresence, onBuzz } = props;
+  // Restored from storage so reopening the chat window keeps the cooldown (Req 6.3).
+  // A chat window has one friend for its whole life, so reading once is enough.
+  const [cooldown, setCooldown] = useState<NudgeCooldown>(() => {
+    try {
+      return readStoredCooldown(localStorage.getItem(cooldownKey(friendId)), Date.now());
+    } catch {
+      return { lastNudgeAt: null }; // storage unavailable
+    }
+  });
   const [now, setNow] = useState(() => Date.now());
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
   const sendingRef = useRef(false);
 
-  const inCooldown = isInCooldown(cooldown, now);
+  const remainingMs = cooldownRemainingMs(cooldown, now);
+  const inCooldown = remainingMs > 0;
   const offline = friendPresence === "offline";
   const enabled = isNudgeEnabled(friendPresence, cooldown, now) && !sending;
 
@@ -32,9 +47,9 @@ export function NudgeButton(props: {
     return () => window.clearInterval(id);
   }, [inCooldown]);
 
-  const stateRef = useRef({ onBuzz, friendPresence, cooldown });
+  const stateRef = useRef({ onBuzz, friendPresence, cooldown, friendId });
   useEffect(() => {
-    stateRef.current = { onBuzz, friendPresence, cooldown };
+    stateRef.current = { onBuzz, friendPresence, cooldown, friendId };
   });
 
   const buzz = useCallback(async () => {
@@ -54,6 +69,13 @@ export function NudgeButton(props: {
     }
     const after = Date.now();
     setCooldown((c) => onNudgeResult(c, after, delivered));
+    if (delivered) {
+      try {
+        localStorage.setItem(cooldownKey(cur.friendId), String(after));
+      } catch {
+        // Best effort: the in-memory cooldown still applies.
+      }
+    }
     setNow(after);
     setFailed(!delivered);
     sendingRef.current = false;
@@ -71,13 +93,7 @@ export function NudgeButton(props: {
     return () => window.removeEventListener("keydown", onKey);
   }, [buzz]);
 
-  const remaining =
-    inCooldown && cooldown.lastNudgeAt != null
-      ? Math.max(
-          1,
-          Math.ceil((NUDGE_COOLDOWN_MS - (now - cooldown.lastNudgeAt)) / 1000),
-        )
-      : 0;
+  const remaining = Math.ceil(remainingMs / 1000);
 
   let status = "";
   if (offline) status = "Your friend is offline.";

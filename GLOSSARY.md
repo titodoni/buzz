@@ -71,7 +71,7 @@ A message sent while the friend was offline; it waits and reaches them when they
 _Avoid_: Queued message, pending message
 
 **Nudge**:
-A playful attention-getter sent to a friend's chat window: the window shakes and makes a sound, then the sender must wait before nudging again. The on-screen label is "Buzz!".
+A playful attention-getter sent to a friend: their chat window pops open if it was closed, shakes, and makes a sound, then the sender must wait before nudging again. The on-screen label is "Buzz!".
 _Avoid_: Buzz (in specs and code), poke, ping
 
 **Typing Indicator**:

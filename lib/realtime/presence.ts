@@ -3,6 +3,7 @@
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { nextPresenceState, type PresenceEvent, type PresenceState } from "@/lib/presence/state"
+import { onRemoteActivity } from "@/lib/realtime/activity"
 import { mergePresence, type PresencePayload } from "@/lib/realtime/presenceMerge"
 import { getSupabase } from "@/lib/supabase/browser-client"
 
@@ -11,7 +12,8 @@ export const PRESENCE_CHANNEL = "presence:global"
 /** Pause before each reconnect attempt; the last value repeats. */
 export const RECONNECT_BACKOFF_MS = [1000, 2000, 5000, 10000] as const
 const ACTIVITY_THROTTLE_MS = 5000
-const IDLE_CHECK_MS = 15000
+/** How often the idle check runs. Keeps "away" within 10 s of the 5 min limit (Req 4.2). */
+export const IDLE_CHECK_MS = 5000
 const ACTIVITY_EVENTS = ["mousemove", "keydown", "mousedown", "focus", "visibilitychange"] as const
 
 type TrackedPayload = { user_id: string; presence_state: PresenceState }
@@ -125,11 +127,18 @@ export function usePresenceTracker(me: string, friendIds: string[]): PresenceTra
 
     const onActivity = () => {
       const now = Date.now()
+      // Always record the time (cheap) so the throttle can never make "away" fire early.
+      lastActivityRef.current = Math.max(lastActivityRef.current, now)
+      // Throttle only the state transition, which may re-track.
       if (now - lastEmitRef.current < ACTIVITY_THROTTLE_MS) return
       lastEmitRef.current = now
-      lastActivityRef.current = now
       dispatch({ type: "activity", now })
     }
+    // Chatting in a chat window counts as activity (Req 4.1, 4.2).
+    const stopRemote = onRemoteActivity((at) => {
+      lastActivityRef.current = Math.max(lastActivityRef.current, at)
+      dispatch({ type: "activity", now: at })
+    })
     for (const name of ACTIVITY_EVENTS) window.addEventListener(name, onActivity)
     const idle = setInterval(() => {
       dispatch({ type: "idleTimeout", now: Date.now(), lastActivityAt: lastActivityRef.current })
@@ -143,6 +152,7 @@ export function usePresenceTracker(me: string, friendIds: string[]): PresenceTra
       window.removeEventListener("beforeunload", onUnload)
       for (const name of ACTIVITY_EVENTS) window.removeEventListener(name, onActivity)
       clearInterval(idle)
+      stopRemote()
       trackRef.current = null
       void conn?.close()
     }

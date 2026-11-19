@@ -1,19 +1,18 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { getSupabase } from "@/lib/supabase/browser-client"
 import { pairKey } from "@/lib/friends/search"
 import type { MessageRow } from "@/lib/chat/conversation"
-
-export type ChatChannelStatus = "connecting" | "connected" | "reconnecting"
+import type { TypingSignal } from "@/lib/typing/broadcast"
 
 export interface ChatChannelOptions {
   me: string
   friendId: string
   onMessage: (message: MessageRow) => void
-  /** The friend started or kept typing; `at` is the local receive time (ms). */
-  onTyping: (at: number) => void
+  /** A typing broadcast from the friend; `at` is the local receive time (ms). */
+  onTyping: (signal: TypingSignal, at: number) => void
   onBuzz: () => void
   /** Called after a reconnect so the caller can reload history. */
   onReconnect?: () => void
@@ -21,9 +20,13 @@ export interface ChatChannelOptions {
 
 export const RECONNECT_DELAYS_MS: readonly number[] = [1000, 2000, 5000, 10000]
 
-function isMessageRow(v: unknown): v is MessageRow & { receiver_id: string } {
-  if (typeof v !== "object" || v === null) return false
-  const r = v as Record<string, unknown>
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null
+}
+
+function isMessageRow(v: unknown): v is MessageRow {
+  if (!isRecord(v)) return false
+  const r = v
   return (
     typeof r.id === "string" &&
     typeof r.sender_id === "string" &&
@@ -34,9 +37,13 @@ function isMessageRow(v: unknown): v is MessageRow & { receiver_id: string } {
 }
 
 function senderOf(payload: unknown): string | null {
-  if (typeof payload !== "object" || payload === null) return null
-  const s = (payload as Record<string, unknown>).sender
-  return typeof s === "string" ? s : null
+  if (!isRecord(payload)) return null
+  return typeof payload.sender === "string" ? payload.sender : null
+}
+
+/** A missing or malformed `stopped` counts as still typing. */
+function stoppedOf(payload: unknown): boolean {
+  return isRecord(payload) && payload.stopped === true
 }
 
 /**
@@ -45,9 +52,9 @@ function senderOf(payload: unknown): string | null {
  * joined here; the Buddy List window owns it.
  */
 export function useChatChannel(options: ChatChannelOptions): {
-  sendTyping: () => void
+  /** `stopped: true` is sent once right after a message, to clear the indicator. */
+  sendTyping: (stopped: boolean) => void
   sendBuzz: () => Promise<boolean>
-  status: ChatChannelStatus
 } {
   const { me, friendId } = options
   const handlers = useRef(options)
@@ -55,7 +62,6 @@ export function useChatChannel(options: ChatChannelOptions): {
     handlers.current = options
   })
   const channelRef = useRef<RealtimeChannel | null>(null)
-  const [status, setStatus] = useState<ChatChannelStatus>("connecting")
 
   useEffect(() => {
     let active = true
@@ -70,17 +76,31 @@ export function useChatChannel(options: ChatChannelOptions): {
         config: { broadcast: { ack: true, self: false } },
       })
       channelRef.current = channel
+      // Two listeners, because a filter takes one column: messages to me, and
+      // my own sends from another instance. Only rows of this pair are kept;
+      // the conversation reducer dedupes by id.
+      const onInsert = (payload: { new: unknown }) => {
+        const row = payload.new
+        if (!isMessageRow(row)) return
+        const fromFriend = row.sender_id === friendId && row.receiver_id === me
+        const fromMe = row.sender_id === me && row.receiver_id === friendId
+        if (fromFriend || fromMe) handlers.current.onMessage(row)
+      }
       channel
         .on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "messages", filter: `receiver_id=eq.${me}` },
-          (payload) => {
-            const row: unknown = payload.new
-            if (isMessageRow(row) && row.sender_id === friendId) handlers.current.onMessage(row)
-          },
+          onInsert,
+        )
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "messages", filter: `sender_id=eq.${me}` },
+          onInsert,
         )
         .on("broadcast", { event: "typing" }, ({ payload }) => {
-          if (senderOf(payload) === friendId) handlers.current.onTyping(Date.now())
+          if (senderOf(payload) === friendId) {
+            handlers.current.onTyping({ stopped: stoppedOf(payload) }, Date.now())
+          }
         })
         .on("broadcast", { event: "nudge" }, ({ payload }) => {
           if (senderOf(payload) === friendId) handlers.current.onBuzz()
@@ -89,12 +109,10 @@ export function useChatChannel(options: ChatChannelOptions): {
           if (!active || channelRef.current !== channel) return
           if (s === "SUBSCRIBED") {
             attempt = 0
-            setStatus("connected")
             // Messages are the source of truth: catch up after a drop.
             if (hasConnected) handlers.current.onReconnect?.()
             hasConnected = true
           } else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT") {
-            setStatus("reconnecting")
             channelRef.current = null
             void supabase.removeChannel(channel)
             const delay = RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)]
@@ -115,9 +133,12 @@ export function useChatChannel(options: ChatChannelOptions): {
     }
   }, [me, friendId])
 
-  const sendTyping = useCallback(() => {
-    void channelRef.current?.send({ type: "broadcast", event: "typing", payload: { sender: me } })
-  }, [me])
+  const sendTyping = useCallback(
+    (stopped: boolean) => {
+      void channelRef.current?.send({ type: "broadcast", event: "typing", payload: { sender: me, stopped } })
+    },
+    [me],
+  )
 
   const sendBuzz = useCallback(async () => {
     const ch = channelRef.current
@@ -130,5 +151,5 @@ export function useChatChannel(options: ChatChannelOptions): {
     }
   }, [me])
 
-  return { sendTyping, sendBuzz, status }
+  return { sendTyping, sendBuzz }
 }

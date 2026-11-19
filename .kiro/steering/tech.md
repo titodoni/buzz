@@ -65,6 +65,8 @@ Follow the layout in `design.md`:
   windows never track presence (avoids duplicate presence entries); they
   may subscribe read-only to see a friend's state (docs/adr/0003).
 - The typing indicator is a broadcast event, never a database write.
+- Nudges are broadcasts on the pair's chat channel and the friend's
+  `inbox:<userId>` channel (docs/adr/0007); never stored.
 
 ## Workflow
 

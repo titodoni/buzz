@@ -13,8 +13,10 @@ export interface MessageInputHandle {
 }
 
 export interface MessageInputProps {
-  onSend: (body: string) => void;
-  onTyping: () => void;
+  /** Resolves true when the message was saved. */
+  onSend: (body: string) => Promise<boolean>;
+  /** Typing broadcast; `stopped: true` is sent once right after a message. */
+  onTyping: (stopped: boolean) => void;
 }
 
 export const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(function MessageInput(
@@ -32,7 +34,7 @@ export const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(fu
     typingRef.current = onKeystroke(typingRef.current, now);
     if (shouldBroadcastTyping(lastBroadcastRef.current, now)) {
       lastBroadcastRef.current = now;
-      onTyping();
+      onTyping(false);
     }
   }
 
@@ -65,7 +67,11 @@ export const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(fu
       );
       return;
     }
-    onSend(text);
+    const announcedTyping = lastBroadcastRef.current !== null;
+    void onSend(text).then((ok) => {
+      // Clear the friend's indicator right away instead of waiting for it to time out.
+      if (ok && announcedTyping) onTyping(true);
+    });
     setText("");
     setError(null);
     lastBroadcastRef.current = null;
@@ -94,12 +100,12 @@ export const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(fu
         <span
           id="message-error"
           role="alert"
-          style={{ color: "#cc0000", fontSize: 12, minHeight: 16 }}
+          style={{ color: "var(--buzz-red)", fontSize: 12, minHeight: 16 }}
         >
           {error ?? ""}
         </span>
         <span
-          style={{ fontSize: 11, color: text.length > MESSAGE_BODY_MAX ? "#cc0000" : "#666" }}
+          style={{ fontSize: 11, color: text.length > MESSAGE_BODY_MAX ? "var(--buzz-red)" : "var(--text-muted)" }}
           aria-label="Characters used"
         >
           {text.length}/{MESSAGE_BODY_MAX}

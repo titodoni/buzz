@@ -6,12 +6,33 @@ import { getSupabase } from "@/lib/supabase/browser-client"
 
 export interface OfflineDelivery {
   unreadBySender: Record<string, number>
-  refresh(): void
+}
+
+interface InsertedRow {
+  id: string
+  sender_id: string
+  read_at: string | null
+}
+
+/** Realtime payloads are untyped, so check the shape before use. */
+function isInsertedRow(v: unknown): v is InsertedRow {
+  if (typeof v !== "object" || v === null) return false
+  const r = v as Record<string, unknown> // narrowing an unknown object to read its fields
+  return typeof r.id === "string" && typeof r.sender_id === "string"
+}
+
+function readMarker(v: unknown): { id: string; read_at: string | null } | null {
+  if (typeof v !== "object" || v === null) return null
+  const r = v as Record<string, unknown> // narrowing an unknown object to read its fields
+  if (typeof r.id !== "string") return null
+  return { id: r.id, read_at: typeof r.read_at === "string" ? r.read_at : null }
 }
 
 /**
  * Messages waiting for me (Req 9). Loads unread messages on mount and on
  * window focus, marks them delivered, and keeps the counts live.
+ * Display order is by created_at, not delivered_at, so stamping a live row
+ * later than its neighbours never reorders a conversation.
  */
 export function useOfflineDelivery(me: string): OfflineDelivery {
   const [unreadBySender, setUnread] = useState<Record<string, number>>({})
@@ -59,14 +80,24 @@ export function useOfflineDelivery(me: string): OfflineDelivery {
     const channel = supabase
       .channel(`offline:${me}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter }, (p) => {
-        const row = p.new as { id?: string; sender_id?: string; read_at?: string | null }
-        if (!row.id || !row.sender_id || row.read_at) return
+        const row: unknown = p.new
+        if (!isInsertedRow(row) || row.read_at) return
         unreadRef.current.set(row.id, row.sender_id)
         publish()
+        // The Buddy List is open, so the message is delivered now (Req 9.1, 9.2).
+        // Only where delivered_at is null, as the receipt trigger requires.
+        // A failure is ignored; the next load retries (Req 9.5).
+        void Promise.resolve(
+          supabase
+            .from("messages")
+            .update({ delivered_at: new Date().toISOString() })
+            .eq("id", row.id)
+            .is("delivered_at", null),
+        ).catch(() => undefined)
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages", filter }, (p) => {
-        const row = p.new as { id?: string; read_at?: string | null }
-        if (!row.id || !row.read_at) return
+        const row = readMarker(p.new)
+        if (!row || !row.read_at) return
         if (unreadRef.current.delete(row.id)) publish()
       })
       .subscribe()
@@ -78,6 +109,5 @@ export function useOfflineDelivery(me: string): OfflineDelivery {
     }
   }, [me, load, publish])
 
-  const refresh = useCallback(() => void load(), [load])
-  return { unreadBySender, refresh }
+  return { unreadBySender }
 }

@@ -104,20 +104,34 @@ session and keeps the user signed in (Requirement 1.4).
 1. **`presence:global`** (presence). The signed-in client tracks
    `{ user_id, presence_state }` where `presence_state` is
    `online | away | busy`. `offline` is the absence of a presence entry.
-   This channel is **owned by the Buddy List window only**; chat windows
-   do not join it, so one user produces one presence entry regardless of
-   how many chat windows are open. Friends read this channel to render
-   presence dots and to decide whether the Nudge button is enabled
-   (Requirement 6.4).
+   Only the **Buddy List window tracks** on this channel, so one user
+   produces one presence entry regardless of how many chat windows are
+   open. Chat windows subscribe **read-only** (never `track()`) to see
+   the friend's state for the Nudge button (Requirement 6.4); see
+   `docs/adr/0003`. Activity in chat windows reaches the Buddy List
+   through a `localStorage` `storage` event (`lib/realtime/activity.ts`,
+   `docs/adr/0008`), so chatting keeps the user Available (4.1, 4.2).
+   The idle check runs every 5 s, so Away is reported within 10 s of the
+   5-minute mark (4.2).
 2. **`chat:<pairKey>`** (postgres_changes + broadcast). `pairKey` is
    `canonicalPair(a, b)` joined as `"<min>_<max>"`. The channel carries:
-   - `postgres_changes` on `messages` `INSERT`, filtered to the pair —
-     one DB insert both persists the message and broadcasts it, so
+   - `postgres_changes` on `messages` `INSERT`, two bindings on the one
+     channel: `receiver_id=eq.<me>` and `sender_id=eq.<me>`, keeping only
+     rows of this pair (so my own sends from another instance appear).
+     One DB insert both persists the message and broadcasts it, so
      Requirement 5.2 (deliver in under 2s) and 5.3 (survive reload) are
      satisfied by a single write.
    - `broadcast` events `typing` (Requirement 10) and `nudge`
      (Requirement 6), which are ephemeral and never written to Postgres.
-3. **profiles feed** (postgres_changes on `profiles` `UPDATE`). The
+     A `typing` payload is `{ sender, stopped }`; the sender broadcasts
+     `stopped: true` right after a send, and because broadcasts arrive in
+     order it clears the friend's indicator for good (10.3).
+3. **`inbox:<userId>`** (broadcast only). Each Buddy List listens on its
+   own inbox. A nudge is sent there too (REST broadcast, no subscription
+   needed), so a friend whose chat window is closed still gets it: their
+   Buddy List opens the chat window with `buzz=1` and it shakes (6.6,
+   classic YM). Nudges from non-friends are ignored.
+4. **profiles feed** (postgres_changes on `profiles` `UPDATE`). The
    friend list and chat headers subscribe to profile updates for the
    user's friends so a changed Display_Name, Avatar, Status, or
    Now_Playing appears within ~5s without a reload (Requirements 2.3,
@@ -265,17 +279,25 @@ and the Offline_Message_Service delivers it when the friend returns
 `messages` where `receiver_id = me AND delivered_at IS NULL`, ordered by
 `created_at` (chronological, 9.2), renders them, and sets
 `delivered_at = now`. If that update fails the row stays
-`delivered_at = null` and is retried on the next connect (9.5). When the
-user opens the chat, `read_at` is set (9.3).
+`delivered_at = null` and is retried on the next connect (9.5). A message
+that arrives while the Buddy List is open is stamped `delivered_at` at
+once. Delivered rows share one timestamp; display order always comes from
+`created_at` (9.2). `read_at` is set only while the chat window is
+focused and visible: after history loads, on focus, and on arrival if
+focused (9.3), so unread badges survive an unfocused window.
 
 **Nudge (Req 6).** `NudgeButton` is disabled when the friend is offline
-(6.4). On click it broadcasts `nudge` on `chat:<pairKey>` and shows the
-system line "You nudged <Display_Name>" locally (6.2); it does not start
-the cooldown until delivery is confirmed. The receiver adds a 600 ms
-shake CSS class and plays a ≤1s Web Audio sound (6.1). On confirmed
-delivery the sender enters a 10s cooldown (6.3). On delivery failure the
-sender shows a not-delivered message and leaves the button enabled with
-no cooldown (6.5).
+(6.4). On click (or Ctrl+G) it broadcasts `nudge` on `chat:<pairKey>` and
+on the friend's `inbox:<friendId>` in parallel; it counts as delivered if
+either is accepted, then shows "You nudged <Display_Name>" (6.2) and
+starts the 10 s cooldown (6.3). The cooldown is saved in `localStorage`
+per friend, so closing and reopening the chat doesn't reset it. If both
+sends fail it shows a not-delivered message and leaves the button enabled
+with no cooldown (6.5). On the receiving side, an open chat window shakes
+(600 ms OS-window shake, CSS fallback) and plays a ≤1 s Web Audio buzz
+(6.1); if the chat window is closed, the Buddy List opens it and it
+shakes on load (6.6). An already open window is only focused by the
+inbox path, so it never shakes twice.
 
 ## UI/UX Specification
 

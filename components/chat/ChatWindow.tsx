@@ -15,6 +15,9 @@ import { useFriendPresence } from "@/lib/realtime/presence";
 import { playBuzzSound, shakeChatWindow } from "@/lib/nudge/effects";
 import { getProfile, type PublicProfile } from "@/lib/friends/api";
 import { onSend as typingOnSend, type TypingState } from "@/lib/typing/state";
+import { receiveTypingSignal, type TypingSignal } from "@/lib/typing/broadcast";
+import { reportActivity } from "@/lib/realtime/activity";
+import { sendNudgeToInbox } from "@/lib/realtime/inbox";
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -32,7 +35,7 @@ function Avatar({ name, url }: { name: string; url: string | null }) {
           alt={`${name}'s picture`}
           width={64}
           height={64}
-          style={{ objectFit: "cover", border: "1px solid #999" }}
+          style={{ objectFit: "cover", border: "1px solid var(--border)" }}
         />
       ) : (
         <div
@@ -46,7 +49,7 @@ function Avatar({ name, url }: { name: string; url: string | null }) {
             alignItems: "center",
             justifyContent: "center",
             background: "var(--ym-purple)",
-            color: "#fff",
+            color: "var(--titlebar-text)",
             fontSize: 22,
             fontWeight: 700,
           }}
@@ -82,18 +85,44 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     presenceRef.current = presence;
   });
 
+  const receiveBuzz = useCallback(() => {
+    dispatch({ type: "buzzReceived", at: new Date().toISOString() });
+    playBuzzSound();
+    void shakeChatWindow(rootRef.current);
+  }, []);
+
+  // A window opened by an incoming Nudge has `buzz=1` in its URL (chatUrl).
+  const pendingBuzzRef = useRef(false);
+
+  // Read receipts count only while the user can actually see this window (Req 9.3).
+  const markReadIfActive = useCallback(() => {
+    if (document.hasFocus() && document.visibilityState === "visible") {
+      markConversationRead(me, friendId).catch(() => undefined);
+    }
+  }, [me, friendId]);
+
   const reload = useCallback(() => {
     return loadHistory(me, friendId)
       .then((rows) => {
         dispatch({ type: "historyLoaded", messages: rows });
         setLoadError(false);
-        return markConversationRead(me, friendId);
+        markReadIfActive();
       })
-      .catch(() => setLoadError(true));
-  }, [me, friendId]);
+      .catch(() => setLoadError(true))
+      .then(() => {
+        if (!pendingBuzzRef.current) return;
+        pendingBuzzRef.current = false;
+        receiveBuzz();
+        // Drop `buzz` so a reload does not shake again.
+        const url = new URL(window.location.href);
+        url.searchParams.delete("buzz");
+        window.history.replaceState(window.history.state, "", url);
+      });
+  }, [me, friendId, markReadIfActive, receiveBuzz]);
 
   useEffect(() => {
     let active = true;
+    pendingBuzzRef.current = new URLSearchParams(window.location.search).get("buzz") === "1";
     getProfile(friendId)
       .then((p) => active && setFriend(p))
       .catch(() => undefined);
@@ -106,24 +135,41 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     };
   }, [me, friendId, reload]);
 
+  // Unread messages stay unread until the window is focused and visible again.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") markReadIfActive();
+    };
+    window.addEventListener("focus", markReadIfActive);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", markReadIfActive);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [markReadIfActive]);
+
+  // Chatting counts as activity for the Buddy List's presence (Req 4.1, 4.2).
+  useEffect(() => {
+    const report = () => reportActivity();
+    const events = ["keydown", "mousedown", "focus"] as const;
+    for (const e of events) window.addEventListener(e, report);
+    return () => {
+      for (const e of events) window.removeEventListener(e, report);
+    };
+  }, []);
+
   const onMessage = useCallback(
     (message: MessageRow) => {
       dispatch({ type: "messageArrived", message });
+      if (message.sender_id !== friendId) return; // my own send, seen from another instance
       setFriendTyping((s) => typingOnSend(s));
-      // The window is open, so the message counts as read right away.
-      markConversationRead(me, friendId).catch(() => undefined);
+      markReadIfActive();
     },
-    [me, friendId],
+    [friendId, markReadIfActive],
   );
 
-  const onTyping = useCallback((at: number) => {
-    setFriendTyping({ lastKeystrokeAt: at, sent: false });
-  }, []);
-
-  const onBuzz = useCallback(() => {
-    dispatch({ type: "buzzReceived", at: new Date().toISOString() });
-    playBuzzSound();
-    void shakeChatWindow(rootRef.current);
+  const onTyping = useCallback((signal: TypingSignal, at: number) => {
+    setFriendTyping((s) => receiveTypingSignal(s, signal, at));
   }, []);
 
   const { sendTyping, sendBuzz } = useChatChannel({
@@ -131,7 +177,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     friendId,
     onMessage,
     onTyping,
-    onBuzz,
+    onBuzz: receiveBuzz,
     onReconnect: () => void reload(),
   });
 
@@ -145,18 +191,21 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
         created_at: new Date().toISOString(),
       };
       dispatch({ type: "sendStarted", message: row });
-      void sendMessage(row, presenceRef.current !== "offline").then((res) => {
+      return sendMessage(row, presenceRef.current !== "offline").then((res) => {
         dispatch(res.ok ? { type: "sendConfirmed", id: row.id } : { type: "sendFailed", id: row.id });
+        return res.ok;
       });
     },
     [me, friendId],
   );
 
   const handleBuzz = useCallback(async () => {
-    const ok = await sendBuzz();
+    // Chat channel reaches an open window; the inbox opens a closed one. Either is delivery.
+    const results = await Promise.all([sendBuzz(), sendNudgeToInbox(friendId, me)]);
+    const ok = results.some(Boolean);
     if (ok) dispatch({ type: "buzzSent", friendName, at: new Date().toISOString() });
     return ok;
-  }, [sendBuzz, friendName]);
+  }, [sendBuzz, friendId, me, friendName]);
 
   const closePicker = useCallback(() => {
     setPickerOpen(false);
@@ -165,18 +214,18 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
 
   return (
     <WindowFrame title={`${friendName} - Instant Message`}>
-      <div ref={rootRef} style={{ display: "flex", flexDirection: "column", height: "100%", background: "#ece9f5" }}>
+      <div ref={rootRef} style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--window-bg)" }}>
         <header
-          style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px", borderBottom: "1px solid #ccc" }}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px", borderBottom: "1px solid var(--border)" }}
         >
           <PresenceDot state={presence} />
           <strong>{friendName}</strong>
-          <span style={{ fontSize: 12, color: "#555" }}>
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
             {friend?.statusMessage ? `"${friend.statusMessage}"` : presenceLabel(presence)}
           </span>
         </header>
         {loadError ? (
-          <p role="alert" style={{ color: "#cc0000", fontSize: 12, margin: "4px 8px" }}>
+          <p role="alert" style={{ color: "var(--buzz-red)", fontSize: 12, margin: "4px 8px" }}>
             Couldn&apos;t load your earlier messages. We&apos;ll try again when you&apos;re back online.
           </p>
         ) : null}
@@ -196,7 +245,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
               >
                 Emoticons
               </button>
-              <NudgeButton friendPresence={presence} onBuzz={handleBuzz} />
+              <NudgeButton friendId={friendId} friendPresence={presence} onBuzz={handleBuzz} />
               {pickerOpen ? (
                 <EmoticonPicker
                   onPick={(code) => {
@@ -209,7 +258,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
             </div>
             <MessageInput ref={inputRef} onSend={handleSend} onTyping={sendTyping} />
           </div>
-          <aside style={{ width: 88, padding: 8, borderLeft: "1px solid #ccc" }} aria-label="Pictures">
+          <aside style={{ width: 88, padding: 8, borderLeft: "1px solid var(--border)" }} aria-label="Pictures">
             <Avatar name={friendName} url={friend?.avatarUrl ?? null} />
             <Avatar name={myName} url={mine?.avatarUrl ?? null} />
           </aside>

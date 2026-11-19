@@ -7,6 +7,13 @@ import type { PresenceState } from "@/lib/presence/state"
 import { updateProfile } from "@/lib/profile/api"
 import { STATUS_MAX, isValidStatus } from "@/lib/validation/profile"
 
+type MenuAction = "available" | "busy" | "custom"
+const MENU_ITEMS: readonly { label: string; action: MenuAction }[] = [
+  { label: "Available", action: "available" },
+  { label: "Busy", action: "busy" },
+  { label: "Custom Status...", action: "custom" },
+]
+
 export const STATUS_PRESETS = [
   "Be Right Back",
   "Stepped Out",
@@ -42,6 +49,7 @@ export function StatusSelector({
   const [text, setText] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const statusError = `Status must be ${STATUS_MAX} characters or fewer.`
   const triggerRef = useRef<HTMLButtonElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -65,9 +73,23 @@ export function StatusSelector({
     triggerRef.current?.focus()
   }
 
+  function choose(action: MenuAction) {
+    if (action === "available") onAvailable()
+    else if (action === "busy") onBusy()
+    else {
+      setText(profile?.statusMessage ?? "")
+      setError(null)
+      setDialog(true)
+      onMenuOpenChange(false)
+      return
+    }
+    closeMenu()
+  }
+
   function onListKeyDown(e: KeyboardEvent<HTMLUListElement>) {
     const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>("[role=menuitem]"))
-    const i = items.indexOf(document.activeElement as HTMLElement)
+    const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const i = active ? items.indexOf(active) : -1
     if (e.key === "Escape") {
       e.preventDefault()
       closeMenu()
@@ -83,7 +105,7 @@ export function StatusSelector({
   async function save() {
     if (!profile) return
     if (!isValidStatus(text)) {
-      setError(`Status must be ${STATUS_MAX} characters or fewer.`)
+      setError(statusError)
       return
     }
     setSaving(true)
@@ -126,47 +148,13 @@ export function StatusSelector({
           className="m-0 list-none border p-0 shadow"
           style={{ position: "absolute", left: 0, top: "100%", background: "var(--window-bg)", zIndex: 50, minWidth: 170 }}
         >
-          <li role="none">
-            <button
-              role="menuitem"
-              type="button"
-              className={item}
-              onClick={() => {
-                onAvailable()
-                closeMenu()
-              }}
-            >
-              Available
-            </button>
-          </li>
-          <li role="none">
-            <button
-              role="menuitem"
-              type="button"
-              className={item}
-              onClick={() => {
-                onBusy()
-                closeMenu()
-              }}
-            >
-              Busy
-            </button>
-          </li>
-          <li role="none">
-            <button
-              role="menuitem"
-              type="button"
-              className={item}
-              onClick={() => {
-                setText(profile?.statusMessage ?? "")
-                setError(null)
-                setDialog(true)
-                onMenuOpenChange(false)
-              }}
-            >
-              Custom Status...
-            </button>
-          </li>
+          {MENU_ITEMS.map((m) => (
+            <li key={m.label} role="none">
+              <button role="menuitem" type="button" className={item} onClick={() => choose(m.action)}>
+                {m.label}
+              </button>
+            </li>
+          ))}
         </ul>
       ) : null}
       {dialog ? (
@@ -212,7 +200,7 @@ export function StatusSelector({
               aria-invalid={error ? true : undefined}
               onChange={(e) => {
                 setText(e.target.value)
-                setError(isValidStatus(e.target.value) ? null : `Status must be ${STATUS_MAX} characters or fewer.`)
+                setError(isValidStatus(e.target.value) ? null : statusError)
               }}
               className="block w-full"
             />

@@ -13,6 +13,7 @@ import { getProfile, useFriends, type PublicProfile } from "@/lib/friends/api"
 import { useSession } from "@/lib/auth/session"
 import { hasNowPlaying, shouldShowField } from "@/lib/profile/render"
 import { useOfflineDelivery } from "@/lib/offline/useOfflineDelivery"
+import { useNudgeInbox } from "@/lib/realtime/inbox"
 import { usePresenceTracker } from "@/lib/realtime/presence"
 import { openChatWindow } from "@/lib/tauri/windows"
 
@@ -34,6 +35,10 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
   const friendIds = useMemo(() => friends.map((f) => f.id), [friends])
   const { myState, setAvailable, setBusy, friendsPresence } = usePresenceTracker(me, friendIds)
   const { unreadBySender } = useOfflineDelivery(me)
+  // A nudge from an accepted friend pops their chat window open and shakes it.
+  useNudgeInbox(me, (sender) => {
+    if (friendIds.includes(sender)) void openChatWindow(sender, { buzz: true })
+  })
   const totalUnread = Object.values(unreadBySender).reduce((a, b) => a + b, 0)
 
   useEffect(() => {

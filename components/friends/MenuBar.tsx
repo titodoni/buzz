@@ -20,6 +20,7 @@ export function MenuBar({ menus }: { menus: MenuDef[] }) {
     if (openIndex === null) return
     rootRef.current?.querySelector<HTMLElement>("[role=menu] [role=menuitem]")?.focus()
     const onDown = (e: MouseEvent) => {
+      // event targets are typed EventTarget; a mousedown target is always a Node
       if (!rootRef.current?.contains(e.target as Node)) setOpenIndex(null)
     }
     document.addEventListener("mousedown", onDown)
@@ -28,7 +29,7 @@ export function MenuBar({ menus }: { menus: MenuDef[] }) {
 
   function onMenuKeyDown(e: KeyboardEvent<HTMLUListElement>, i: number) {
     const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>("[role=menuitem]"))
-    const at = items.indexOf(document.activeElement as HTMLElement)
+    const at = document.activeElement instanceof HTMLElement ? items.indexOf(document.activeElement) : -1
     if (e.key === "Escape") {
       e.preventDefault()
       setOpenIndex(null)
