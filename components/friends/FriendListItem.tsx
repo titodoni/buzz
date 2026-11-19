@@ -9,11 +9,13 @@ import type { FriendEntry } from "@/lib/friends/api"
 export interface FriendListItemProps {
   friend: FriendEntry
   presence: PresenceState
+  /** Messages waiting from this friend. */
+  unread?: number
   onOpen: (friendId: string) => void
   onContextMenu: (friend: FriendEntry, x: number, y: number) => void
 }
 
-export function FriendListItem({ friend, presence, onOpen, onContextMenu }: FriendListItemProps) {
+export function FriendListItem({ friend, presence, unread, onOpen, onContextMenu }: FriendListItemProps) {
   function onKeyDown(e: KeyboardEvent<HTMLLIElement>) {
     if (e.key === "Enter") {
       e.preventDefault()
@@ -34,14 +36,17 @@ export function FriendListItem({ friend, presence, onOpen, onContextMenu }: Frie
       className="ym-row flex cursor-pointer items-start gap-2 px-2 py-1"
       style={{ opacity: presence === "offline" ? 0.55 : 1 }}
       tabIndex={0}
-      aria-label={`${friend.displayName}, ${presence}. Press Enter to chat.`}
+      aria-label={`${friend.displayName}, ${presence}${unread ? `, ${unread} waiting` : ""}. Press Enter to chat.`}
       onDoubleClick={() => onOpen(friend.id)}
       onKeyDown={onKeyDown}
       onContextMenu={onRightClick}
     >
       <PresenceDot state={presence} />
       <div className="min-w-0 flex-1">
-        <div className="truncate font-bold">{friend.displayName}</div>
+        <div className="truncate font-bold">
+          {friend.displayName}
+          {unread && unread > 0 ? <span> ({unread})</span> : null}
+        </div>
         {shouldShowField(friend.statusMessage) ? (
           <div className="truncate text-xs">{friend.statusMessage}</div>
         ) : null}

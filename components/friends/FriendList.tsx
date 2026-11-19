@@ -30,11 +30,14 @@ const MENU_ITEM = "ym-row block w-full cursor-pointer border-0 bg-transparent px
 export function FriendList({
   friends,
   presence = {},
+  unreadBySender = {},
   onChanged,
 }: {
   friends: FriendEntry[]
-  /** Friend id to state. Missing ids are treated as offline. Wired up in task 11. */
+  /** Friend id to state. Missing ids are treated as offline. */
   presence?: Record<string, PresenceState>
+  /** Waiting messages per sender id, shown as "(n)" after the name. */
+  unreadBySender?: Record<string, number>
   onChanged: () => void
 }) {
   const [open, setOpen] = useState(true)
@@ -93,6 +96,7 @@ export function FriendList({
                 key={f.id}
                 friend={f}
                 presence={presence[f.id] ?? "offline"}
+                unread={unreadBySender[f.id]}
                 onOpen={(id) => void openChatWindow(id)}
                 onContextMenu={(friend, x, y) => setOverlay({ kind: "menu", friend, x, y })}
               />
