@@ -63,6 +63,24 @@ describe("conversation", () => {
     });
   });
 
+  it("a history reload keeps messages it doesn't know about yet and never duplicates", () => {
+    let s = conversation(emptyConversation(ME), { type: "historyLoaded", messages: [] });
+    const sending = msg("p", ME, "2025-01-01T10:03:00Z", "still sending");
+    const arrived = msg("q", ANN, "2025-01-01T10:04:00Z", "arrived during the fetch");
+    s = conversation(s, { type: "sendStarted", message: sending });
+    s = conversation(s, { type: "messageArrived", message: arrived });
+    // The reload was fetched before "q" existed but after "p" was stored.
+    s = conversation(s, {
+      type: "historyLoaded",
+      messages: [msg("a", ANN, "2025-01-01T10:00:00Z"), sending],
+    });
+    expect(s.items.map((i) => (i.kind === "message" ? [i.id, i.status] : null))).toEqual([
+      ["a", "sent"],
+      ["p", "sent"],
+      ["q", "sent"],
+    ]);
+  });
+
   it("adds Buzz system lines in time order with the messages (Req 6.2)", () => {
     let s = conversation(emptyConversation(ME), {
       type: "historyLoaded",

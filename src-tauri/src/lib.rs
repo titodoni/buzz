@@ -20,9 +20,27 @@ fn is_valid_friend_id(id: &str) -> bool {
         && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
 }
 
+/// Query flag telling a newly opened chat window that it was opened by an
+/// incoming nudge, so it shakes and plays the sound on load (classic YM).
+const BUZZ_QUERY: &str = "buzz=1";
+
+/// App-relative URL of the chat page for `friend_id` (id already validated).
+fn chat_url(friend_id: &str, buzz: bool) -> String {
+    let base = format!("{CHAT_PATH}?{CHAT_QUERY_KEY}={friend_id}");
+    if buzz {
+        format!("{base}&{BUZZ_QUERY}")
+    } else {
+        base
+    }
+}
+
 /// Opens (or focuses) the chat window for `friend_id` in its own OS window.
+///
+/// `buzz` is true when an incoming nudge opens the window. An already open
+/// window is only focused: it receives the nudge itself over Realtime and
+/// shakes, so passing the flag again would shake it twice.
 #[tauri::command]
-fn open_chat_window(app: AppHandle, friend_id: String) -> Result<(), String> {
+fn open_chat_window(app: AppHandle, friend_id: String, buzz: Option<bool>) -> Result<(), String> {
     if !is_valid_friend_id(&friend_id) {
         return Err("invalid friend id".into());
     }
@@ -37,7 +55,7 @@ fn open_chat_window(app: AppHandle, friend_id: String) -> Result<(), String> {
         return Ok(());
     }
 
-    let url = format!("{CHAT_PATH}?{CHAT_QUERY_KEY}={friend_id}");
+    let url = chat_url(&friend_id, buzz.unwrap_or(false));
     WebviewWindowBuilder::new(&app, label, WebviewUrl::App(url.into()))
         .title("Buzz Chat")
         .inner_size(420.0, 360.0)
@@ -60,7 +78,17 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::is_valid_friend_id;
+    use super::{chat_url, is_valid_friend_id};
+
+    #[test]
+    fn chat_url_for_a_normal_open() {
+        assert_eq!(chat_url("abc-123", false), "chat/?friendId=abc-123");
+    }
+
+    #[test]
+    fn chat_url_for_an_incoming_buzz_asks_the_window_to_shake() {
+        assert_eq!(chat_url("abc-123", true), "chat/?friendId=abc-123&buzz=1");
+    }
 
     #[test]
     fn accepts_uuid() {

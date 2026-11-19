@@ -103,14 +103,16 @@ function add(state: ConversationState, item: ConversationItem): ConversationStat
 /** Pure reducer for one chat window's conversation. */
 export function conversation(state: ConversationState, event: ConversationEvent): ConversationState {
   switch (event.type) {
-    case "historyLoaded":
+    case "historyLoaded": {
+      // Merge by id rather than replace: a reload (e.g. after a reconnect)
+      // must not drop messages still sending or ones that arrived mid-fetch.
+      const fetched = event.messages.map((m) => toItem(state.me, m, "sent"));
+      const fetchedIds = new Set(fetched.map((i) => i.id));
       return {
         ...state,
-        items: [
-          ...state.items.filter((i) => i.kind === "system"),
-          ...event.messages.map((m) => toItem(state.me, m, "sent")),
-        ].sort(byTime),
+        items: [...state.items.filter((i) => !fetchedIds.has(i.id)), ...fetched].sort(byTime),
       };
+    }
     case "messageArrived":
       if (state.items.some((i) => i.id === event.message.id)) return setStatus(state, event.message.id, "sent");
       return add(state, toItem(state.me, event.message, "sent"));
