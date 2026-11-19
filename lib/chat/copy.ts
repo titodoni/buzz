@@ -4,15 +4,20 @@ import type { ConversationItem } from "./conversation"
 
 /**
  * The conversation on screen as plain text (Req 17.7): one line per message,
- * "Name (hh:mm): text", and system lines as they read.
+ * "Name (hh:mm): text", or "Name: text" when `time` is null because
+ * timestamps are hidden, and system lines as they read.
  */
 export function conversationText(
   items: readonly ConversationItem[],
   names: { mine: string; friend: string },
-  time: (iso: string) => string,
+  time: ((iso: string) => string) | null,
 ): string {
   return items
-    .map((i) => (i.kind === "system" ? i.text : `${i.mine ? names.mine : names.friend} (${time(i.createdAt)}): ${i.body}`))
+    .map((i) => {
+      if (i.kind === "system") return i.text
+      const who = i.mine ? names.mine : names.friend
+      return time ? `${who} (${time(i.createdAt)}): ${i.body}` : `${who}: ${i.body}`
+    })
     .join("\n")
 }
 

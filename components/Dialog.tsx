@@ -1,12 +1,15 @@
 "use client"
 import { useEffect, useId, useRef, type ReactNode } from "react"
 
-const FOCUSABLE = "button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])"
+const FOCUSABLE =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 /**
  * A small modal window in the Buzz look: a title bar and a body. Escape or a
  * click outside closes it, Tab stays inside, and focus goes back to where it
- * was when it closes. The first button (or `autoFocus` control) gets focus.
+ * was when it closes. The control marked `data-autofocus`, else the first
+ * one, gets focus. (Not React's `autoFocus`: it would run before the dialog
+ * remembers the previous focus.)
  */
 export function Dialog({
   title,
@@ -30,7 +33,7 @@ export function Dialog({
   useEffect(() => {
     const before = document.activeElement instanceof HTMLElement ? document.activeElement : null
     const box = boxRef.current
-    const first = box?.querySelector<HTMLElement>("[autofocus]") ?? box?.querySelector<HTMLElement>(FOCUSABLE)
+    const first = box?.querySelector<HTMLElement>("[data-autofocus]") ?? box?.querySelector<HTMLElement>(FOCUSABLE)
     first?.focus()
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {

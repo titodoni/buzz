@@ -14,9 +14,11 @@ export const EARLIER_PAGE_SIZE = DEFAULT_MESSAGE_LIMIT
 
 /**
  * Up to 50 messages between two friends, newest first (the reducer sorts
- * them): the most recent, or with `before`, those at or before that time.
- * "At or before" so messages sharing the cursor's timestamp aren't skipped;
- * the reducer drops the repeat by id.
+ * them): the most recent, or with `before`, those strictly before that time.
+ * `created_at` is set by the server per insert, so two messages in one
+ * conversation don't share a timestamp in practice.
+ * The ids are safe in the filter string: `me` is the session user and the
+ * chat page only accepts a UUID as `friendId`.
  */
 async function loadPage(me: string, friendId: string, before: string | null): Promise<MessageRow[]> {
   let query = getSupabase()
@@ -25,7 +27,7 @@ async function loadPage(me: string, friendId: string, before: string | null): Pr
     .or(
       `and(sender_id.eq.${me},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${me})`,
     )
-  if (before !== null) query = query.lte("created_at", before)
+  if (before !== null) query = query.lt("created_at", before)
   const { data, error } = await query.order("created_at", { ascending: false }).limit(EARLIER_PAGE_SIZE)
   if (error) throw error
   return data ?? []

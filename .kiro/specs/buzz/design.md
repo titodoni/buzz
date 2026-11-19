@@ -718,13 +718,15 @@ Stop Ignoring) and the list in Contacts > Ignore List....
 | Conversation | Copy Conversation, Close |
 | Edit | Copy, Select All, Clear Window |
 | View | Show Timestamps, Show Earlier Messages (F3), Show Friends' Fonts |
-| Actions | Buzz! (Ctrl+G), View Profile, Ignore |
+| Actions | Buzz! (Ctrl+G), View Profile, Ignore... (Stop Ignoring while ignored) |
 | Help | About Buzz |
 
 - **Formatting** is stored on the message as `messages.format jsonb`:
-  `{ font, size, color, bold, italic, underline }`. A `CHECK` allows only the
-  four fonts Tahoma, Verdana, Arial, and Times New Roman, sizes 10 to 24, and a
-  `#rrggbb` color. The renderer builds inline style from these validated values
+  `{ font, size, color, bold, italic, underline }`. A `CHECK` requires exactly
+  those six keys (`?&`, since a missing key would make its test NULL and a
+  CHECK lets NULL through) and allows only the four fonts Tahoma, Verdana,
+  Arial, and Times New Roman, whole sizes 10 to 24, and a lowercase `#rrggbb`
+  color. The renderer builds inline style from these validated values
   only, never from raw text, and a pure `parseFormat()` returns the default
   format for anything invalid (Req 17.4).
   Formats are a whole: one bad field shows the message in the default format
@@ -739,18 +741,21 @@ Stop Ignoring) and the list in Contacts > Ignore List....
   Show Friends' Fonts, and my own format. Section 28's Preferences should read
   the same key. Show Friends' Fonts off shows the friend's messages in the
   default format; my own always keep mine.
-- **Earlier messages** (F3) page backwards with `limit 50` from the cursor
-  `earlierCursor(state)`: the oldest message on screen, else the moment of the
-  last Clear Window, else the newest. The query is `created_at <= cursor`, not
-  `<`, so messages sharing the cursor's timestamp aren't skipped; the reducer
-  drops the repeat by id. A page shorter than 50 sets `reachedStart`, which
-  shows "This is the start of your conversation." and disables the menu item.
-  Adding older messages keeps the reader's scroll position.
-- **Clear Window** empties the window and records `clearedAt`. A history
-  reload (after a reconnect) leaves out messages from before it, so cleared
-  messages don't come back by themselves; F3 brings them back on purpose.
-  Nothing is deleted from the database.
-- **Copy Conversation** copies "Name (hh:mm): text" lines; Edit > Copy copies
+- **Earlier messages** (F3) load the 50 messages strictly before the oldest
+  message on screen (`earlierCursor(state)`), or the newest 50 when the window
+  is empty. `created_at` is set by the server per insert, so ties at the
+  boundary don't happen in practice. A page shorter than 50 sets
+  `reachedStart`, which shows "This is the start of your conversation." and
+  disables the menu item. Adding older messages keeps the reader's scroll
+  position.
+- **Clear Window** empties the window and remembers the ids it removed and the
+  time of the newest of them (a server time, so the client's clock doesn't
+  matter). A history reload after a reconnect, or a late Realtime echo of a
+  message sent just before the clear, leaves those out, so cleared messages
+  don't come back by themselves; F3 brings them back on purpose. Nothing is
+  deleted from the database.
+- **Copy Conversation** copies the lines as shown: "Name (hh:mm): text", or
+  "Name: text" while timestamps are hidden. Edit > Copy copies
   the selected text in the box or the conversation. Both use the Clipboard API
   with a hidden-text-box fallback for older WebKitGTK.
 - **Actions** reuses the Buzz! button's cooldown (`NudgeButtonHandle.send`),

@@ -52,10 +52,13 @@ export interface ConversationState {
   /** True once an earlier page came back short: nothing older is stored. */
   reachedStart: boolean;
   /**
-   * When the user last chose Clear Window. A history reload leaves out
-   * messages from before it; only F3 brings them back (Req 17.8).
+   * Clear Window (Req 17.8): the messages it removed, and the time of the
+   * newest of them (a server time, so the client's clock doesn't matter).
+   * A history reload or a late Realtime echo leaves these out; only F3
+   * brings them back.
    */
-  clearedAt: string | null;
+  clearedIds: ReadonlySet<string>;
+  clearedThrough: string | null;
 }
 
 /**
@@ -74,10 +77,10 @@ export type ConversationEvent =
   | { type: "nudgeSent"; friendName: string; at: string }
   | { type: "nudgeReceived"; at: string }
   /** Clear Window: empty the window; stored history is untouched. */
-  | { type: "cleared"; at: string };
+  | { type: "cleared" };
 
 export function emptyConversation(me: string): ConversationState {
-  return { me, items: [], systemCount: 0, reachedStart: false, clearedAt: null };
+  return { me, items: [], systemCount: 0, reachedStart: false, clearedIds: new Set(), clearedThrough: null };
 }
 
 function toItem(me: string, m: MessageRow, status: MessageStatus): MessageItem {
@@ -133,14 +136,16 @@ export function conversation(state: ConversationState, event: ConversationEvent)
     case "historyLoaded": {
       // Merge by id rather than replace: a reload (e.g. after a reconnect)
       // must not drop messages still sending or ones that arrived mid-fetch.
-      const clearedAt = state.clearedAt === null ? null : Date.parse(state.clearedAt);
-      const rows =
-        clearedAt === null ? event.messages : event.messages.filter((m) => Date.parse(m.created_at) > clearedAt);
+      const through = state.clearedThrough === null ? null : Date.parse(state.clearedThrough);
+      const rows = event.messages.filter(
+        (m) => !state.clearedIds.has(m.id) && (through === null || Date.parse(m.created_at) > through),
+      );
       return merge(state, rows);
     }
     case "earlierLoaded":
       return { ...merge(state, event.messages), reachedStart: event.messages.length < event.pageSize };
     case "messageArrived":
+      if (state.clearedIds.has(event.message.id)) return state;
       if (state.items.some((i) => i.id === event.message.id)) return setStatus(state, event.message.id, "sent");
       return add(state, toItem(state.me, event.message, "sent"));
     case "sendStarted":
@@ -154,16 +159,29 @@ export function conversation(state: ConversationState, event: ConversationEvent)
       return addSystem(state, "info", nudgeSystemLine(event.friendName), event.at);
     case "nudgeReceived":
       return addSystem(state, "nudge", NUDGE_RECEIVED_TEXT, event.at);
-    case "cleared":
-      return { ...state, items: [], clearedAt: event.at, reachedStart: false };
+    case "cleared": {
+      const messages = state.items.filter((i) => i.kind === "message");
+      const newest = messages.length > 0 ? messages[messages.length - 1].createdAt : null;
+      const through =
+        newest !== null && (state.clearedThrough === null || Date.parse(newest) > Date.parse(state.clearedThrough))
+          ? newest
+          : state.clearedThrough;
+      return {
+        ...state,
+        items: [],
+        clearedIds: new Set([...state.clearedIds, ...messages.map((m) => m.id)]),
+        clearedThrough: through,
+        reachedStart: false,
+      };
+    }
   }
 }
 
 /**
- * Where F3 pages back from: the oldest message on screen, else the moment
- * the window was cleared, else null (the newest messages).
+ * Where F3 pages back from: the oldest message on screen, or null (the
+ * newest messages) when the window is empty, e.g. right after Clear Window.
  */
 export function earlierCursor(state: ConversationState): string | null {
   const oldest = state.items.find((i) => i.kind === "message");
-  return oldest ? oldest.createdAt : state.clearedAt;
+  return oldest ? oldest.createdAt : null;
 }

@@ -130,7 +130,7 @@ describe("conversation", () => {
       type: "historyLoaded",
       messages: [msg("a", ANN, "2025-01-01T10:00:00Z"), msg("b", ME, "2025-01-01T10:05:00Z")],
     });
-    const cleared = conversation(shown, { type: "cleared", at: "2025-01-01T10:06:00Z" });
+    const cleared = conversation(shown, { type: "cleared" });
 
     it("empties the window", () => {
       expect(cleared.items).toEqual([]);
@@ -144,8 +144,21 @@ describe("conversation", () => {
       expect(s.items.map((i) => i.id)).toEqual(["c"]);
     });
 
-    it("still lets F3 bring the stored messages back, starting from the clear", () => {
-      expect(earlierCursor(cleared)).toBe("2025-01-01T10:06:00Z");
+    it("keeps out older stored messages that weren't on screen when it was cleared", () => {
+      const s = conversation(cleared, { type: "historyLoaded", messages: [msg("old", ANN, "2025-01-01T09:00:00Z")] });
+      expect(s.items).toEqual([]);
+    });
+
+    it("doesn't bring back a cleared message when its Realtime echo comes late", () => {
+      const sending = conversation(shown, { type: "sendStarted", message: msg("p", ME, "2025-01-01T10:06:00Z") });
+      let s = conversation(sending, { type: "cleared" });
+      s = conversation(s, { type: "messageArrived", message: msg("p", ME, "2025-01-01T10:06:01Z") });
+      s = conversation(s, { type: "sendConfirmed", id: "p" });
+      expect(s.items).toEqual([]);
+    });
+
+    it("lets F3 bring the stored messages back, newest first", () => {
+      expect(earlierCursor(cleared)).toBeNull(); // empty window: page from the newest
       const s = conversation(cleared, {
         type: "earlierLoaded",
         messages: [msg("b", ME, "2025-01-01T10:05:00Z"), msg("a", ANN, "2025-01-01T10:00:00Z")],

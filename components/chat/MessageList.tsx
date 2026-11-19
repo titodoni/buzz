@@ -46,21 +46,26 @@ export function MessageList({
   const scrollRef = logRef ?? ownRef;
   const endRef = useRef<HTMLDivElement>(null);
   const lastIdRef = useRef<string | null>(null);
+  const firstIdRef = useRef<string | null>(null);
   const heightRef = useRef(0);
 
-  // A new newest item scrolls to the end; older ones added above (F3) keep
-  // the reader where they were.
+  // After every render: a new newest item scrolls to the end; older items
+  // added above (F3) keep the reader where they were; anything else (a
+  // status change, a View toggle) leaves the scroll alone. The height is
+  // measured every time so it is never stale.
   useLayoutEffect(() => {
     const el = scrollRef.current;
     const lastId = items.length > 0 ? items[items.length - 1].id : null;
-    if (el && lastId === lastIdRef.current && lastId !== null) {
-      el.scrollTop += el.scrollHeight - heightRef.current;
-    } else {
+    const firstId = items.length > 0 ? items[0].id : null;
+    if (lastId !== lastIdRef.current) {
       endRef.current?.scrollIntoView?.({ block: "end" });
+    } else if (el && firstId !== firstIdRef.current) {
+      el.scrollTop += el.scrollHeight - heightRef.current;
     }
     lastIdRef.current = lastId;
+    firstIdRef.current = firstId;
     heightRef.current = el?.scrollHeight ?? 0;
-  }, [items, scrollRef]);
+  });
 
   return (
     <div

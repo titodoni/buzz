@@ -12,6 +12,9 @@ alter table public.messages add column format jsonb;
 alter table public.messages add constraint messages_format_valid check (
   format is null or (
     jsonb_typeof(format) = 'object'
+    -- all six keys present: a missing one would make its test NULL, and a
+    -- CHECK lets NULL through
+    and format ?& array['font', 'size', 'color', 'bold', 'italic', 'underline']
     -- no keys other than the six
     and format - array['font', 'size', 'color', 'bold', 'italic', 'underline'] = '{}'::jsonb
     and jsonb_typeof(format -> 'font') = 'string'

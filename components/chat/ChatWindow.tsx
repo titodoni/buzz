@@ -264,9 +264,10 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   }, [showEarlier]);
 
   const copyConversation = useCallback(async () => {
-    const text = conversationText(stateRef.current.items, { mine: myName, friend: friendName }, hhmm);
+    const time = view.showTimestamps ? hhmm : null;
+    const text = conversationText(stateRef.current.items, { mine: myName, friend: friendName }, time);
     setNote((await copyText(text)) ? "Conversation copied." : "Couldn't copy the conversation.");
-  }, [myName, friendName]);
+  }, [myName, friendName, view.showTimestamps]);
 
   const copySelection = useCallback(async () => {
     const text = inputRef.current?.selectedText() || window.getSelection()?.toString() || "";
@@ -308,7 +309,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
       items: [
         { label: "Copy", shortcut: "Ctrl+C", onSelect: () => void copySelection() },
         { label: "Select All", onSelect: selectAll },
-        { label: "Clear Window", onSelect: () => dispatch({ type: "cleared", at: new Date().toISOString() }) },
+        { label: "Clear Window", onSelect: () => dispatch({ type: "cleared" }) },
       ],
     },
     {
@@ -432,7 +433,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
             <button type="button" className="ym-button" onClick={() => void setIgnoring(true)}>
               Ignore
             </button>
-            <button type="button" className="ym-button" autoFocus onClick={() => setDialog(null)}>
+            <button type="button" className="ym-button" data-autofocus onClick={() => setDialog(null)}>
               Cancel
             </button>
           </div>

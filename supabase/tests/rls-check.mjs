@@ -74,6 +74,7 @@ await check("format rejects a font Buzz doesn't offer", async () => sendFormatte
 await check("format rejects size 25", async () => sendFormatted(fmt({ size: 25 })), (g) => /check constraint/.test(g));
 await check("format rejects a fractional size", async () => sendFormatted(fmt({ size: 12.5 })), (g) => /check constraint/.test(g));
 await check("format rejects a color that isn't #rrggbb", async () => sendFormatted(fmt({ color: "red;background:url(x)" })), (g) => /check constraint/.test(g));
+await check("format rejects a format with keys missing", async () => sendFormatted(JSON.stringify({ size: 12 })), (g) => /check constraint/.test(g));
 await check("format rejects an extra key", async () => sendFormatted(fmt({ background: "#000000" })), (g) => /check constraint/.test(g));
 await check("receiver B cannot change a message's format", async () => { await as(B); await c.query(`update messages set format=$2::jsonb where receiver_id=$1`, [B, fmt({ size: 24 })]); return "updated"; }, (g) => g.startsWith("ERROR"));
 await c.query("rollback");
