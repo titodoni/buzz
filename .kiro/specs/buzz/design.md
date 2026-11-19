@@ -672,9 +672,10 @@ Stop Ignoring) and the list in Contacts > Ignore List....
   (`SETTLE_MS`).
 - **Toast** is a frameless always-on-top Tauri window labelled `toast` at
   `/toast?friendId&text`, placed at the bottom-right of the primary monitor's
-  work area with a 12 px margin. The page closes itself after 5 s
-  (`TOAST_MS`); Escape closes it; a click opens the chat. A newer Toast
-  replaces the old one. It uses no plugin and no new dependency. In a browser
+  work area with a 12 px margin. Rust closes it 5 s after showing it (so a page
+  that fails to load can't leave it up); Escape closes it sooner; a click opens
+  the chat. A newer Toast replaces the old one, so when several friends come
+  online in the same moment only the last is announced. It uses no plugin and no new dependency. In a browser
   (no Tauri) an in-window Toast is shown instead. On Linux the window manager
   keeps the window at least 260x200 instead of 260x72, so Rust reads the real
   size back 250 ms after showing it and places it again; the content stays
@@ -686,10 +687,16 @@ Stop Ignoring) and the list in Contacts > Ignore List....
   `set_tray_status` when `myState` changes. Closing the Buddy List window is
   intercepted (`CloseRequested`) and hides it. Exit emits
   `buzz://exit-requested`; the Buddy List goes Offline and calls `quit_app`,
-  and Rust quits after 1.5 s regardless. Linux AppIndicator does not report
+  and Rust quits after 1.5 s regardless. If the desktop has no tray (building
+  it fails), closing the Buddy List closes it as before, so the user is never
+  left with a hidden window and no way back. Linux AppIndicator does not report
   clicks on the icon itself, so there "Open Buzz" in the menu is how the user
   gets the Buddy List back (Req 16.9); Windows and macOS also show it on a
   left click.
+- **Window permissions** are split by window (`src-tauri/capabilities/`): the
+  Buddy List gets window controls and shell events, chat windows get window
+  controls, the Buzz! shake and clearing the flash, and the Toast may only
+  close itself. Buzz's own commands validate every friend id in Rust.
 - **Sounds** are short original Web Audio cues (`lib/alerts/sounds.ts`:
   message, friend online, sign in), sharing the Buzz sound's `AudioContext`.
 - **Preferences.** Until Section 28, the sound and Toast switches are constants
@@ -697,9 +704,12 @@ Stop Ignoring) and the list in Contacts > Ignore List....
 - **Checked in the real desktop app** (Linux, X11): the Toast position, size,
   text and 5 s close; a message from a friend with no open window opens it
   unfocused with the urgency hint set; opening a chat from the list sets no
-  hint; closing the Buddy List hides it while the app keeps running. Not
-  checked: the tray itself (no tray host in the test display), Windows and
-  macOS.
+  hint; closing the Buddy List hides it while the app keeps running, and while
+  hidden it still receives messages (the chat window opens on its own) and
+  online changes (the Toast still shows). In dev mode only (`npm run tauri
+  dev`), the first hide after start is undone about 2 s later; the build with
+  the static export embedded does not do this. Not checked: the tray itself
+  (no tray host in the test display), Windows and macOS.
 
 ### Chat window menus, formatting, history (Requirement 17)
 

@@ -1,0 +1,18 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "chat",
+  "description": "Chat windows: window controls, the Buzz! shake, and clearing the taskbar flash",
+  "windows": [
+    "chat-*"
+  ],
+  "permissions": [
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-position",
+    "core:window:allow-outer-position",
+    "core:window:allow-is-maximized",
+    "core:window:allow-request-user-attention"
+  ]
+}

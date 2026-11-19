@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Duration;
 
 use tauri::image::Image;
@@ -24,6 +25,14 @@ const TOAST_PATH: &str = "toast/";
 const TOAST_SIZE: (u32, u32) = (260, 72);
 const TOAST_MARGIN: i32 = 12;
 const MAX_TOAST_TEXT_LEN: usize = 200;
+/// How long a toast stays on screen (Req 16.4), counted from when it is shown.
+const TOAST_DURATION: Duration = Duration::from_secs(5);
+/// How long after showing the toast its real size is read back.
+const TOAST_SETTLE: Duration = Duration::from_millis(250);
+/// Which toast is current, so an old toast's timer can't close a newer one.
+static TOAST_GENERATION: AtomicU64 = AtomicU64::new(0);
+/// False when the desktop has no tray; then closing the Buddy List really closes it.
+static HAS_TRAY: AtomicBool = AtomicBool::new(false);
 const TRAY_ID: &str = "buzz-tray";
 /// Events the shell sends to the Buddy List window.
 const EVENT_SET_STATUS: &str = "buzz://set-status";
@@ -172,7 +181,7 @@ fn flash_chat_window(app: AppHandle, friend_id: String) -> Result<(), String> {
 }
 
 /// Shows the "<name> is now online" toast at the bottom-right of the primary
-/// screen for 5 seconds (the page closes itself); a newer toast replaces it.
+/// screen for 5 seconds; a newer toast replaces it.
 #[tauri::command]
 fn show_toast(app: AppHandle, friend_id: String, text: String) -> Result<(), String> {
     if !is_valid_friend_id(&friend_id) {
@@ -209,16 +218,20 @@ fn show_toast(app: AppHandle, friend_id: String, text: String) -> Result<(), Str
             f64::from(TOAST_SIZE.1),
         ))
         .map_err(|e| e.to_string())?;
-    // GTK applies the size asynchronously, so read it back after a moment.
+    let generation = TOAST_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
     std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(TOAST_SETTLE_MS));
+        // GTK applies the size asynchronously, so read it back after a moment.
+        std::thread::sleep(TOAST_SETTLE);
         let _ = fit_to_actual_size(&window);
+        // Close it here rather than in the page, so a page that fails to
+        // load can't leave it on screen.
+        std::thread::sleep(TOAST_DURATION.saturating_sub(TOAST_SETTLE));
+        if TOAST_GENERATION.load(Ordering::SeqCst) == generation {
+            let _ = window.destroy();
+        }
     });
     Ok(())
 }
-
-/// How long after showing the toast its real size is read back.
-const TOAST_SETTLE_MS: u64 = 250;
 
 /// Re-places the toast by the size the window system really gave it.
 fn fit_to_actual_size(window: &tauri::WebviewWindow) -> Result<(), String> {
@@ -363,13 +376,17 @@ fn build_tray(app: &AppHandle) -> tauri::Result<TrayIcon> {
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            build_tray(app.handle())?;
+            // Some Linux desktops have no tray; Buzz still runs, without hide-to-tray.
+            match build_tray(app.handle()) {
+                Ok(_) => HAS_TRAY.store(true, Ordering::SeqCst),
+                Err(e) => eprintln!("Buzz: no tray icon ({e}); closing the Buddy List quits"),
+            }
             Ok(())
         })
         .on_window_event(|window, event| {
             // Closing the Buddy List hides it to the tray; Buzz keeps running (Req 16.7).
             if let WindowEvent::CloseRequested { api, .. } = event {
-                if window.label() == MAIN_LABEL {
+                if window.label() == MAIN_LABEL && HAS_TRAY.load(Ordering::SeqCst) {
                     api.prevent_close();
                     let _ = window.hide();
                 }

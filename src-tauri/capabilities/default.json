@@ -1,21 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Window controls, taskbar attention, and shell events for the Buddy List, chat, and toast windows",
+  "description": "Buddy List window: window controls and the tray's shell events",
   "windows": [
-    "main",
-    "chat-*",
-    "toast"
+    "main"
   ],
   "permissions": [
     "core:window:allow-minimize",
     "core:window:allow-toggle-maximize",
     "core:window:allow-close",
     "core:window:allow-start-dragging",
-    "core:window:allow-set-position",
-    "core:window:allow-outer-position",
-    "core:window:allow-is-maximized",
-    "core:window:allow-request-user-attention",
     "core:event:allow-listen",
     "core:event:allow-unlisten"
   ]

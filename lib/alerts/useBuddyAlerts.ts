@@ -19,7 +19,7 @@ import { playMessageSound, playOnlineSound, playSignInSound } from "./sounds"
  * syncs; announcements start only after this long (Req 16.4).
  */
 const SETTLE_MS = 8_000
-/** How long an in-window toast stays (the desktop toast closes itself after the same time). */
+/** How long an in-window toast stays (Rust closes the desktop toast after the same time). */
 export const TOAST_MS = 5_000
 
 // Sounds and Toasts are always on until Preferences (Section 28) adds the switches.
@@ -72,13 +72,15 @@ export function useBuddyAlerts(input: {
     if (alerts.sound) playOnlineSound()
     for (const id of alerts.toastFor) {
       const text = `${latest.current.friendNames.get(id) ?? "A friend"} is now online`
-      void showToast(id, text).then((shown) => {
-        if (shown) return
-        // Browser fallback: a toast inside the Buddy List window.
-        const key = ++nextKey.current
-        setToasts((t) => [...t, { key, friendId: id, text }])
-        setTimeout(() => setToasts((t) => t.filter((x) => x.key !== key)), TOAST_MS)
-      })
+      // A failed desktop toast falls back to one inside the Buddy List window.
+      void showToast(id, text)
+        .catch(() => false)
+        .then((shown) => {
+          if (shown) return
+          const key = ++nextKey.current
+          setToasts((t) => [...t, { key, friendId: id, text }])
+          setTimeout(() => setToasts((t) => t.filter((x) => x.key !== key)), TOAST_MS)
+        })
     }
   }, [input.presence, settled])
 
