@@ -301,14 +301,15 @@ running desktop app instances (or two app windows), per `tech.md`.
   - [x]* 23.6 Extend `npm run test:rls` with checks for the three new tables: only the owner can read or change their rows, and a group delete returns friends to "Friends"
     - _Requirements: 14.2, 14.3, 15.1_
 
-- [ ] 24. Ignore list
-  - [ ] 24.1 Write the migration that adds "the receiver has not ignored the sender" to the `messages` insert policy, the friend-request insert policy, and the chat and inbox Realtime authorization policies
+- [x] 24. Ignore list
+  - [x] 24.1 Write the migration that adds "the receiver has not ignored the sender" to the `messages` insert policy, the friend-request insert policy, and the chat and inbox Realtime authorization policies
     - _Requirements: 15.2, 15.3, 15.4_
-  - [ ] 24.2 Build the Ignore API and its entry points: Ignore in the friend context menu and in the chat Actions menu, with the list and a Remove button in Preferences
+  - [x] 24.2 Build the Ignore API and its entry points: Ignore in the friend context menu and in the chat Actions menu, with the list and a Remove button in Preferences
+    - Built in the friend menu and Contacts > Ignore List...; the chat Actions entry comes with 26.5 and the list moves into Preferences with 28.4
     - _Requirements: 15.1, 15.6, 15.8_
-  - [ ] 24.3 Enforce on the client what the database cannot: show an ignored person's presence as Offline to that person, drop their Nudges, and never reveal that they were ignored
+  - [x] 24.3 Enforce on the client what the database cannot: show an ignored person's presence as Offline to that person, drop their Nudges, and never reveal that they were ignored
     - _Requirements: 15.3, 15.5, 15.7_
-  - [ ]* 24.4 Extend `npm run test:rls`: an ignored sender cannot insert a message or friend request, and removing the person from the list restores both
+  - [x]* 24.4 Extend `npm run test:rls`: an ignored sender cannot insert a message or friend request, and removing the person from the list restores both
     - _Requirements: 15.2, 15.4, 15.6_
 
 - [ ] 25. Incoming messages and alerts

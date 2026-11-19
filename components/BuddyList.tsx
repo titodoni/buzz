@@ -15,6 +15,8 @@ import { MenuBar, type MenuDef } from "@/components/friends/MenuBar"
 import { PendingRequests } from "@/components/friends/PendingRequests"
 import { getProfile, useFriends, type PublicProfile } from "@/lib/friends/api"
 import { createGroup, useGroups } from "@/lib/friends/groups"
+import { unignoreUser, useIgnoreList, useIgnorers } from "@/lib/friends/ignore"
+import { hideIgnorers } from "@/lib/realtime/hideIgnorers"
 import { useBuddyView } from "@/lib/friends/useBuddyView"
 import { isValidEmail } from "@/lib/validation/profile"
 import { useSession } from "@/lib/auth/session"
@@ -24,7 +26,7 @@ import { useNudgeInbox } from "@/lib/realtime/inbox"
 import { usePresenceTracker } from "@/lib/realtime/presence"
 import { openChatWindow } from "@/lib/tauri/windows"
 
-type Panel = "search" | "pick" | "about" | "newGroup" | null
+type Panel = "search" | "pick" | "about" | "newGroup" | "ignore" | null
 
 export function BuddyList() {
   const { user } = useSession()
@@ -40,6 +42,8 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
   const [note, setNote] = useState<string | null>(null)
   const [statusMenu, setStatusMenu] = useState(false)
   const { groups, memberships, reload: reloadGroups } = useGroups(me)
+  const { ignored, ignoredIds, reload: reloadIgnore } = useIgnoreList(me)
+  const ignorers = useIgnorers(me)
   const { view, toggleGroup, setShowOffline } = useBuddyView()
   const [search, setSearch] = useState("")
   const [addQuery, setAddQuery] = useState("")
@@ -61,10 +65,13 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
   const { myState, setAvailable, setBusy, setInvisible, friendsPresence } = usePresenceTracker(me, friendIds, {
     startInvisible,
   })
+  // People who ignore me appear Offline (Req 15.5, docs/adr/0009).
+  const visiblePresence = useMemo(() => hideIgnorers(friendsPresence, ignorers), [friendsPresence, ignorers])
   const { unreadBySender } = useOfflineDelivery(me)
   // A nudge from an accepted friend pops their chat window open and shakes it.
   useNudgeInbox(me, (sender) => {
-    if (friendIds.includes(sender)) void openChatWindow(sender, { nudge: true })
+    // Nudges from someone I ignore are dropped (Req 15.3); the server blocks them too.
+    if (friendIds.includes(sender) && !ignoredIds.has(sender)) void openChatWindow(sender, { nudge: true })
   })
   const totalUnread = Object.values(unreadBySender).reduce((a, b) => a + b, 0)
 
@@ -109,6 +116,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
       items: [
         { label: "Add a Contact", onSelect: () => openAddFriend("") },
         { label: "New Group...", onSelect: () => openNewGroup() },
+        { label: "Ignore List...", onSelect: () => setPanel("ignore") },
         {
           label: "Show Offline Contacts",
           checked: view.showOffline,
@@ -245,8 +253,10 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
         friends={friends}
         groups={groups}
         memberships={memberships}
-        presence={friendsPresence}
+        presence={visiblePresence}
         unreadBySender={unreadBySender}
+        ignoredIds={ignoredIds}
+        onIgnoreChanged={reloadIgnore}
         view={view}
         search={search}
         onToggleGroup={toggleGroup}
@@ -279,6 +289,40 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
       ) : null}
 
       {panel === "about" ? <AboutDialog onClose={() => setPanel(null)} /> : null}
+      {panel === "ignore" ? (
+        <section
+          aria-label="Ignore List"
+          className="border-t px-2 py-1"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setPanel(null)
+          }}
+        >
+          <h2 className="m-0 text-xs font-bold">Ignore List</h2>
+          <p className="m-0 text-xs">People here can&apos;t message you, Buzz you, or send you friend requests.</p>
+          {ignored.length === 0 ? <p className="m-0 mt-1 text-xs">You&apos;re not ignoring anyone.</p> : null}
+          <ul className="m-0 mt-1 list-none p-0">
+            {ignored.map((p) => (
+              <li key={p.id} className="ym-row flex items-center gap-1 px-1 py-1">
+                <span className="min-w-0 flex-1 truncate">{p.displayName}</span>
+                <button
+                  type="button"
+                  className="ym-button"
+                  onClick={async () => {
+                    const res = await unignoreUser(me, p.id)
+                    setNote(res.ok ? `You're no longer ignoring ${p.displayName}.` : res.message)
+                    reloadIgnore()
+                  }}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button type="button" className="ym-button mt-1" autoFocus onClick={() => setPanel(null)}>
+            Close
+          </button>
+        </section>
+      ) : null}
 
 
     </WindowFrame>

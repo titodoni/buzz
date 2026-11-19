@@ -22,6 +22,7 @@ Buzz does not use end-to-end encryption and does not claim to.
 | Supabase schema, RLS, Realtime policies | Applied and checked |
 | Availability: Available, Busy, Invisible, presets, custom status; one icon everywhere | Built; checked with two signed-in users |
 | Buddy List groups, search box, Add a Friend, Show Offline Contacts | Built; checked with three users |
+| Ignore list: blocks messages, Buzz!, and friend requests; ignored person sees you Offline | Built; checked with two users |
 | Sign-in options, forgot password by emailed code, About Buzz | Built; recovery email needs the template change in [supabase/README.md](supabase/README.md) and a real inbox to test |
 | Responsive windows (220x400 up to maximized) | Built; see [docs/responsive-checks.md](docs/responsive-checks.md) |
 | Installer config (task 17.1) and two-user integration tests | Not yet |

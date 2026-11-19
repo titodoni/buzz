@@ -155,8 +155,14 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "is_friend_of_me":
+            "ignorers_of_me":
+{ Args: Record<PropertyKey, never>; Returns: string[]
+                           },
+"is_friend_of_me":
 { Args: { "other": string }; Returns: boolean
+                           },
+"is_ignored_by":
+{ Args: { "owner": string }; Returns: boolean
                            },
 "search_users":
 { Args: { "q": string }; Returns: {

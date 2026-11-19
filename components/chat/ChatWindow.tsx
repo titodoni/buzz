@@ -13,6 +13,7 @@ import { conversation, emptyConversation, type MessageRow } from "@/lib/chat/con
 import { loadHistory, markConversationRead, sendMessage } from "@/lib/chat/api";
 import { useChatChannel } from "@/lib/realtime/chat";
 import { useFriendPresence } from "@/lib/realtime/presence";
+import { isIgnoredByMe, useIgnorers } from "@/lib/friends/ignore";
 import { playNudgeSound, shakeChatWindow } from "@/lib/nudge/effects";
 import { getProfile, type PublicProfile } from "@/lib/friends/api";
 import { onSend as typingOnSend, type TypingState } from "@/lib/typing/state";
@@ -37,13 +38,29 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
 
   const friendName = friend?.displayName ?? "Your friend";
   const myName = mine?.displayName ?? "Me";
-  const presence = useFriendPresence(friendId);
+  const livePresence = useFriendPresence(friendId);
+  // A friend who ignores me looks Offline (Req 15.5); then the Nudge button is off too.
+  const ignorers = useIgnorers(me);
+  const presence = ignorers.has(friendId) ? "offline" : livePresence;
+  // Buzz! and typing from someone I ignore are dropped here too (Req 15.3); the server blocks them first.
+  const ignoredRef = useRef(false);
+  useEffect(() => {
+    let active = true;
+    const check = () => void isIgnoredByMe(me, friendId).then((v) => { if (active) ignoredRef.current = v; });
+    check();
+    window.addEventListener("focus", check);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", check);
+    };
+  }, [me, friendId]);
   const presenceRef = useRef(presence);
   useEffect(() => {
     presenceRef.current = presence;
   });
 
   const receiveNudge = useCallback(() => {
+    if (ignoredRef.current) return;
     dispatch({ type: "nudgeReceived", at: new Date().toISOString() });
     playNudgeSound();
     void shakeChatWindow(rootRef.current);
@@ -127,6 +144,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   );
 
   const onTyping = useCallback((signal: TypingSignal, at: number) => {
+    if (ignoredRef.current) return;
     setFriendTyping((s) => receiveTypingSignal(s, signal, at));
   }, []);
 

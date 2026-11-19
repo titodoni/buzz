@@ -647,7 +647,10 @@ authorization policies each add "the receiver has not ignored the sender". An
 ignored person gets a generic "couldn't send" and never a reason (15.7).
 **Hiding presence cannot be enforced**: `presence:global` is a public channel
 (docs/adr/0003), so the ignored person's app is simply told to show the user as
-Offline, and a modified client could still see them. See `docs/adr/0009`.
+Offline, and a modified client could still see them. See `docs/adr/0009`, which also covers the `is_ignored_by` and
+`ignorers_of_me` helpers. Until Preferences (Section 28) and the chat menus
+(Section 26) exist, Ignore lives in the friend right-click menu (Ignore... /
+Stop Ignoring) and the list in Contacts > Ignore List....
 
 ### Incoming messages and alerts (Requirement 16)
 

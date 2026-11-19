@@ -4,6 +4,7 @@ import { removeFriend, type FriendEntry } from "@/lib/friends/api"
 import { arrangeBuddyList, DEFAULT_GROUP_NAME, type ArrangedGroup } from "@/lib/friends/arrange"
 import type { BuddyView } from "@/lib/friends/buddyView"
 import { deleteGroup, moveFriend, renameGroup, type ContactGroup, type GroupMembership } from "@/lib/friends/groups"
+import { ignoreUser, unignoreUser } from "@/lib/friends/ignore"
 import type { PresenceState } from "@/lib/presence/state"
 import { hasNowPlaying, shouldShowField } from "@/lib/profile/render"
 import { openChatWindow } from "@/lib/tauri/windows"
@@ -20,6 +21,7 @@ type Overlay =
   | { kind: "move"; friend: FriendEntry }
   | { kind: "rename"; group: ContactGroup }
   | { kind: "deleteGroup"; group: ContactGroup }
+  | { kind: "ignore"; friend: FriendEntry }
   | null
 
 const MENU_ITEM = "ym-row block w-full cursor-pointer border-0 bg-transparent px-3 py-1 text-left"
@@ -33,6 +35,9 @@ export interface FriendListProps {
   presence?: Record<string, PresenceState>
   /** Waiting messages per sender id, shown as "(n)" after the name. */
   unreadBySender?: Record<string, number>
+  /** People I have ignored (their menu offers Stop Ignoring). */
+  ignoredIds: ReadonlySet<string>
+  onIgnoreChanged: () => void
   view: BuddyView
   /** Text from the Buddy List search box. */
   search: string
@@ -48,6 +53,8 @@ export function FriendList({
   memberships,
   presence = {},
   unreadBySender = {},
+  ignoredIds,
+  onIgnoreChanged,
   view,
   search,
   onToggleGroup,
@@ -95,6 +102,13 @@ export function FriendList({
     const name = groupId === null ? DEFAULT_GROUP_NAME : (groups.find((g) => g.id === groupId)?.name ?? "")
     setNote(`Moved ${f.displayName} to ${name}.`)
     onGroupsChanged()
+  }
+  async function doIgnore(f: FriendEntry, ignore: boolean) {
+    const res = ignore ? await ignoreUser(me, f.id) : await unignoreUser(me, f.id)
+    setOverlay(null)
+    if (!res.ok) return setNote(res.message)
+    setNote(ignore ? `You're ignoring ${f.displayName}.` : `You're no longer ignoring ${f.displayName}.`)
+    onIgnoreChanged()
   }
   async function doRename(e: FormEvent, group: ContactGroup) {
     e.preventDefault()
@@ -222,6 +236,17 @@ export function FriendList({
             </button>
           </li>
           <li role="none">
+            {ignoredIds.has(overlay.friend.id) ? (
+              <button role="menuitem" type="button" className={MENU_ITEM} onClick={() => void doIgnore(overlay.friend, false)}>
+                Stop Ignoring
+              </button>
+            ) : (
+              <button role="menuitem" type="button" className={MENU_ITEM} onClick={() => setOverlay({ kind: "ignore", friend: overlay.friend })}>
+                Ignore...
+              </button>
+            )}
+          </li>
+          <li role="none">
             <button role="menuitem" type="button" className={MENU_ITEM} onClick={() => setOverlay({ kind: "confirm", friend: overlay.friend })}>
               Remove Friend
             </button>
@@ -336,6 +361,29 @@ export function FriendList({
             </button>
             <button type="button" className="ym-button" autoFocus onClick={() => setOverlay(null)}>
               Keep
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {overlay?.kind === "ignore" ? (
+        <div
+          role="alertdialog"
+          aria-label={`Ignore ${overlay.friend.displayName}`}
+          className="m-2 border p-2"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOverlay(null)
+          }}
+        >
+          <p className="m-0 text-xs">
+            Ignore {overlay.friend.displayName}? They won&apos;t be able to message you, Buzz you, or send you friend
+            requests, and they&apos;ll see you as offline. Buzz won&apos;t tell them.
+          </p>
+          <div className="mt-1 flex gap-1">
+            <button type="button" className="ym-button" onClick={() => void doIgnore(overlay.friend, true)}>
+              Ignore
+            </button>
+            <button type="button" className="ym-button" autoFocus onClick={() => setOverlay(null)}>
+              Cancel
             </button>
           </div>
         </div>
