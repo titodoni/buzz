@@ -1,5 +1,7 @@
 "use client"
 import { useCallback, useEffect, useState } from "react"
+import type { RealtimeChannel } from "@supabase/supabase-js"
+import { closeChannel, openChannel } from "@/lib/realtime/channel"
 import { getSupabase } from "@/lib/supabase/browser-client"
 import { groupNameError } from "./groupName"
 
@@ -50,8 +52,33 @@ export function useGroups(me: string): {
     }
   }, [me, tick])
 
+  // Changes made in my other app instances arrive live (rows are RLS-filtered to me).
+  useEffect(() => {
+    if (!me) return
+    const topic = `groups:${me}`
+    let cancelled = false
+    let opened: RealtimeChannel | null = null
+    void (async () => {
+      const channel = await openChannel(topic, undefined, () => cancelled)
+      if (!channel) return
+      opened = channel
+      const filter = `owner_id=eq.${me}`
+      channel
+        .on("postgres_changes", { event: "*", schema: "public", table: "contact_groups", filter }, reload)
+        .on("postgres_changes", { event: "*", schema: "public", table: "contact_group_members", filter }, reload)
+        .subscribe()
+    })()
+    return () => {
+      cancelled = true
+      if (opened) void closeChannel(topic, opened)
+    }
+  }, [me, reload])
+
   return { groups, memberships, reload }
 }
+
+/** Postgres unique-violation code: a group with that name appeared meanwhile. */
+const UNIQUE_VIOLATION = "23505"
 
 export async function createGroup(me: string, name: string, existing: readonly ContactGroup[]): Promise<GroupResult> {
   const problem = groupNameError(name, existing.map((g) => g.name))
@@ -60,6 +87,7 @@ export async function createGroup(me: string, name: string, existing: readonly C
   const { error } = await getSupabase()
     .from("contact_groups")
     .insert({ owner_id: me, name: name.trim(), position })
+  if (error?.code === UNIQUE_VIOLATION) return { ok: false, message: `You already have a group called "${name.trim()}".` }
   return error ? { ok: false, message: MSG_FAILED } : { ok: true }
 }
 
@@ -71,6 +99,7 @@ export async function renameGroup(group: ContactGroup, name: string, existing: r
   )
   if (problem) return { ok: false, message: problem }
   const { error } = await getSupabase().from("contact_groups").update({ name: name.trim() }).eq("id", group.id)
+  if (error?.code === UNIQUE_VIOLATION) return { ok: false, message: `You already have a group called "${name.trim()}".` }
   return error ? { ok: false, message: MSG_FAILED } : { ok: true }
 }
 

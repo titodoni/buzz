@@ -5,6 +5,8 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react"
 export interface MenuItemDef {
   label: string
   onSelect: () => void
+  /** Set for an on/off item: it is announced as a checkbox and shows a tick when on. */
+  checked?: boolean
 }
 export interface MenuDef {
   label: string
@@ -18,7 +20,7 @@ export function MenuBar({ menus }: { menus: MenuDef[] }) {
 
   useEffect(() => {
     if (openIndex === null) return
-    rootRef.current?.querySelector<HTMLElement>("[role=menu] [role=menuitem]")?.focus()
+    rootRef.current?.querySelector<HTMLElement>("[role=menu] [role=menuitem], [role=menu] [role=menuitemcheckbox]")?.focus()
     const onDown = (e: MouseEvent) => {
       // event targets are typed EventTarget; a mousedown target is always a Node
       if (!rootRef.current?.contains(e.target as Node)) setOpenIndex(null)
@@ -28,7 +30,7 @@ export function MenuBar({ menus }: { menus: MenuDef[] }) {
   }, [openIndex])
 
   function onMenuKeyDown(e: KeyboardEvent<HTMLUListElement>, i: number) {
-    const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>("[role=menuitem]"))
+    const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>("[role=menuitem], [role=menuitemcheckbox]"))
     const at = document.activeElement instanceof HTMLElement ? items.indexOf(document.activeElement) : -1
     if (e.key === "Escape") {
       e.preventDefault()
@@ -80,14 +82,19 @@ export function MenuBar({ menus }: { menus: MenuDef[] }) {
               {m.items.map((item) => (
                 <li key={item.label} role="none">
                   <button
-                    role="menuitem"
+                    role={item.checked === undefined ? "menuitem" : "menuitemcheckbox"}
+                    aria-checked={item.checked}
                     type="button"
-                    className="ym-row block w-full cursor-pointer border-0 bg-transparent px-3 py-1 text-left"
+                    className="ym-row flex w-full cursor-pointer items-center border-0 bg-transparent px-3 py-1 text-left"
                     onClick={() => {
                       setOpenIndex(null)
                       item.onSelect()
                     }}
                   >
+                    {/* Fixed-width tick column, so the label never moves when toggled. */}
+                    <span aria-hidden="true" className="inline-block w-4 shrink-0">
+                      {item.checked ? "✓" : ""}
+                    </span>
                     {item.label}
                   </button>
                 </li>

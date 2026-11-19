@@ -629,6 +629,16 @@ group stays open. Group actions: Contacts > New Group..., right-click a group
 header for Rename Group... or Delete Group, and right-click a friend for Move
 to Group....
 
+Decisions from review: a membership may only name an accepted friend
+(`is_friend_of_me` in the insert and update policies, migration
+`20250101000900`); unfriending keeps the membership row, which is private to
+the owner and ignored while they aren't friends, so a re-added friend comes
+back in the same group; `ignored_users` deliberately allows non-friends,
+because strangers can still send friend requests. Group changes stream to the
+user's other app instances (`contact_groups` and `contact_group_members` are
+in the Realtime publication; `useGroups` subscribes filtered by `owner_id`).
+"Show Offline Contacts" is a `menuitemcheckbox` with `aria-checked`.
+
 ### Ignore list (Requirement 15)
 
 Enforced by Postgres where the database can enforce it: the `messages` insert

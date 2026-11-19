@@ -258,12 +258,25 @@ export function FriendList({
         </ul>
       ) : null}
       {overlay?.kind === "move" ? (
-        <div role="dialog" aria-label={`Move ${overlay.friend.displayName} to a group`} className="m-2 border p-2">
+        <div
+          role="dialog"
+          aria-label={`Move ${overlay.friend.displayName} to a group`}
+          className="m-2 border p-2"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOverlay(null)
+          }}
+        >
           <p className="m-0 text-xs font-bold">Move {overlay.friend.displayName} to:</p>
           <ul className="m-0 mt-1 list-none p-0">
-            {[{ id: null as string | null, name: DEFAULT_GROUP_NAME }, ...groups].map((g) => (
+            {[{ id: null as string | null, name: DEFAULT_GROUP_NAME }, ...groups].map((g, i) => (
               <li key={viewKey(g.id)}>
-                <button type="button" className={MENU_ITEM} onClick={() => void doMove(overlay.friend, g.id)}>
+                <button
+                  type="button"
+                  className={MENU_ITEM}
+                  // Focus lands in the dialog, so keyboard users don't have to Tab past the list.
+                  autoFocus={i === 0}
+                  onClick={() => void doMove(overlay.friend, g.id)}
+                >
                   {g.name}
                 </button>
               </li>

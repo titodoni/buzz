@@ -110,8 +110,8 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
         { label: "Add a Contact", onSelect: () => openAddFriend("") },
         { label: "New Group...", onSelect: () => openNewGroup() },
         {
-          // A tick shows the current setting (Req 14.8).
-          label: `${view.showOffline ? "✓ " : ""}Show Offline Contacts`,
+          label: "Show Offline Contacts",
+          checked: view.showOffline,
           onSelect: () => setShowOffline(!view.showOffline),
         },
       ],
@@ -168,15 +168,15 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
           You have {totalUnread} offline {totalUnread === 1 ? "message" : "messages"}
         </p>
       ) : null}
-      <div className="flex items-center gap-1 border-b px-2 py-1" role="toolbar" aria-label="Buddy List tools">
+      <div className="flex flex-wrap items-center gap-1 border-b px-2 py-1" role="toolbar" aria-label="Buddy List tools">
         <button
           type="button"
           className="ym-button shrink-0 px-2"
+          style={{ minHeight: 28 }}
           aria-expanded={panel === "search"}
-          title="Add a Friend"
           onClick={() => (panel === "search" ? setPanel(null) : openAddFriend(""))}
         >
-          + Add
+          + Add a Friend
         </button>
         <input
           type="search"
@@ -194,6 +194,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
             }
           }}
           className="min-w-0 flex-1"
+          style={{ minHeight: 28, minWidth: 96 }}
         />
       </div>
       {panel === "search" ? (
