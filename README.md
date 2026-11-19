@@ -145,10 +145,26 @@ sound are verified by running the app.
 npm run tauri build
 ```
 
-Tauri writes `.msi`/`.exe` (Windows), `.deb`/`.AppImage` (Linux), or
-`.dmg`/`.app` (macOS) to `src-tauri/target/release/bundle/`. Build on
-each target OS. The app icons in `src-tauri/icons/` are placeholders;
-replace them with `npm run tauri icon <source.png>`.
+Tauri writes `.msi`/`.exe` (Windows), `.deb`/`.rpm`/`.AppImage` (Linux), or
+`.dmg`/`.app` (macOS) to `src-tauri/target/release/bundle/`. Each OS's
+installers must be built on that OS. The build bakes in
+`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from
+`.env`.
+
+Linux packages built locally need the glibc of the machine that built them
+(a build on Ubuntu 26.04 needs glibc 2.39, so Ubuntu 24.04 or newer). For
+older distributions, build on an older system, as the CI does.
+
+**Beta builds for all three systems:** `.github/workflows/beta-build.yml`
+runs the checks, then builds on Windows, macOS (Apple Silicon and Intel), and
+Ubuntu 22.04, and attaches the installers to a draft pre-release. Start it
+from the Actions tab or by pushing a tag like `v0.1.0-beta.1`. It needs the
+two `NEXT_PUBLIC_SUPABASE_*` values as repository secrets. The builds are not
+code signed; testers follow [docs/beta-install.md](docs/beta-install.md).
+
+App icons: `python3 scripts/gen-app-icon.py` draws `src-tauri/icons/app-icon.png`
+(original art), and `npx tauri icon src-tauri/icons/app-icon.png` makes
+every size.
 
 ## Project layout
 

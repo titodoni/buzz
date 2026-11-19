@@ -1,0 +1,87 @@
+# Builds Buzz installers for beta testers on Windows, macOS, and Linux, and
+# attaches them to a draft pre-release on GitHub. Follows the Tauri guide:
+# https://v2.tauri.app/distribute/pipelines/github/
+#
+# Run it from the Actions tab ("Run workflow"), or push a tag like v0.1.0-beta.1.
+# Needs two repository secrets (Settings > Secrets and variables > Actions):
+#   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+# Both are public by design (they ship inside the app); the service key is
+# never used here.
+#
+# The builds are not code signed: Windows shows a SmartScreen warning and
+# macOS blocks the app until the tester allows it (see docs/beta-install.md).
+name: beta-build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  checks:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+
+  build:
+    needs: checks
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest # Apple Silicon (M1 and later)
+            args: --target aarch64-apple-darwin
+          - platform: macos-latest # Intel Macs
+            args: --target x86_64-apple-darwin
+          - platform: ubuntu-22.04 # the oldest supported glibc, so the packages run on more distros
+            args: ""
+          - platform: windows-latest
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Linux build packages
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - run: npm ci
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+        with:
+          tagName: ${{ github.ref_type == 'tag' && github.ref_name || 'beta-v__VERSION__' }}
+          releaseName: "Buzz __VERSION__ (beta)"
+          releaseBody: "Beta build for testers. Not code signed yet; see docs/beta-install.md for how to install on each system."
+          releaseDraft: true
+          prerelease: true
+          args: ${{ matrix.args }}

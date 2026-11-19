@@ -39,6 +39,11 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "publisher": "Buzz",
+    "copyright": "© 2026 the Buzz authors. Not affiliated with Yahoo.",
+    "category": "SocialNetworking",
+    "shortDescription": "Chat with your friends, classic messenger style",
+    "longDescription": "Buzz brings back the classic desktop messenger: a buddy list that shows who is online, one window per chat, status messages, emoticons, and the Buzz! nudge."
   }
 }
