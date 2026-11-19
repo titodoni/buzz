@@ -312,21 +312,21 @@ running desktop app instances (or two app windows), per `tech.md`.
   - [x]* 24.4 Extend `npm run test:rls`: an ignored sender cannot insert a message or friend request, and removing the person from the list restores both
     - _Requirements: 15.2, 15.4, 15.6_
 
-- [ ] 25. Incoming messages and alerts
-  - [ ] 25.1 Implement the pure `lib/alerts/plan.ts`: `incomingMessagePlan` (open window, flash, sound, from window state, focus, and preferences) and `friendOnlinePlan` (Toast and sound when a friend goes from Offline to Available)
+- [x] 25. Incoming messages and alerts
+  - [x] 25.1 Implement the pure `lib/alerts/plan.ts`: `incomingMessagePlan` (open window, flash, sound, from window state, focus, and preferences) and `friendOnlineAlerts` (Toast and sound when a friend goes from Offline to Available)
     - No I/O; pure functions only
     - _Requirements: 16.1, 16.2, 16.4, 16.10_
-  - [ ]* 25.2 Write tests: a closed window opens unfocused with a flash, a focused window does nothing, switches off suppress each sound and the Toast, and only Offline to Available triggers the online alert
+  - [x]* 25.2 Write tests: a closed window opens unfocused with a flash, a focused window does nothing, switches off suppress each sound and the Toast, and only Offline to Available triggers the online alert
     - _Requirements: 16.1, 16.2, 16.4, 16.10_
-  - [ ] 25.3 Extend the Rust `open_chat_window` with a `focus` option: build the window unfocused, call `request_user_attention`, and add the capability permission; clear the flash when the window gains focus
+  - [x] 25.3 Extend the Rust `open_chat_window` with a `focus` option: build the window unfocused, call `request_user_attention`, and add the capability permission; clear the flash when the window gains focus
     - _Requirements: 16.1, 16.2, 16.3_
-  - [ ] 25.4 Wire the Buddy List: on an incoming message for a friend with no open chat window, follow `incomingMessagePlan`; an open but unfocused chat window flashes and plays the sound
+  - [x] 25.4 Wire the Buddy List: on an incoming message for a friend with no open chat window, follow `incomingMessagePlan`; an open but unfocused chat window flashes and plays the sound
     - _Requirements: 16.1, 16.2, 16.3_
-  - [ ] 25.5 Add the original Web Audio sounds for a message, a friend coming online, and signing in
+  - [x] 25.5 Add the original Web Audio sounds for a message, a friend coming online, and signing in
     - _Requirements: 16.1, 16.4_
-  - [ ] 25.6 Build the Toast: a small frameless always-on-top window at the bottom-right of the screen for 5 seconds, "<Display_Name> is now online", and a click opens the chat; no new dependency
+  - [x] 25.6 Build the Toast: a small frameless always-on-top window at the bottom-right of the screen for 5 seconds, "<Display_Name> is now online", and a click opens the chat; no new dependency
     - _Requirements: 16.4, 16.5_
-  - [ ] 25.7 Build the tray icon from the `tauri` crate's built-in `tray-icon` and `image-png` features with four original PNGs: swap it with the Availability, hide the Buddy List on close, show it on click, and make Exit set the user Offline first
+  - [x] 25.7 Build the tray icon from the `tauri` crate's built-in `tray-icon` and `image-png` features with five original PNGs (Available, Busy, Away, Invisible, Offline): swap it with the Availability, hide the Buddy List on close, show it on click, and make Exit set the user Offline first
     - _Requirements: 16.6, 16.7, 16.8, 16.9_
 
 - [ ] 26. Chat window menus, formatting, and history

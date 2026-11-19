@@ -17,6 +17,7 @@ import { getProfile, useFriends, type PublicProfile } from "@/lib/friends/api"
 import { createGroup, useGroups } from "@/lib/friends/groups"
 import { unignoreUser, useIgnoreList, useIgnorers } from "@/lib/friends/ignore"
 import { hideIgnorers } from "@/lib/realtime/hideIgnorers"
+import { useBuddyAlerts } from "@/lib/alerts/useBuddyAlerts"
 import { useBuddyView } from "@/lib/friends/useBuddyView"
 import { isValidEmail } from "@/lib/validation/profile"
 import { useSession } from "@/lib/auth/session"
@@ -59,15 +60,29 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
       presenceStartedThisRun: hasPresenceStarted(),
     }),
   )
+  const [firstStartThisRun] = useState(() => !hasPresenceStarted())
   useEffect(() => {
     markPresenceStarted()
   }, [])
-  const { myState, setAvailable, setBusy, setInvisible, friendsPresence } = usePresenceTracker(me, friendIds, {
-    startInvisible,
-  })
+  const { myState, setAvailable, setBusy, setInvisible, friendsPresence, goOffline } = usePresenceTracker(
+    me,
+    friendIds,
+    { startInvisible },
+  )
   // People who ignore me appear Offline (Req 15.5, docs/adr/0009).
   const visiblePresence = useMemo(() => hideIgnorers(friendsPresence, ignorers), [friendsPresence, ignorers])
-  const { unreadBySender } = useOfflineDelivery(me)
+  const friendNames = useMemo(() => new Map(friends.map((f) => [f.id, f.displayName])), [friends])
+  const alerts = useBuddyAlerts({
+    friendNames,
+    presence: visiblePresence,
+    myState,
+    firstStartThisRun,
+    setAvailable,
+    setBusy,
+    setInvisible,
+    goOffline,
+  })
+  const { unreadBySender } = useOfflineDelivery(me, { onMessage: alerts.onMessage })
   // A nudge from an accepted friend pops their chat window open and shakes it.
   useNudgeInbox(me, (sender) => {
     // Nudges from someone I ignore are dropped (Req 15.3); the server blocks them too.
@@ -294,6 +309,25 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
       ) : null}
 
       {panel === "about" ? <AboutDialog onClose={() => setPanel(null)} /> : null}
+      {/* Browser fallback for the desktop toast (Req 16.4, 16.5). */}
+      {alerts.toasts.length > 0 ? (
+        <div className="fixed right-2 bottom-2 z-50 flex flex-col gap-1" aria-live="polite">
+          {alerts.toasts.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              className="ym-window ym-row flex items-center gap-2 px-3 py-2 text-left text-sm shadow"
+              onClick={() => {
+                alerts.dismissToast(t.key)
+                void openChatWindow(t.friendId)
+              }}
+            >
+              <PresenceDot state="online" size={16} decorative />
+              {t.text}
+            </button>
+          ))}
+        </div>
+      ) : null}
       {panel === "ignore" ? (
         <section
           aria-label="Ignore List"

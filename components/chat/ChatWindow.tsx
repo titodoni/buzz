@@ -20,6 +20,7 @@ import { onSend as typingOnSend, type TypingState } from "@/lib/typing/state";
 import { receiveTypingSignal, type TypingSignal } from "@/lib/typing/broadcast";
 import { reportActivity } from "@/lib/realtime/activity";
 import { sendNudgeToInbox } from "@/lib/realtime/inbox";
+import { clearAttention } from "@/lib/tauri/windows";
 
 export interface ChatWindowProps {
   me: string;
@@ -62,6 +63,14 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
       window.removeEventListener("focus", check);
     };
   }, [me, friendId]);
+  // Looking at the window stops its taskbar flash (Req 16.3).
+  useEffect(() => {
+    const stop = () => void clearAttention().catch(() => undefined);
+    // A window opened behind the others for an incoming message keeps its flash.
+    if (document.hasFocus()) stop();
+    window.addEventListener("focus", stop);
+    return () => window.removeEventListener("focus", stop);
+  }, []);
   const presenceRef = useRef(presence);
   useEffect(() => {
     presenceRef.current = presence;

@@ -36,7 +36,17 @@ function readMarker(v: unknown): { id: string; read_at: string | null } | null {
  * Display order is by created_at, not delivered_at, so stamping a live row
  * later than its neighbours never reorders a conversation.
  */
-export function useOfflineDelivery(me: string): OfflineDelivery {
+export function useOfflineDelivery(
+  me: string,
+  options: {
+    /** Called for each friend's message that arrives while the Buddy List is open (alerts, Req 16). */
+    onMessage?: (senderId: string) => void
+  } = {},
+): OfflineDelivery {
+  const onMessageRef = useRef(options.onMessage)
+  useEffect(() => {
+    onMessageRef.current = options.onMessage
+  })
   const [unreadBySender, setUnread] = useState<Record<string, number>>({})
   const unreadRef = useRef<Map<string, string>>(new Map()) // message id -> sender id
 
@@ -92,6 +102,7 @@ export function useOfflineDelivery(me: string): OfflineDelivery {
         const row: unknown = p.new
         if (!isInsertedRow(row) || row.read_at) return
         unreadRef.current.set(row.id, row.sender_id)
+        onMessageRef.current?.(row.sender_id)
         publish()
         // The Buddy List is open, so the message is delivered now (Req 9.1, 9.2).
         // Only where delivered_at is null, as the receipt trigger requires.

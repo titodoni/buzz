@@ -4,7 +4,8 @@ import { NUDGE_SHAKE_MS } from "./cooldown";
 let audioCtx: AudioContext | null = null;
 let osShakeRunning = false;
 
-function getAudioContext(): AudioContext | null {
+/** One shared AudioContext for every Buzz sound (lib/alerts/sounds.ts uses it too). */
+export function getAudioContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (audioCtx) return audioCtx;
   const Ctor: typeof AudioContext | undefined =

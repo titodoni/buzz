@@ -105,6 +105,8 @@ function openPresence(opts: {
 }
 
 export interface PresenceTracker {
+  /** Leaves presence now, so friends see Offline at once (tray Exit, Req 16.8). */
+  goOffline(): Promise<void>
   /** What the user chose for themselves; friends never see "invisible" (they see offline). */
   myState: Availability
   setBusy(): void
@@ -129,6 +131,7 @@ export function usePresenceTracker(
   const lastActivityRef = useRef<number>(0)
   const lastEmitRef = useRef<number>(0)
   const trackRef = useRef<(() => void) | null>(null)
+  const goOfflineRef = useRef<() => Promise<void>>(async () => {})
 
   const dispatch = useCallback((e: PresenceEvent) => {
     const next = nextPresenceState(stateRef.current, e)
@@ -141,6 +144,10 @@ export function usePresenceTracker(
 
   useEffect(() => {
     let conn: Connection | null = null
+    goOfflineRef.current = async () => {
+      trackRef.current = null
+      await conn?.close()
+    }
     // Supabase closes the channel after 5 presence updates in 30 s, so sends are
     // budgeted (lib/realtime/presenceBudget.ts) and coalesced: while over budget
     // we wait, then send only the latest state. The send history outlives
@@ -231,6 +238,7 @@ export function usePresenceTracker(
     }
   }, [me, dispatch])
 
+  const goOffline = useCallback(() => goOfflineRef.current(), [])
   const setBusy = useCallback(() => dispatch({ type: "setBusy" }), [dispatch])
   const setInvisible = useCallback(() => dispatch({ type: "setInvisible" }), [dispatch])
   const setAvailable = useCallback(() => {
@@ -244,7 +252,7 @@ export function usePresenceTracker(
     [payload, idsKey],
   )
 
-  return { myState, setBusy, setAvailable, setInvisible, friendsPresence }
+  return { myState, setBusy, setAvailable, setInvisible, friendsPresence, goOffline }
 }
 
 /**
