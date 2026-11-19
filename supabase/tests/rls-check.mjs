@@ -15,6 +15,8 @@ const A = "00000000-0000-4000-8000-00000000000a", B = "00000000-0000-4000-8000-0
 const results = [];
 const as = async (uid) => { await c.query(`set local role authenticated`); await c.query(`select set_config('request.jwt.claims', $1, true)`, [JSON.stringify({ sub: uid, role: "authenticated" })]); };
 const asAdmin = async () => { await c.query(`reset role`); };
+// Updates name the test users: the project also holds real rows, and an
+// unscoped admin update would run the triggers on them too (rolled back, but it fails).
 const check = async (name, fn, expect) => {
   await c.query("savepoint s");
   let got;
@@ -39,8 +41,8 @@ await check("receiver B cannot edit body", async () => { await as(B); await c.qu
 await check("A cannot update B's profile", async () => { await as(A); return (await c.query(`update profiles set display_name='x' where id=$1`, [B])).rowCount; }, 0);
 await check("search_users finds bob by exact email", async () => { await as(A); return (await c.query(`select display_name from search_users('bob@buzz.test')`)).rows.map(r => r.display_name).join(","); }, "bob");
 await check("search_users does not match partial email", async () => { await as(A); return (await c.query(`select count(*)::int n from search_users('bob@buzz')`)).rows[0].n; }, 0);
-await check("unfriend hides history (Req 3.5)", async () => { await as(A); await c.query(`update friendships set status='removed'`); await as(B); return (await c.query(`select count(*)::int n from messages`)).rows[0].n; }, 0);
-await check("B may re-request after removal", async () => { await asAdmin(); await c.query(`update friendships set status='removed'`); await as(B); return (await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2`, [B, A])).rowCount; }, 1);
+await check("unfriend hides history (Req 3.5)", async () => { await as(A); await c.query(`update friendships set status='removed' where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]); await as(B); return (await c.query(`select count(*)::int n from messages`)).rows[0].n; }, 0);
+await check("B may re-request after removal", async () => { await asAdmin(); await c.query(`update friendships set status='removed' where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]); await as(B); return (await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2 where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [B, A])).rowCount; }, 1);
 await check("is_friend_of_me true for a friend", async () => { await as(A); return (await c.query(`select public.is_friend_of_me($1) f`, [B])).rows[0].f; }, true);
 await check("is_friend_of_me false for a stranger", async () => { await as(A); return (await c.query(`select public.is_friend_of_me($1) f`, [C])).rows[0].f; }, false);
 // ---- Groups and ignore list (Req 14.2-14.4, 15.1): every row belongs to its owner.
@@ -61,7 +63,7 @@ await check("ignored B cannot message A (Req 15.2)", async () => { await ignoreB
 await check("A can still message B, who A ignored", async () => { await ignoreB(); await as(A); return (await c.query(`insert into messages (sender_id, receiver_id, body) values ($1,$2,'hi')`, [A, B])).rowCount; }, 1);
 await check("B messages A again after A un-ignores B (Req 15.6)", async () => { await ignoreB(); await as(A); await c.query(`delete from ignored_users where owner_id=$1 and ignored_id=$2`, [A, B]); await as(B); return (await c.query(`insert into messages (sender_id, receiver_id, body) values ($1,$2,'back')`, [B, A])).rowCount; }, 1);
 await check("ignored C cannot send A a friend request (Req 15.4)", async () => { await as(A); await c.query(`insert into ignored_users (owner_id, ignored_id) values ($1,$2)`, [A, C]); await as(C); await c.query(`insert into friendships (requester_id, addressee_id, status) values ($1,$2,'pending')`, [C, A]); return "inserted"; }, (g) => /row-level security/.test(g));
-await check("ignored B cannot re-request A after removal", async () => { await ignoreB(); await asAdmin(); await c.query(`update friendships set status='removed'`); await as(B); await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2`, [B, A]); return "updated"; }, (g) => /request not allowed/.test(g));
+await check("ignored B cannot re-request A after removal", async () => { await ignoreB(); await asAdmin(); await c.query(`update friendships set status='removed' where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]); await as(B); await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2 where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [B, A]); return "updated"; }, (g) => /request not allowed/.test(g));
 await check("is_ignored_by tells B that A ignores B", async () => { await ignoreB(); await as(B); return (await c.query(`select public.is_ignored_by($1) x`, [A])).rows[0].x; }, true);
 await check("ignorers_of_me lists A for B, nothing for C", async () => { await ignoreB(); await as(B); const forB = (await c.query(`select count(*)::int n from public.ignorers_of_me()`)).rows[0].n; await as(C); const forC = (await c.query(`select count(*)::int n from public.ignorers_of_me()`)).rows[0].n; return `${forB},${forC}`; }, "1,0");
 await check("is_ignored_by can't read someone else's list: C asks about A, who ignores B", async () => { await ignoreB(); await as(C); return (await c.query(`select public.is_ignored_by($1) x`, [A])).rows[0].x; }, false);

@@ -24,7 +24,7 @@ Buzz does not use end-to-end encryption and does not claim to.
 | Buddy List groups, search box, Add a Friend, Show Offline Contacts | Built; checked with three users |
 | Ignore list: blocks messages, Buzz!, and friend requests; ignored person sees you Offline | Built; checked with two users |
 | Sign-in options, forgot password by emailed code, About Buzz | Built; recovery email needs the template change in [supabase/README.md](supabase/README.md) and a real inbox to test |
-| Chat menus (Conversation, Edit, View, Actions, Help), fonts and colors, F3 earlier messages, Clear Window | Built; needs migration `20250101001200` applied, then a two-user check |
+| Chat menus (Conversation, Edit, View, Actions, Help), fonts and colors, F3 earlier messages, Clear Window | Built; checked with two users in the Linux desktop app |
 | Incoming-message alerts, "is now online" toast, tray icon, sounds | Built; checked in the Linux desktop app except the tray itself (see design.md, Requirement 16) |
 | Responsive windows (220x400 up to maximized) | Built; see [docs/responsive-checks.md](docs/responsive-checks.md) |
 | Installer config (task 17.1) and two-user integration tests | Not yet |
