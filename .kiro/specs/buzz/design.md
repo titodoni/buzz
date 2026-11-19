@@ -126,8 +126,10 @@ session and keeps the user signed in (Requirement 1.4).
      A `typing` payload is `{ sender, stopped }`; the sender broadcasts
      `stopped: true` right after a send, and because broadcasts arrive in
      order it clears the friend's indicator for good (10.3).
-3. **`inbox:<userId>`** (broadcast only). Each Buddy List listens on its
-   own inbox. A nudge is sent there too (REST broadcast, no subscription
+3. **`inbox:<userId>`** (broadcast only, private). Each Buddy List listens on its
+   own inbox; Realtime Authorization lets only accepted friends send to it,
+   and `chat:<pairKey>` is private to the pair the same way (migration
+   `20250101000600`). A nudge is sent there too (REST broadcast, no subscription
    needed), so a friend whose chat window is closed still gets it: their
    Buddy List opens the chat window with `buzz=1` and it shakes (6.6,
    classic YM). Nudges from non-friends are ignored.

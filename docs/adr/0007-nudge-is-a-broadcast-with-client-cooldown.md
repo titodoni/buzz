@@ -4,4 +4,4 @@ A nudge is an ephemeral Realtime broadcast, sent both on the pair's `chat:<pairK
 
 ## Consequences
 
-- Inbox channels are public Realtime channels: anyone signed in who knows a user id could send to that inbox. The Buddy List ignores nudges from non-friends, so the worst case is a no-op. Private channels with Realtime authorization would close this if it ever matters.
+- Inbox and chat channels are **private** Realtime channels. RLS policies on `realtime.messages` (migration `20250101000600`) let only me listen on `inbox:<me>`, only my accepted friends send to it, and only the two friends of a pair join or broadcast on `chat:<pair>`. The `sender` field in a payload is still client-supplied, so one friend could claim to be another friend; the Buddy List also ignores senders who aren't friends.

@@ -44,3 +44,12 @@ supabase gen types typescript --linked > lib/supabase/database.types.ts
 - `tests/rls.sql` holds two-user verification queries to run manually.
 - None of this SQL has been executed yet (no local Postgres/Supabase available
   when written).
+
+## Realtime Authorization
+
+Chat (`chat:<pair>`) and inbox (`inbox:<userId>`) channels are joined as
+**private** channels. Migration `20250101000600_realtime_private_channels.sql`
+adds the RLS policies on `realtime.messages` that decide who may join and
+broadcast. Private channels need no extra dashboard setting; leaving
+"Allow public access" on keeps `presence:global` working (see
+`docs/adr/0003` for its known gap).

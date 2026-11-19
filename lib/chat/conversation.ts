@@ -24,18 +24,18 @@ export interface MessageItem {
   status: MessageStatus;
 }
 
-/** A centered line that is not a chat message, e.g. Buzz notices. */
+/** A centered line that is not a chat message, e.g. Nudge notices. */
 export interface SystemItem {
   kind: "system";
   id: string;
-  /** `buzz` renders as the red bold "BUZZ!!!" line; `info` as gray italics. */
-  tone: "buzz" | "info";
+  /** `nudge` renders as the red bold "BUZZ!!!" line; `info` as gray italics. */
+  tone: "nudge" | "info";
   text: string;
   createdAt: string;
 }
 
-/** Text shown when a friend buzzes you. */
-export const BUZZ_RECEIVED_TEXT = "BUZZ!!!";
+/** Text shown when a friend nudges you. */
+export const NUDGE_RECEIVED_TEXT = "BUZZ!!!";
 
 export type ConversationItem = MessageItem | SystemItem;
 
@@ -57,8 +57,8 @@ export type ConversationEvent =
   | { type: "sendStarted"; message: MessageRow }
   | { type: "sendConfirmed"; id: string }
   | { type: "sendFailed"; id: string }
-  | { type: "buzzSent"; friendName: string; at: string }
-  | { type: "buzzReceived"; at: string };
+  | { type: "nudgeSent"; friendName: string; at: string }
+  | { type: "nudgeReceived"; at: string };
 
 export function emptyConversation(me: string): ConversationState {
   return { me, items: [], systemCount: 0 };
@@ -123,9 +123,9 @@ export function conversation(state: ConversationState, event: ConversationEvent)
       return setStatus(state, event.id, "sent");
     case "sendFailed":
       return setStatus(state, event.id, "failed");
-    case "buzzSent":
+    case "nudgeSent":
       return addSystem(state, "info", nudgeSystemLine(event.friendName), event.at);
-    case "buzzReceived":
-      return addSystem(state, "buzz", BUZZ_RECEIVED_TEXT, event.at);
+    case "nudgeReceived":
+      return addSystem(state, "nudge", NUDGE_RECEIVED_TEXT, event.at);
   }
 }

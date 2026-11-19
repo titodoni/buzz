@@ -6,7 +6,8 @@ import { getSupabase } from "../supabase/browser-client";
 // Each signed-in user's Buddy List listens on a personal inbox channel. A nudge
 // is sent there as well as on the pair's chat channel, so a friend whose chat
 // window is closed still gets it: their Buddy List pops the window open and it
-// shakes, as in classic Yahoo Messenger (docs/adr/0007).
+// shakes, as in classic Yahoo Messenger (docs/adr/0007). The channel is
+// private, so the server rejects nudges from anyone who isn't a friend.
 
 /** Inbox channel name for a user. */
 export function inboxChannel(userId: string): string {
@@ -19,9 +20,11 @@ const NUDGE_EVENT = "nudge";
  * Sends a nudge to a friend's inbox over Realtime's REST broadcast endpoint
  * (no subscription needed). Resolves true when the server accepted it.
  */
-export async function sendNudgeToInbox(friendId: string, me: string): Promise<boolean> {
+export async function sendNudgeToInbox(me: string, friendId: string): Promise<boolean> {
   const supabase = getSupabase();
-  const channel = supabase.channel(inboxChannel(friendId));
+  // Private: only accepted friends may send here (Realtime Authorization,
+  // migration 20250101000600).
+  const channel = supabase.channel(inboxChannel(friendId), { config: { private: true } });
   try {
     const res = await channel.httpSend(NUDGE_EVENT, { sender: me });
     return res.success;
@@ -46,7 +49,7 @@ export function useNudgeInbox(me: string, onNudge: (senderId: string) => void): 
     if (!me) return;
     const supabase = getSupabase();
     const channel = supabase
-      .channel(inboxChannel(me))
+      .channel(inboxChannel(me), { config: { private: true } })
       .on("broadcast", { event: NUDGE_EVENT }, ({ payload }) => {
         // Payload comes from another client, so check its shape before use.
         const sender = (payload as { sender?: unknown } | null)?.sender;

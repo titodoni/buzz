@@ -38,7 +38,7 @@ export function MessageList({ items, myName, friendName }: MessageListProps) {
       ) : null}
       {items.map((item) => {
         if (item.kind === "system") {
-          const buzz = item.tone === "buzz";
+          const nudge = item.tone === "nudge";
           return (
             <p
               key={item.id}
@@ -46,9 +46,9 @@ export function MessageList({ items, myName, friendName }: MessageListProps) {
                 textAlign: "center",
                 fontStyle: "italic",
                 margin: "6px 0",
-                color: buzz ? "#cc0000" : "#666",
-                fontWeight: buzz ? 700 : 400,
-                textTransform: buzz ? "uppercase" : "none",
+                color: nudge ? "var(--buzz-red)" : "#666",
+                fontWeight: nudge ? 700 : 400,
+                textTransform: nudge ? "uppercase" : "none",
               }}
             >
               {item.text}
@@ -71,7 +71,7 @@ export function MessageList({ items, myName, friendName }: MessageListProps) {
               <MessageBubble body={item.body} />
             </div>
             {failed ? (
-              <div role="alert" style={{ color: "#cc0000", fontSize: 12 }}>
+              <div role="alert" style={{ color: "var(--buzz-red)", fontSize: 12 }}>
                 {MSG_NOT_SENT_LINE}
               </div>
             ) : null}

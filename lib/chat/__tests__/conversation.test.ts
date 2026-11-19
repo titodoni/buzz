@@ -81,15 +81,15 @@ describe("conversation", () => {
     ]);
   });
 
-  it("adds Buzz system lines in time order with the messages (Req 6.2)", () => {
+  it("adds Nudge system lines in time order with the messages (Req 6.2)", () => {
     let s = conversation(emptyConversation(ME), {
       type: "historyLoaded",
       messages: [msg("a", ANN, "2025-01-01T10:00:00Z"), msg("c", ANN, "2025-01-01T10:10:00Z")],
     });
-    s = conversation(s, { type: "buzzSent", friendName: "Ann", at: "2025-01-01T10:05:00Z" });
-    s = conversation(s, { type: "buzzReceived", at: "2025-01-01T10:15:00Z" });
+    s = conversation(s, { type: "nudgeSent", friendName: "Ann", at: "2025-01-01T10:05:00Z" });
+    s = conversation(s, { type: "nudgeReceived", at: "2025-01-01T10:15:00Z" });
     expect(
       s.items.map((i) => (i.kind === "system" ? `${i.tone}:${i.text}` : i.id)),
-    ).toEqual(["a", "info:You nudged Ann", "c", "buzz:BUZZ!!!"]);
+    ).toEqual(["a", "info:You nudged Ann", "c", "nudge:BUZZ!!!"]);
   });
 });

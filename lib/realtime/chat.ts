@@ -13,7 +13,7 @@ export interface ChatChannelOptions {
   onMessage: (message: MessageRow) => void
   /** A typing broadcast from the friend; `at` is the local receive time (ms). */
   onTyping: (signal: TypingSignal, at: number) => void
-  onBuzz: () => void
+  onNudge: () => void
   /** Called after a reconnect so the caller can reload history. */
   onReconnect?: () => void
 }
@@ -54,7 +54,7 @@ function stoppedOf(payload: unknown): boolean {
 export function useChatChannel(options: ChatChannelOptions): {
   /** `stopped: true` is sent once right after a message, to clear the indicator. */
   sendTyping: (stopped: boolean) => void
-  sendBuzz: () => Promise<boolean>
+  sendNudge: () => Promise<boolean>
 } {
   const { me, friendId } = options
   const handlers = useRef(options)
@@ -73,7 +73,7 @@ export function useChatChannel(options: ChatChannelOptions): {
     const connect = () => {
       if (!active) return
       const channel = supabase.channel(`chat:${pairKey(me, friendId)}`, {
-        config: { broadcast: { ack: true, self: false } },
+        config: { private: true, broadcast: { ack: true, self: false } },
       })
       channelRef.current = channel
       // Two listeners, because a filter takes one column: messages to me, and
@@ -103,7 +103,7 @@ export function useChatChannel(options: ChatChannelOptions): {
           }
         })
         .on("broadcast", { event: "nudge" }, ({ payload }) => {
-          if (senderOf(payload) === friendId) handlers.current.onBuzz()
+          if (senderOf(payload) === friendId) handlers.current.onNudge()
         })
         .subscribe((s) => {
           if (!active || channelRef.current !== channel) return
@@ -140,7 +140,7 @@ export function useChatChannel(options: ChatChannelOptions): {
     [me],
   )
 
-  const sendBuzz = useCallback(async () => {
+  const sendNudge = useCallback(async () => {
     const ch = channelRef.current
     if (!ch) return false
     try {
@@ -151,5 +151,5 @@ export function useChatChannel(options: ChatChannelOptions): {
     }
   }, [me])
 
-  return { sendTyping, sendBuzz }
+  return { sendTyping, sendNudge }
 }

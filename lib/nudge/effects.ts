@@ -18,7 +18,7 @@ function getAudioContext(): AudioContext | null {
 }
 
 /** Original short buzz (~0.45 s): low sawtooth with a fast tremolo. */
-export function playBuzzSound(): void {
+export function playNudgeSound(): void {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;

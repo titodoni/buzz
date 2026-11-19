@@ -18,9 +18,9 @@ function cooldownKey(friendId: string): string {
 export function NudgeButton(props: {
   friendId: string;
   friendPresence: PresenceState;
-  onBuzz: () => Promise<boolean>;
+  onNudge: () => Promise<boolean>;
 }) {
-  const { friendId, friendPresence, onBuzz } = props;
+  const { friendId, friendPresence, onNudge } = props;
   // Restored from storage so reopening the chat window keeps the cooldown (Req 6.3).
   // A chat window has one friend for its whole life, so reading once is enough.
   const [cooldown, setCooldown] = useState<NudgeCooldown>(() => {
@@ -47,12 +47,12 @@ export function NudgeButton(props: {
     return () => window.clearInterval(id);
   }, [inCooldown]);
 
-  const stateRef = useRef({ onBuzz, friendPresence, cooldown, friendId });
+  const stateRef = useRef({ onNudge, friendPresence, cooldown, friendId });
   useEffect(() => {
-    stateRef.current = { onBuzz, friendPresence, cooldown, friendId };
+    stateRef.current = { onNudge, friendPresence, cooldown, friendId };
   });
 
-  const buzz = useCallback(async () => {
+  const sendNudge = useCallback(async () => {
     const cur = stateRef.current;
     const t = Date.now();
     if (sendingRef.current || !isNudgeEnabled(cur.friendPresence, cur.cooldown, t)) {
@@ -63,7 +63,7 @@ export function NudgeButton(props: {
     setFailed(false);
     let delivered = false;
     try {
-      delivered = await cur.onBuzz();
+      delivered = await cur.onNudge();
     } catch {
       delivered = false;
     }
@@ -86,12 +86,12 @@ export function NudgeButton(props: {
     function onKey(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "g") {
         e.preventDefault();
-        void buzz();
+        void sendNudge();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [buzz]);
+  }, [sendNudge]);
 
   const remaining = Math.ceil(remainingMs / 1000);
 
@@ -109,7 +109,7 @@ export function NudgeButton(props: {
         title="Buzz! (Ctrl+G)"
         disabled={!enabled}
         aria-describedby="nudge-status"
-        onClick={() => void buzz()}
+        onClick={() => void sendNudge()}
       >
         Buzz!
       </button>

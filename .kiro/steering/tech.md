@@ -58,8 +58,11 @@ Follow the layout in `design.md`:
 
 - Realtime powers chat delivery, presence, and the typing indicator.
   No polling loops.
-- One Postgres changes subscription per open chat window, filtered to
-  messages where the signed-in user is sender or receiver.
+- One chat channel per open chat window, with postgres_changes bindings
+  for messages where the signed-in user is sender or receiver (a filter
+  takes one column, so that is two bindings on the one channel).
+- Chat and inbox channels are private (Realtime Authorization policies in
+  supabase/migrations); never send broadcasts on public topics.
 - One presence channel tracks the signed-in user's state — online,
   away, busy, offline — set client-side by the Buddy List window. Chat
   windows never track presence (avoids duplicate presence entries); they

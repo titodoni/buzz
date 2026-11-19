@@ -37,7 +37,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
   const { unreadBySender } = useOfflineDelivery(me)
   // A nudge from an accepted friend pops their chat window open and shakes it.
   useNudgeInbox(me, (sender) => {
-    if (friendIds.includes(sender)) void openChatWindow(sender, { buzz: true })
+    if (friendIds.includes(sender)) void openChatWindow(sender, { nudge: true })
   })
   const totalUnread = Object.values(unreadBySender).reduce((a, b) => a + b, 0)
 

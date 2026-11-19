@@ -12,7 +12,7 @@ import { conversation, emptyConversation, type MessageRow } from "@/lib/chat/con
 import { loadHistory, markConversationRead, sendMessage } from "@/lib/chat/api";
 import { useChatChannel } from "@/lib/realtime/chat";
 import { useFriendPresence } from "@/lib/realtime/presence";
-import { playBuzzSound, shakeChatWindow } from "@/lib/nudge/effects";
+import { playNudgeSound, shakeChatWindow } from "@/lib/nudge/effects";
 import { getProfile, type PublicProfile } from "@/lib/friends/api";
 import { onSend as typingOnSend, type TypingState } from "@/lib/typing/state";
 import { receiveTypingSignal, type TypingSignal } from "@/lib/typing/broadcast";
@@ -85,14 +85,14 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     presenceRef.current = presence;
   });
 
-  const receiveBuzz = useCallback(() => {
-    dispatch({ type: "buzzReceived", at: new Date().toISOString() });
-    playBuzzSound();
+  const receiveNudge = useCallback(() => {
+    dispatch({ type: "nudgeReceived", at: new Date().toISOString() });
+    playNudgeSound();
     void shakeChatWindow(rootRef.current);
   }, []);
 
-  // A window opened by an incoming Nudge has `buzz=1` in its URL (chatUrl).
-  const pendingBuzzRef = useRef(false);
+  // A window opened by an incoming Nudge has `nudge=1` in its URL (chatUrl).
+  const pendingNudgeRef = useRef(false);
 
   // Read receipts count only while the user can actually see this window (Req 9.3).
   const markReadIfActive = useCallback(() => {
@@ -110,19 +110,19 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
       })
       .catch(() => setLoadError(true))
       .then(() => {
-        if (!pendingBuzzRef.current) return;
-        pendingBuzzRef.current = false;
-        receiveBuzz();
-        // Drop `buzz` so a reload does not shake again.
+        if (!pendingNudgeRef.current) return;
+        pendingNudgeRef.current = false;
+        receiveNudge();
+        // Drop `nudge` so a reload does not shake again.
         const url = new URL(window.location.href);
-        url.searchParams.delete("buzz");
+        url.searchParams.delete("nudge");
         window.history.replaceState(window.history.state, "", url);
       });
-  }, [me, friendId, markReadIfActive, receiveBuzz]);
+  }, [me, friendId, markReadIfActive, receiveNudge]);
 
   useEffect(() => {
     let active = true;
-    pendingBuzzRef.current = new URLSearchParams(window.location.search).get("buzz") === "1";
+    pendingNudgeRef.current = new URLSearchParams(window.location.search).get("nudge") === "1";
     getProfile(friendId)
       .then((p) => active && setFriend(p))
       .catch(() => undefined);
@@ -172,12 +172,12 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     setFriendTyping((s) => receiveTypingSignal(s, signal, at));
   }, []);
 
-  const { sendTyping, sendBuzz } = useChatChannel({
+  const { sendTyping, sendNudge } = useChatChannel({
     me,
     friendId,
     onMessage,
     onTyping,
-    onBuzz: receiveBuzz,
+    onNudge: receiveNudge,
     onReconnect: () => void reload(),
   });
 
@@ -199,13 +199,13 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     [me, friendId],
   );
 
-  const handleBuzz = useCallback(async () => {
+  const handleNudge = useCallback(async () => {
     // Chat channel reaches an open window; the inbox opens a closed one. Either is delivery.
-    const results = await Promise.all([sendBuzz(), sendNudgeToInbox(friendId, me)]);
+    const results = await Promise.all([sendNudge(), sendNudgeToInbox(me, friendId)]);
     const ok = results.some(Boolean);
-    if (ok) dispatch({ type: "buzzSent", friendName, at: new Date().toISOString() });
+    if (ok) dispatch({ type: "nudgeSent", friendName, at: new Date().toISOString() });
     return ok;
-  }, [sendBuzz, friendId, me, friendName]);
+  }, [sendNudge, friendId, me, friendName]);
 
   const closePicker = useCallback(() => {
     setPickerOpen(false);
@@ -245,7 +245,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
               >
                 Emoticons
               </button>
-              <NudgeButton friendId={friendId} friendPresence={presence} onBuzz={handleBuzz} />
+              <NudgeButton friendId={friendId} friendPresence={presence} onNudge={handleNudge} />
               {pickerOpen ? (
                 <EmoticonPicker
                   onPick={(code) => {
