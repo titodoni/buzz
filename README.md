@@ -1,40 +1,165 @@
-# Buzz — Kiro spec pack
+# Buzz
 
-Kiroween 2026, category Resurrection. Buzz is a Yahoo Messenger revival:
-a native desktop chat app (Windows, Linux, macOS) built around people
-being present, not infinite scroll.
+A Yahoo Messenger revival for Kiroween 2026 (category: Resurrection).
+Buzz is a native desktop chat app for Windows, Linux, and macOS built
+around people being present: a Buddy List of friends with live
+presence, one chat window per friend, classic emoticons, and the Nudge
+("Buzz!") that shakes your friend's window.
 
-## What is in this pack
+Buzz does not use end-to-end encryption and does not claim to.
 
-- `.kiro/specs/buzz/requirements.md` — what the app must do, in WHEN/THEN form
-- `.kiro/specs/buzz/design.md` — architecture, data model, screens, security
-- `.kiro/specs/buzz/tasks.md` — build order, one small task at a time
-- `.kiro/steering/product.md` — product rules Kiro must follow
-- `.kiro/steering/tech.md` — technical rules Kiro must follow
+## Status
 
-## How to use it
+| Area | State |
+| --- | --- |
+| Sign in / sign up, profile, avatar | Built |
+| Buddy List, friend search, friend requests | Built |
+| Presence (Available, Away, Busy, Offline), custom status | Built |
+| Chat windows, emoticons, typing indicator, read receipts | Built |
+| Nudge ("Buzz!"): sound, window shake, cooldown | Built |
+| Offline messages and unread badges | Built |
+| Live profile updates in the Buddy List (task 18.1) | Not yet |
+| Installer config (task 17.1) and two-user integration tests | Not yet |
 
-1. Create the repo (suggested name: `buzz`, public, MIT license).
-2. Copy the whole `.kiro` folder from this pack into the repo root.
-   It must stay in version control. Never add it to `.gitignore`,
-   Devpost disqualifies submissions without it.
-3. Open the repo folder in the Kiro desktop IDE.
-4. Run the spec workflow for `buzz` (requirements, then design,
-   then tasks), or just start with task 1 and work down the list.
-5. After each task, run typecheck and the tests before moving on.
+Nothing has run against a live Supabase project yet. The database
+migrations and RLS policies are written but unverified; see
+[Set up Supabase](#set-up-supabase).
 
-## Stack (locked)
+## Stack
 
-Next.js App Router + TypeScript (static client export), Supabase
-(Auth, Postgres, Realtime), Tailwind CSS, wrapped in Tauri as a
-native desktop app for Windows, Linux, and macOS. No other backend,
-no other database.
+- **Client:** Next.js App Router + TypeScript (strict), built as a
+  static export, styled with Tailwind CSS.
+- **Desktop shell:** Tauri v2 (Rust). The Buddy List is the main
+  window; each chat opens its own OS window.
+- **Backend:** Supabase only (Auth, Postgres, Realtime, Storage). All
+  data access goes through Row Level Security.
 
-## Scope (locked)
+Why it's built this way: see [`docs/adr/`](docs/adr/).
 
-In: email sign-in, profiles, friend list, live presence, custom status
-and now playing, 1:1 real-time chat, Nudge, classic emoticons and YM-era
+## Prerequisites
+
+- Node.js 20 or newer (developed on Node 24)
+- Rust stable with `rustfmt` and `clippy` ([rustup](https://rustup.rs))
+- Tauri's system packages for your OS. On Debian/Ubuntu:
+
+  ```sh
+  sudo apt-get install libwebkit2gtk-4.1-dev build-essential pkg-config \
+    libssl-dev libxdo-dev libayatana-appindicator3-dev librsvg2-dev
+  ```
+
+  For Windows and macOS see the
+  [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
+- A Supabase project and the [Supabase CLI](https://supabase.com/docs/guides/cli)
+
+## Set up Supabase
+
+1. Create a Supabase project.
+2. Link it and apply the migrations (do not paste SQL into the
+   dashboard; schema changes live in `supabase/migrations/`):
+
+   ```sh
+   supabase link --project-ref <your-project-ref>
+   supabase db push
+   ```
+
+3. Enable the `pg_cron` extension if `db push` reports it missing
+   (it purges undelivered messages older than 30 days).
+4. Verify RLS with two test users using the checks in
+   [`supabase/tests/rls.sql`](supabase/tests/rls.sql).
+5. Regenerate the hand-written types once linked:
+
+   ```sh
+   supabase gen types typescript --linked > lib/supabase/database.types.ts
+   ```
+
+More detail: [`supabase/README.md`](supabase/README.md).
+
+## Configure the app
+
+Copy `.env.example` to `.env` and fill in the two public values from
+the Supabase dashboard (Project Settings → API):
+
+```sh
+NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
+```
+
+Only the publishable key goes in the app. Never put the service-role
+key in `.env` or the build. `.env` is git-ignored.
+
+## Run
+
+```sh
+npm install
+npm run tauri dev    # desktop app (starts Next on :3000 and the Tauri shell)
+npm run dev          # browser only, for quick UI work; chats open as popups
+```
+
+To try chat, presence, and the Nudge, run two app instances signed in
+as two different test users who are friends.
+
+## Test and check
+
+```sh
+npm test             # Vitest + fast-check property tests
+npm run typecheck    # tsc --noEmit
+npm run lint         # ESLint
+npm run build        # static export to out/
+
+cd src-tauri
+cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+```
+
+Pure logic (validation, emoticons, presence, cooldown, typing, the
+conversation model, offline delivery) is tested at its public
+functions. Supabase calls, React components, the window shake, and the
+sound are verified by running the app.
+
+## Build installers
+
+```sh
+npm run tauri build
+```
+
+Tauri writes `.msi`/`.exe` (Windows), `.deb`/`.AppImage` (Linux), or
+`.dmg`/`.app` (macOS) to `src-tauri/target/release/bundle/`. Build on
+each target OS. The app icons in `src-tauri/icons/` are placeholders;
+replace them with `npm run tauri icon <source.png>`.
+
+## Project layout
+
+```
+app/              routes: / (Buddy List), /login, /signup, /profile, /chat?friendId=<id>
+components/       window chrome, Buddy List, friends, profile, chat, auth
+lib/              pure logic (validation, emoticons, presence, nudge, typing,
+                  chat, offline, skin) plus Supabase and Tauri adapters
+public/emoticons/ original emoticon art (generated by scripts/gen-emoticons.mjs)
+src-tauri/        Rust shell: windows, open_chat_window command, capabilities
+supabase/         migrations, RLS checks
+.kiro/            Kiro spec (requirements, design, tasks) and steering rules
+docs/adr/         architecture decisions
+GLOSSARY.md       domain terms used across code and specs
+```
+
+## Docs
+
+- What the app must do: [`.kiro/specs/buzz/requirements.md`](.kiro/specs/buzz/requirements.md)
+- How it's designed (architecture, data model, UI/UX): [`.kiro/specs/buzz/design.md`](.kiro/specs/buzz/design.md)
+- Build plan and progress: [`.kiro/specs/buzz/tasks.md`](.kiro/specs/buzz/tasks.md)
+- Product and technical rules: [`.kiro/steering/`](.kiro/steering/)
+- Decisions: [`docs/adr/`](docs/adr/) · Terms: [`GLOSSARY.md`](GLOSSARY.md)
+
+The `.kiro/` folder must stay in version control (the Kiroween
+submission requires it).
+
+## Scope
+
+In: email sign-in, profiles, friends, live presence, custom status and
+now playing, 1:1 real-time chat, Nudge, classic emoticons and YM-era
 skin, offline messages, typing indicator.
 
-Out: voice/video calls, group chat, file sharing beyond small images,
-mobile app, end-to-end encryption claims.
+Out: voice/video calls, group chat, file sharing beyond avatars,
+games, invisible mode, tabbed chats, a mobile app, and any end-to-end
+encryption claim.
+
+All art and sound are original; Buzz is not affiliated with Yahoo.

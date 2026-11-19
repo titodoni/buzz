@@ -190,44 +190,44 @@ running desktop app instances (or two app windows), per `tech.md`.
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
 
 - [ ] 11. Wire presence
-  - [~] 11.1 Implement the `usePresence` hook over the `presence:global` Realtime channel, owned by the Buddy List window only: track `{ user_id, presence_state }`, run a 25s heartbeat, report online on activity, away after 5 min idle, busy when set, and offline on explicit untrack (sign-out/app close) or a missed heartbeat; drive transitions through `nextPresenceState` and expose friends' presence to the friend list
+  - [x] 11.1 Implement the `usePresence` hook over the `presence:global` Realtime channel, owned by the Buddy List window only: track `{ user_id, presence_state }`, run a 25s heartbeat, report online on activity, away after 5 min idle, busy when set, and offline on explicit untrack (sign-out/app close) or a missed heartbeat; drive transitions through `nextPresenceState` and expose friends' presence to the friend list
     - Presence is never written to Postgres; chat windows do not join this channel (avoids duplicate presence entries)
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
   - [ ]* 11.2 Write integration tests for presence between two running app instances: online on activity, away after 5 min idle, busy when set, offline within 30s of app close, and offline within ~60s of a dropped connection
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
 - [ ] 12. Implement the chat UI and Realtime
-  - [~] 12.1 Implement `MessageInput`: textarea with a char counter, send on Enter, an Emoticon picker slot, and a send flow that validates the body with `isValidMessageBody` and rejects empty/whitespace/>1000-char messages with an error (storing nothing)
+  - [x] 12.1 Implement `MessageInput`: textarea with a char counter, send on Enter, an Emoticon picker slot, and a send flow that validates the body with `isValidMessageBody` and rejects empty/whitespace/>1000-char messages with an error (storing nothing)
     - _Requirements: 5.4_
-  - [~] 12.2 Implement `MessageBubble`: sender/receiver styling, emoticon rendering via `renderMessage`, and system lines (e.g. "You nudged <Display_Name>")
+  - [x] 12.2 Implement `MessageBubble`: sender/receiver styling, emoticon rendering via `renderMessage`, and system lines (e.g. "You nudged <Display_Name>")
     - _Requirements: 5.1, 6.2, 8.3_
-  - [~] 12.3 Implement `EmoticonPicker`: a grid of >=30 classic-style emoticons that inserts the matching shortcode at the cursor via `insertAtCursor`
+  - [x] 12.3 Implement `EmoticonPicker`: a grid of >=30 classic-style emoticons that inserts the matching shortcode at the cursor via `insertAtCursor`
     - _Requirements: 8.1, 8.2_
-  - [~] 12.4 Implement the `useChatChannel` hook for `chat:<pairKey>` (postgres_changes on `messages` INSERT filtered to the pair, plus broadcast for `typing` and `nudge`); chat windows join only this channel (not `presence:global`); sending inserts a `messages` row so one write both persists and broadcasts; if the friend is offline the row is stored with `delivered_at = null`
+  - [x] 12.4 Implement the `useChatChannel` hook for `chat:<pairKey>` (postgres_changes on `messages` INSERT filtered to the pair, plus broadcast for `typing` and `nudge`); chat windows join only this channel (not `presence:global`); sending inserts a `messages` row so one write both persists and broadcasts; if the friend is offline the row is stored with `delivered_at = null`
     - Messages are the source of truth; the subscription is reattached on reconnect so missed inserts recover from Postgres
     - _Requirements: 5.2, 5.3, 5.5_
-  - [~] 12.5 Implement `ChatWindow` (header with friend name, presence, and Nudge button slot) and `MessageList` (renders the most recent 50 via `loadRecentMessages` then appends), composing `MessageInput`, `MessageBubble`, `EmoticonPicker`, `NudgeButton`, `TypingIndicator`, and the `useChatChannel`/`usePresence` hooks; the chat route `/chat?friendId=<id>` renders in its own Tauri OS window opened via the IPC command (Req 5.6)
+  - [x] 12.5 Implement `ChatWindow` (header with friend name, presence, and Nudge button slot) and `MessageList` (renders the most recent 50 via `loadRecentMessages` then appends), composing `MessageInput`, `MessageBubble`, `EmoticonPicker`, `NudgeButton`, `TypingIndicator`, and the `useChatChannel`/`usePresence` hooks; the chat route `/chat?friendId=<id>` renders in its own Tauri OS window opened via the IPC command (Req 5.6)
     - _Requirements: 5.1, 5.2, 5.4, 5.6_
   - [ ]* 12.6 Write integration tests for chat (two running app instances): opening a chat shows the most recent 50, a sent message reaches a connected friend in under 2s, reload preserves history, and an offline friend's message is delivered on return in chronological order and marked read on open
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 9.2, 9.3_
 
 - [ ] 13. Implement nudge
-  - [~] 13.1 Implement `NudgeButton`: disabled with a "friend is offline" message when presence is offline; on click broadcast `nudge` on `chat:<pairKey>` and show "You nudged <Display_Name>" locally; do not start the cooldown until delivery is confirmed; on confirmed delivery enter a 10s cooldown with a visible countdown; on delivery failure show a "nudge was not delivered" message and leave the button enabled with no cooldown, all driven by `isInCooldown`/`onNudgeResult`
+  - [x] 13.1 Implement `NudgeButton`: disabled with a "friend is offline" message when presence is offline; on click broadcast `nudge` on `chat:<pairKey>` and show "You nudged <Display_Name>" locally; do not start the cooldown until delivery is confirmed; on confirmed delivery enter a 10s cooldown with a visible countdown; on delivery failure show a "nudge was not delivered" message and leave the button enabled with no cooldown, all driven by `isInCooldown`/`onNudgeResult`
     - Nudge is ephemeral; there is no `nudges` table
     - _Requirements: 6.2, 6.3, 6.4, 6.5_
-  - [~] 13.2 Implement the `useNudgeReceiver` hook: on a received `nudge` broadcast, add a 600 ms shake CSS class to the chat window and play a <=1s Web Audio sound
+  - [x] 13.2 Implement the `useNudgeReceiver` hook: on a received `nudge` broadcast, add a 600 ms shake CSS class to the chat window and play a <=1s Web Audio sound
     - _Requirements: 6.1_
   - [ ]* 13.3 Write integration tests for nudge (two running app instances): shake plus sound on the receiver, the 10s cooldown, disabled for an offline friend, and the not-delivered message on a forced failure (button stays enabled, no cooldown)
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
 - [ ] 14. Implement the typing indicator
-  - [~] 14.1 Implement `TypingIndicator`: broadcast `typing` on keystroke (driven by `onKeystroke`), clear after 3s idle (`shouldShowTyping`), and clear on send (`onSend`); render "<Display_Name> is typing..." to the other participant
+  - [x] 14.1 Implement `TypingIndicator`: broadcast `typing` on keystroke (driven by `onKeystroke`), clear after 3s idle (`shouldShowTyping`), and clear on send (`onSend`); render "<Display_Name> is typing..." to the other participant
     - _Requirements: 10.1, 10.2, 10.3_
   - [ ]* 14.2 Write an integration test for typing (two running app instances): the indicator appears while typing, clears after 3s idle, and clears on send
     - _Requirements: 10.1, 10.2, 10.3_
 
 - [ ] 15. Wire offline messages
-  - [~] 15.1 Implement the `useOfflineMessages` hook: on connect, query `messages` where `receiver_id = me AND delivered_at IS NULL` ordered by `created_at` (via `orderOfflineMessages`), render them, and set `delivered_at = now`; if that update fails the row stays `delivered_at = null` and is retried on the next connect; when the user opens a stored message set `read_at`
+  - [x] 15.1 Implement the `useOfflineMessages` hook: on connect, query `messages` where `receiver_id = me AND delivered_at IS NULL` ordered by `created_at` (via `orderOfflineMessages`), render them, and set `delivered_at = now`; if that update fails the row stays `delivered_at = null` and is retried on the next connect; when the user opens a stored message set `read_at`
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
   - [ ]* 15.2 Write an integration test for offline messages (two running app instances): store when the friend is offline, deliver on return in chronological order, mark read on open, surface a "message was not sent" error on a storage failure, and retain the message for retry when delivery fails
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_

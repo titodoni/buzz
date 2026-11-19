@@ -62,7 +62,8 @@ Follow the layout in `design.md`:
   messages where the signed-in user is sender or receiver.
 - One presence channel tracks the signed-in user's state — online,
   away, busy, offline — set client-side by the Buddy List window. Chat
-  windows do not rejoin presence (avoids duplicate presence entries).
+  windows never track presence (avoids duplicate presence entries); they
+  may subscribe read-only to see a friend's state (docs/adr/0003).
 - The typing indicator is a broadcast event, never a database write.
 
 ## Workflow
