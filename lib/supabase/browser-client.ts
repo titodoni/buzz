@@ -1,3 +1,4 @@
+import { SupabaseConfigError } from "./config-error"
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
 import type { Database } from "./database.types"
@@ -22,10 +23,7 @@ export function getSupabase(): BuzzSupabaseClient {
   if (!url) missing.push("NEXT_PUBLIC_SUPABASE_URL")
   if (!publishableKey) missing.push("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
   if (!url || !publishableKey) {
-    throw new Error(
-      `Supabase is not configured: missing ${missing.join(", ")}. ` +
-        "Copy .env.example to .env.local and fill in the project URL and publishable key.",
-    )
+    throw new SupabaseConfigError(missing)
   }
 
   client = createClient<Database>(url, publishableKey, {

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import type { Session, User } from "@supabase/supabase-js"
 
 import { getSupabase } from "@/lib/supabase/browser-client"
-import { MSG_GENERIC, MSG_EMAIL_IN_USE, mapAuthError } from "./errors"
+import { MSG_GENERIC, MSG_EMAIL_IN_USE, mapAuthError, mapThrownError } from "./errors"
 
 export type AuthResult = { ok: true } | { ok: false; message: string }
 export type SignUpResult =
@@ -60,8 +60,8 @@ export async function signIn(email: string, password: string): Promise<AuthResul
     const { error } = await getSupabase().auth.signInWithPassword({ email, password })
     if (error) return { ok: false, message: mapAuthError(error) }
     return { ok: true }
-  } catch {
-    return { ok: false, message: MSG_GENERIC }
+  } catch (e) {
+    return { ok: false, message: mapThrownError(e) }
   }
 }
 
@@ -74,8 +74,8 @@ export async function signUp(email: string, password: string): Promise<SignUpRes
       return { ok: false, message: MSG_EMAIL_IN_USE }
     }
     return { ok: true, needsConfirmation: !data.session }
-  } catch {
-    return { ok: false, message: MSG_GENERIC }
+  } catch (e) {
+    return { ok: false, message: mapThrownError(e) }
   }
 }
 

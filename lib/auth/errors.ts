@@ -1,10 +1,19 @@
+import { SupabaseConfigError } from "../supabase/config-error"
+
 export const MSG_INVALID_CREDENTIALS = "Invalid email or password."
 export const MSG_EMAIL_IN_USE = "That email is already in use."
 export const MSG_GENERIC = "Something went wrong. Please try again."
+export const MSG_NOT_CONFIGURED =
+  "Buzz isn't connected to its server yet. Add the Supabase project URL and publishable key to .env, then restart."
 
 export interface AuthErrorLike {
   message?: string | null
   code?: string | null
+}
+
+/** Maps anything thrown while talking to Supabase to a friendly message. */
+export function mapThrownError(error: unknown): string {
+  return error instanceof SupabaseConfigError ? MSG_NOT_CONFIGURED : MSG_GENERIC
 }
 
 /** Maps a Supabase auth error to a plain, friendly message. */
