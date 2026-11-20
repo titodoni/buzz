@@ -11,19 +11,19 @@ Calendar: today is 20 Nov 2026. Submit on 4 Dec. Feature freeze 1 Dec.
 ## Phase 0. Setup (20 Nov)
 
 - [x] 0.1 Add `.kiro/specs/buzz-trigger/` (spec, requirements, design, tasks). `.kiro` is not in `.gitignore`.
-- [ ] 0.2 Create two test accounts that are friends. Confirm two app instances run side by side.
+- [x] 0.2 Create two test accounts that are friends. Confirm two app instances run side by side.
 
 ## Phase 1. Presence-first Buddy List: trigger 1 (20 to 21 Nov)
 
 - [x] 1.1 Sort Available, Away, Busy, Offline, name; `countOnline` helper; unit tests. _R1.1, R1.2_
 - [x] 1.2 "N online now" line above the groups in `FriendList`. _R1.2_
 - [x] 1.3 "No one is around right now." when friends exist, none online, and no search is active. _R1.3_
-- [ ] 1.4 Two-user check: change Presence, list re-sorts within 2 seconds; count and empty state follow. _R1.4_
-- [ ] Checkpoint: commit.
+- [x] 1.4 Two-user check: change Presence, list re-sorts within 2 seconds; count and empty state follow. _R1.4_
+- [x] Checkpoint: commit.
 
 ## Phase 2. Live profiles and Up for Chat: triggers 1 and 2 (22 to 24 Nov)
 
-- [ ] 2.0 Live profile updates: `useFriendProfiles`, merged into Buddy List and Chat Window header. Closes old task 18.1. Two-user check: Status change shows within 5 seconds. _R0_
+- [~] 2.0 Live profile updates: `useFriendProfiles`, merged into Buddy List and Chat Window header. Closes old task 18.1. Two-user check: Status change shows within 5 seconds. _R0_
 - [ ] 2.1 `lib/status/upForChat.ts` with timer, restore rules, stale-on-start clear; unit tests. _R2.2, R2.4_
 - [ ] 2.2 Toggle in the Buddy List header; sets Status and Available. _R2.1_
 - [ ] 2.3 Highlighted row and "Say hi" button; double-tap guard; message goes through the normal send path. _R2.1, R2.3_
@@ -48,8 +48,7 @@ Calendar: today is 20 Nov 2026. Submit on 4 Dec. Feature freeze 1 Dec.
 
 ## Phase 5. Now Playing: automatic, and as a conversation starter (30 Nov to 1 Dec)
 
-Blocked on approval of the two Rust dependencies in design.md
-(`mpris` on Linux, `windows` on Windows). macOS needs none.
+Dependencies approved 20 Nov: `mpris` (Linux only), `windows` (Windows only). macOS needs none.
 
 - [ ] 5.1 40 character display cut in the row; Now Playing in the Chat Window header. _R5_
 - [ ] 5.2 `lib/nowPlaying/auto.ts` pure rules with unit tests: format, 140 cut, 30 s pause grace, manual line wins, 10 s write throttle. _R7.2 to R7.5_
