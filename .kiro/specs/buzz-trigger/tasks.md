@@ -27,7 +27,7 @@ Calendar: today is 20 Nov 2026. Submit on 4 Dec. Feature freeze 1 Dec.
 - [x] 2.1 `lib/status/upForChat.ts` with timer, restore rules, stale-on-start clear; unit tests. _R2.2, R2.4_
 - [x] 2.2 Toggle in the Buddy List header; sets Status and Available. _R2.1_
 - [x] 2.3 Highlighted row and "Say hi" button; double-tap guard; message goes through the normal send path. _R2.1, R2.3_
-- [ ] 2.4 Two-user check: highlight, Say hi sends once, toggle and timer restore the old Status.
+- [~] 2.4 (skipped on request, not run) Two-user check: highlight, Say hi sends once, toggle and timer restore the old Status.
 - [ ] Checkpoint: add Up for Chat to `GLOSSARY.md`, commit.
 
 ## Phase 3. Hangout: trigger 2 (25 to 28 Nov)
