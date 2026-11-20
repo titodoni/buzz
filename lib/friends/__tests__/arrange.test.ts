@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import fc from "fast-check"
-import { DEFAULT_GROUP_NAME, arrangeBuddyList, type ArrangeInput } from "../arrange"
+import { DEFAULT_GROUP_NAME, arrangeBuddyList, countOnline, type ArrangeInput } from "../arrange"
 import type { PresenceState } from "../../presence/state"
 
 const f = (id: string, displayName = id) => ({ id, displayName })
@@ -30,6 +30,20 @@ describe("arrangeBuddyList (Req 14.1, 14.5, 14.6, 14.8, 14.9)", () => {
       ["g-other", "Other", 0, 0],
     ])
     expect(DEFAULT_GROUP_NAME).toBe("Friends")
+  })
+
+  it("orders a group Available, Away, Busy, then Offline, and by name inside each state", () => {
+    const friends = ["Zed", "amy", "Bea", "Cal", "Dee", "Eve"].map((n) => f(n.toLowerCase(), n))
+    const presence: Record<string, PresenceState> = {
+      zed: "online",
+      amy: "busy",
+      bea: "away",
+      cal: "online",
+      dee: "offline",
+      eve: "busy",
+    }
+    const [g] = arrangeBuddyList(base({ friends, groups: [], memberships: [], presence }))
+    expect(names(g)).toEqual(["Cal", "Zed", "Bea", "amy", "Eve", "Dee"])
   })
 
   it("lists Available, Busy, and Away friends before Offline ones, then by name", () => {
@@ -97,9 +111,24 @@ describe("arrangeBuddyList (Req 14.1, 14.5, 14.6, 14.8, 14.9)", () => {
           for (const g of out) {
             expect(g.total).toBe(g.friends.length)
             expect(g.online).toBe(g.friends.filter((x) => x.presence !== "offline").length)
+            const ranks = g.friends.map((x) => ["online", "away", "busy", "offline"].indexOf(x.presence))
+            expect(ranks).toEqual([...ranks].sort((a, b) => a - b))
           }
+          expect(countOnline(friends, presence)).toBe(out.reduce((n, g) => n + g.online, 0))
         },
       ),
     )
+  })
+})
+
+describe("countOnline (R1.2)", () => {
+  it("counts Available, Away, and Busy friends and treats missing presence as Offline", () => {
+    const friends = [f("a"), f("b"), f("c"), f("d"), f("e")]
+    expect(countOnline(friends, { a: "online", b: "away", c: "busy", d: "offline" })).toBe(3)
+  })
+
+  it("is zero with no friends or nobody around", () => {
+    expect(countOnline([], {})).toBe(0)
+    expect(countOnline([f("a")], { a: "offline" })).toBe(0)
   })
 })

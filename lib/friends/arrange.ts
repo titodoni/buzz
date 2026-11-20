@@ -33,6 +33,20 @@ export interface ArrangedGroup {
 const byName = (a: { displayName: string }, b: { displayName: string }) =>
   a.displayName.localeCompare(b.displayName, undefined, { sensitivity: "base" })
 
+/** Who is most reachable comes first: Available, Away, Busy, then Offline. */
+const PRESENCE_RANK: Record<PresenceState, number> = { online: 0, away: 1, busy: 2, offline: 3 }
+
+const byPresenceThenName = (a: ArrangedFriend, b: ArrangedFriend) =>
+  PRESENCE_RANK[a.presence] - PRESENCE_RANK[b.presence] || byName(a, b)
+
+/** Friends who are not Offline, across every group. Invisible friends already arrive as Offline. */
+export function countOnline(
+  friends: readonly { id: string }[],
+  presence: Readonly<Record<string, PresenceState>>,
+): number {
+  return friends.filter((f) => (presence[f.id] ?? "offline") !== "offline").length
+}
+
 /** Builds the Buddy List: groups in order, each with its friends sorted and filtered. */
 export function arrangeBuddyList(input: ArrangeInput): ArrangedGroup[] {
   const known = new Set(input.groups.map((g) => g.id))
@@ -54,7 +68,7 @@ export function arrangeBuddyList(input: ArrangeInput): ArrangedGroup[] {
     const all = buckets.get(id) ?? []
     const online = all.filter((x) => x.bold)
     const offline = all.filter((x) => !x.bold)
-    let shown = [...online.sort(byName), ...(input.showOffline ? offline.sort(byName) : [])]
+    let shown = [...online.sort(byPresenceThenName), ...(input.showOffline ? offline.sort(byName) : [])]
     if (term) shown = shown.filter((x) => x.displayName.toLowerCase().includes(term))
     return { id, name, online: online.length, total: all.length, friends: shown }
   }

@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from "react"
 import { removeFriend, type FriendEntry } from "@/lib/friends/api"
-import { arrangeBuddyList, DEFAULT_GROUP_NAME, type ArrangedGroup } from "@/lib/friends/arrange"
+import { arrangeBuddyList, countOnline, DEFAULT_GROUP_NAME, type ArrangedGroup } from "@/lib/friends/arrange"
 import type { BuddyView } from "@/lib/friends/buddyView"
 import { deleteGroup, moveFriend, renameGroup, type ContactGroup, type GroupMembership } from "@/lib/friends/groups"
 import { ignoreUser, unignoreUser } from "@/lib/friends/ignore"
@@ -68,6 +68,7 @@ export function FriendList({
   const menuRef = useRef<HTMLUListElement>(null)
   const byId = new Map(friends.map((f) => [f.id, f]))
   const arranged = arrangeBuddyList({ friends, groups, memberships, presence, showOffline: view.showOffline, search })
+  const onlineNow = countOnline(friends, presence)
   const menuOpen = overlay?.kind === "menu" || overlay?.kind === "groupMenu"
   const searching = search.trim() !== ""
 
@@ -159,6 +160,11 @@ export function FriendList({
         <p className="px-2 text-xs">No friends yet. Use “Add a Friend” to find someone!</p>
       ) : null}
       {searching && arranged.length === 0 ? <p className="px-2 text-xs">No friends match “{search.trim()}”.</p> : null}
+      {friends.length > 0 && !searching ? (
+        <p role="status" aria-live="polite" className="m-0 px-2 py-1 text-xs font-bold">
+          {onlineNow > 0 ? `${onlineNow} online now` : "No one is around right now."}
+        </p>
+      ) : null}
       {arranged.map((g) => {
         const key = viewKey(g.id)
         // While searching, every matching group stays open so results are visible.
