@@ -79,6 +79,19 @@ await check("format rejects a color that isn't #rrggbb", async () => sendFormatt
 await check("format rejects a format with keys missing", async () => sendFormatted(JSON.stringify({ size: 12 })), (g) => /check constraint/.test(g));
 await check("format rejects an extra key", async () => sendFormatted(fmt({ background: "#000000" })), (g) => /check constraint/.test(g));
 await check("receiver B cannot change a message's format", async () => { await as(B); await c.query(`update messages set format=$2::jsonb where receiver_id=$1`, [B, fmt({ size: 24 })]); return "updated"; }, (g) => g.startsWith("ERROR"));
+// ---- Privacy hardening (migration 20250101001400): strangers see no one, avatars are pinned.
+const HOST = "https://mkeozqwudranxrdferai.supabase.co/storage/v1/object/public/avatars/";
+const profileCount = async (uid, target) => { await as(uid); return (await c.query(target ? `select count(*)::int n from profiles where id=$1` : `select count(*)::int n from profiles`, target ? [target] : [])).rows[0].n; };
+await check("stranger C lists only their own profile", async () => profileCount(C), 1);
+await check("friend B reads friend A's profile", async () => profileCount(B, A), 1);
+await check("pending requester's profile is visible to the addressee", async () => { await asAdmin(); await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2 where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]); return profileCount(B, A); }, 1);
+await check("a removed friend's profile is hidden", async () => { await asAdmin(); await c.query(`update friendships set status='removed' where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]); return profileCount(B, A); }, 0);
+await check("A still reads the profile of someone on A's Ignore List", async () => { await as(A); await c.query(`insert into ignored_users (owner_id, ignored_id) values ($1,$2)`, [A, C]); return profileCount(A, C); }, 1);
+await check("search_users still finds a stranger by name", async () => { await as(C); return (await c.query(`select count(*)::int n from search_users('ann')`)).rows[0].n; }, 1);
+await check("C can set an avatar in C's own folder", async () => { await as(C); return (await c.query(`update profiles set avatar_url=$2 where id=$1`, [C, `${HOST}${C}/x.png`])).rowCount; }, 1);
+await check("C cannot set an avatar in A's folder", async () => { await as(C); await c.query(`update profiles set avatar_url=$2 where id=$1`, [C, `${HOST}${A}/x.png`]); return "updated"; }, (g) => /check constraint/.test(g));
+await check("C cannot point avatar_url at another site", async () => { await as(C); await c.query(`update profiles set avatar_url='https://evil.example/x.png' where id=$1`, [C]); return "updated"; }, (g) => /check constraint/.test(g));
+await check("nobody can list the avatars bucket", async () => { await asAdmin(); await c.query(`insert into storage.objects (bucket_id, name) values ('avatars', $1)`, [`${A}/t.png`]); await as(C); return (await c.query(`select count(*)::int n from storage.objects where bucket_id='avatars'`)).rows[0].n; }, 0);
 await c.query("rollback");
 await c.end();
 console.table(results);

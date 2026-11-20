@@ -5,7 +5,7 @@ Calendar: today is 20 Nov 2026. Freeze 1 Dec, submit 4 Dec. If the freeze comes 
 
 ## Phase 0. Security hardening (E0)
 
-- [ ] 0.1 Migration `...001400_privacy_hardening.sql`: `profiles` select limited to self, accepted friends, pending parties; `avatar_url` check; drop `avatars_read_all`. Extend `test:rls`: a stranger sees only themselves, cannot list avatars, cannot set a foreign avatar URL. _E0.1 to E0.3_
+- [~] 0.1 (written, not applied, tests not run: needs your approval and SUPABASE_DB_URL) Migration `...001400_privacy_hardening.sql`: `profiles` select limited to self, accepted friends, pending parties; `avatar_url` check; drop `avatars_read_all`. Extend `test:rls`: a stranger sees only themselves, cannot list avatars, cannot set a foreign avatar URL. _E0.1 to E0.3_
 - [ ] 0.2 Content Security Policy in `src-tauri/tauri.conf.json`; check the app still loads Supabase, avatars, fonts. _E0.4_
 - [ ] 0.3 README and ADR 0003: say plainly that presence is public and spoofable. _E0.5_
 - [ ] Checkpoint: commit.
