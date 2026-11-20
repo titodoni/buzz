@@ -119,7 +119,11 @@ export function MessageList({
               </>
             ) : null}
             <div>
-              <MessageBubble body={item.body} style={style} />
+              {item.unreadable ? (
+                <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>{item.body}</span>
+              ) : (
+                <MessageBubble body={item.body} style={style} />
+              )}
             </div>
             {failed ? (
               <div role="alert" style={{ color: "var(--buzz-red)", fontSize: 12 }}>

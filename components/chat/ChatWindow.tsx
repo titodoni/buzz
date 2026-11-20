@@ -14,7 +14,10 @@ import { hhmm, MessageList } from "./MessageList";
 import { Avatar, ChatLayout } from "./ChatLayout";
 import { TypingIndicator } from "./TypingIndicator";
 import { conversation, earlierCursor, emptyConversation, type MessageRow } from "@/lib/chat/conversation";
-import { EARLIER_PAGE_SIZE, loadEarlier, loadHistory, markConversationRead, sendMessage } from "@/lib/chat/api";
+import { EARLIER_PAGE_SIZE, loadEarlier, loadHistory, markConversationRead, sendEncryptedMessage, trustFriendKey } from "@/lib/chat/api";
+import { SafetyNumber } from "./SafetyNumber";
+import { readWireRow, readWireRows, type ReadKey, type WireRow } from "@/lib/chat/wire";
+import { useMyKeys } from "@/lib/crypto/useMyKeys";
 import { conversationText, copyText } from "@/lib/chat/copy";
 import { useChatView } from "@/lib/chat/useChatView";
 import { hasNowPlaying, shouldShowField, shownNowPlaying } from "@/lib/profile/render";
@@ -59,7 +62,20 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   /** A short note under the header, e.g. "Copied." or a failure. */
   const [note, setNote] = useState<string | null>(null);
   const [ignored, setIgnored] = useState(false);
+  // True after a send was stopped because the friend's key changed (ADR 0010, E3.1).
+  const [keyChanged, setKeyChanged] = useState(false);
   const loadingEarlierRef = useRef(false);
+  // The Buddy List window makes my encryption key; this window only reads it (ADR 0010).
+  const myKeys = useMyKeys(me, "reader");
+  const keysLoading = myKeys.status === "loading";
+  const readKey: ReadKey = myKeys.status === "ready" ? { id: me, privateKey: myKeys.keys.privateKey } : null;
+  const readKeyRef = useRef<ReadKey>(readKey);
+  const sendKeys = myKeys.status === "ready" ? myKeys.keys : myKeys.status === "unavailable" ? ("unavailable" as const) : null;
+  const keysRef = useRef(sendKeys);
+  useEffect(() => {
+    readKeyRef.current = readKey;
+    keysRef.current = sendKeys;
+  });
 
   const friendName = friend?.displayName ?? "Your friend";
   const myName = mine?.displayName ?? "Me";
@@ -123,6 +139,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
 
   const reload = useCallback(() => {
     return loadHistory(me, friendId)
+      .then((rows) => readWireRows(rows, readKeyRef.current))
       .then((rows) => {
         dispatch({ type: "historyLoaded", messages: rows });
         setLoadError(false);
@@ -150,11 +167,12 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     getProfile(me)
       .then((p) => active && setMine(p))
       .catch(() => undefined);
-    void reload();
+    // History is read once the key is known, so Encrypted Messages show as text.
+    if (!keysLoading) void reload();
     return () => {
       active = false;
     };
-  }, [me, friendId, reload]);
+  }, [me, friendId, reload, keysLoading]);
 
   // The friend's new Status or Now Playing reaches the header without a reload (buzz-trigger R0).
   const friendIds = useMemo(() => [friendId], [friendId]);
@@ -185,11 +203,13 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   }, []);
 
   const onMessage = useCallback(
-    (message: MessageRow) => {
-      dispatch({ type: "messageArrived", message });
-      if (message.sender_id !== friendId) return; // my own send, seen from another instance
-      setFriendTyping((s) => typingOnSend(s));
-      markReadIfActive();
+    (wire: WireRow) => {
+      void readWireRow(wire, readKeyRef.current).then((message) => {
+        dispatch({ type: "messageArrived", message });
+        if (message.sender_id !== friendId) return; // my own send, seen from another instance
+        setFriendTyping((s) => typingOnSend(s));
+        markReadIfActive();
+      });
     },
     [friendId, markReadIfActive],
   );
@@ -219,12 +239,24 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
         format: formatRef.current,
       };
       dispatch({ type: "sendStarted", message: row });
-      return sendMessage(row, formatRef.current, presenceRef.current !== "offline").then((res) => {
+      // Encrypts on this device first; the text never goes to the database (ADR 0010).
+      return sendEncryptedMessage({
+        me,
+        friendId,
+        friendName,
+        body,
+        format: formatRef.current,
+        id: row.id,
+        delivered: presenceRef.current !== "offline",
+        keys: keysRef.current,
+      }).then((res) => {
         dispatch(res.ok ? { type: "sendConfirmed", id: row.id } : { type: "sendFailed", id: row.id });
+        setNote(res.ok ? null : res.message);
+        setKeyChanged(!res.ok && res.reason === "changed");
         return res.ok;
       });
     },
-    [me, friendId],
+    [me, friendId, friendName],
   );
 
   const handleNudge = useCallback(async () => {
@@ -250,6 +282,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     if (loadingEarlierRef.current || s.reachedStart) return;
     loadingEarlierRef.current = true;
     loadEarlier(me, friendId, earlierCursor(s))
+      .then((rows) => readWireRows(rows, readKeyRef.current))
       .then((rows) => {
         dispatch({ type: "earlierLoaded", messages: rows, pageSize: EARLIER_PAGE_SIZE });
         setNote(null);
@@ -374,6 +407,23 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
             <p role="status" aria-live="polite" style={{ fontSize: 12, margin: note ? "4px 8px" : 0 }}>
               {note ?? ""}
             </p>
+            {keyChanged && myKeys.status === "ready" ? (
+              <div role="alert" style={{ fontSize: 12, margin: "4px 8px" }}>
+                <SafetyNumber myPublicKey={myKeys.keys.publicKey} friendId={friendId} friendName={friendName} />
+                <button
+                  type="button"
+                  className="ym-button mt-1"
+                  onClick={() => {
+                    void trustFriendKey(me, friendId).then((ok) => {
+                      setKeyChanged(!ok);
+                      setNote(ok ? `You trust ${friendName}'s new key. Send your message again.` : "Couldn't update the key. Try again.");
+                    });
+                  }}
+                >
+                  I checked it. Trust the new key.
+                </button>
+              </div>
+            ) : null}
           </>
         }
         list={
@@ -431,6 +481,9 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
           <p className="m-0 font-bold">{friendName}</p>
           {shouldShowField(friend?.statusMessage) ? <p className="m-0 text-xs">{friend?.statusMessage}</p> : null}
           {hasNowPlaying(friend?.nowPlaying) ? <p className="m-0 text-xs">♪ {friend?.nowPlaying}</p> : null}
+          {myKeys.status === "ready" ? (
+            <SafetyNumber myPublicKey={myKeys.keys.publicKey} friendId={friendId} friendName={friendName} />
+          ) : null}
           <button type="button" className="ym-button mt-2" onClick={() => setDialog(null)}>
             Close
           </button>

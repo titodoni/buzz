@@ -1,13 +1,11 @@
 "use client"
 
 import { getSupabase } from "@/lib/supabase/browser-client"
+import { fetchPublicKey } from "@/lib/crypto/keys"
+import { loadPins, pinFriendKey } from "@/lib/crypto/trust"
 import { DEFAULT_MESSAGE_LIMIT } from "./messages"
-import type { MessageRow } from "./conversation"
-import type { MessageFormat } from "./format"
-
-export const MSG_NOT_SENT = "This message was not sent."
-
-export type SendResult = { ok: true } | { ok: false; message: string }
+import { sendEncrypted, type SendDeps } from "./send"
+import type { WireRow } from "./wire"
 
 /** How many older messages one F3 loads (Req 17.6). */
 export const EARLIER_PAGE_SIZE = DEFAULT_MESSAGE_LIMIT
@@ -20,10 +18,10 @@ export const EARLIER_PAGE_SIZE = DEFAULT_MESSAGE_LIMIT
  * The ids are safe in the filter string: `me` is the session user and the
  * chat page only accepts a UUID as `friendId`.
  */
-async function loadPage(me: string, friendId: string, before: string | null): Promise<MessageRow[]> {
+async function loadPage(me: string, friendId: string, before: string | null): Promise<WireRow[]> {
   let query = getSupabase()
     .from("messages")
-    .select("id, sender_id, receiver_id, body, created_at, format")
+    .select("id, sender_id, receiver_id, body, created_at, format, encrypted, cipher_receiver, cipher_sender, sender_public_key")
     .or(
       `and(sender_id.eq.${me},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${me})`,
     )
@@ -34,41 +32,48 @@ async function loadPage(me: string, friendId: string, before: string | null): Pr
 }
 
 /** The most recent 50 messages between two friends. */
-export function loadHistory(me: string, friendId: string): Promise<MessageRow[]> {
+export function loadHistory(me: string, friendId: string): Promise<WireRow[]> {
   return loadPage(me, friendId, null)
 }
 
 /** The 50 messages before `before` (F3); null means the most recent. */
-export function loadEarlier(me: string, friendId: string, before: string | null): Promise<MessageRow[]> {
+export function loadEarlier(me: string, friendId: string, before: string | null): Promise<WireRow[]> {
   return loadPage(me, friendId, before)
 }
 
-/**
- * Inserts a message with a client-made id. When the friend is online the
- * message is stamped delivered right away (Req 5.5, 9.1).
- */
-export async function sendMessage(
-  row: MessageRow,
-  format: MessageFormat,
-  deliveredNow: boolean,
-): Promise<SendResult> {
-  try {
-    const { error } = await getSupabase()
-      .from("messages")
-      .insert({
-        id: row.id,
-        sender_id: row.sender_id,
-        receiver_id: row.receiver_id,
-        body: row.body,
-        // Spread into a plain object: the column type is Json.
-        format: { ...format },
-        ...(deliveredNow ? { delivered_at: new Date().toISOString() } : {}),
-      })
-    if (error) return { ok: false, message: MSG_NOT_SENT }
-    return { ok: true }
-  } catch {
-    return { ok: false, message: MSG_NOT_SENT }
-  }
+/** Real versions of what `sendEncrypted` needs from the outside. */
+const sendDeps: SendDeps = {
+  fetchFriendKey: fetchPublicKey,
+  loadPins: (me) => loadPins(localStorage, me),
+  pin: (me, friendId, key) => pinFriendKey(localStorage, me, friendId, key),
+  /**
+   * Inserts an Encrypted Message with a client-made id. When the friend is
+   * online it is stamped delivered right away (Req 5.5, 9.1).
+   */
+  insert: async (row) => {
+    try {
+      const { error } = await getSupabase()
+        .from("messages")
+        .insert({
+          id: row.id,
+          sender_id: row.sender_id,
+          receiver_id: row.receiver_id,
+          encrypted: true,
+          cipher_receiver: row.cipher_receiver,
+          cipher_sender: row.cipher_sender,
+          sender_public_key: row.sender_public_key,
+          ...(row.delivered ? { delivered_at: new Date().toISOString() } : {}),
+        })
+      return !error
+    } catch {
+      return false
+    }
+  },
+}
+
+/** Encrypts and sends one message (ADR 0010). There is no plaintext path. */
+export function sendEncryptedMessage(input: Parameters<typeof sendEncrypted>[0]) {
+  return sendEncrypted(input, sendDeps)
 }
 
 /**
@@ -92,4 +97,19 @@ export async function markConversationRead(me: string, friendId: string): Promis
     .eq("sender_id", friendId)
     .is("read_at", null)
   if (read.error) throw read.error
+}
+
+/**
+ * The user has compared the Safety Number and accepts the friend's new key
+ * (ADR 0010, E3.1). Reads the key now and remembers it. False if it could not be read.
+ */
+export async function trustFriendKey(me: string, friendId: string): Promise<boolean> {
+  try {
+    const key = await fetchPublicKey(friendId)
+    if (key === null) return false
+    pinFriendKey(localStorage, me, friendId, key)
+    return true
+  } catch {
+    return false
+  }
 }

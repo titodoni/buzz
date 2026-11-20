@@ -27,6 +27,7 @@ import { useNudgeInbox } from "@/lib/realtime/inbox"
 import { useAutoNowPlaying, useShareNowPlaying } from "@/lib/nowPlaying/useAutoNowPlaying"
 import { usePresenceTracker } from "@/lib/realtime/presence"
 import { useUpForChat } from "@/lib/status/useUpForChat"
+import { useMyKeys } from "@/lib/crypto/useMyKeys"
 import { openChatWindow } from "@/lib/tauri/windows"
 
 type Panel = "search" | "pick" | "about" | "newGroup" | "ignore" | null
@@ -108,6 +109,16 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
     (status: string | null) => setMine((m) => (m ? { ...m, statusMessage: status } : m)),
     [],
   )
+  // This window makes and publishes my encryption key; chat windows only read it (buzz-encryption E1).
+  const myKeys = useMyKeys(me, "owner")
+  const keyNote =
+    myKeys.status === "unavailable"
+      ? "Encryption is off: this computer has no keychain to keep your key in."
+      : myKeys.status === "error"
+        ? "Couldn't set up encryption. Check your connection and restart Buzz."
+        : myKeys.status === "ready" && myKeys.startedFresh
+          ? "This device started with a new encryption key. Older messages can't be read here."
+          : null
   const upForChat = useUpForChat({ me, profile: mine, myState, setAvailable, onStatusSaved })
 
   useEffect(() => {
@@ -232,6 +243,11 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
           {note}
         </p>
       ) : null}
+      {keyNote ? (
+        <p role="status" className="m-0 px-2 py-1 text-xs">
+          {keyNote}
+        </p>
+      ) : null}
       {error ? (
         <p role="alert" className="px-2 text-xs">
           {error}
@@ -325,6 +341,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
         unreadBySender={unreadBySender}
         ignoredIds={ignoredIds}
         onIgnoreChanged={reloadIgnore}
+        keys={myKeys.status === "ready" ? myKeys.keys : myKeys.status === "unavailable" ? "unavailable" : null}
         view={view}
         search={search}
         onToggleGroup={toggleGroup}

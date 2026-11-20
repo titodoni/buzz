@@ -6,7 +6,11 @@ around people being present: a Buddy List of friends with live
 presence, one chat window per friend, classic emoticons, and the Nudge
 ("Buzz!") that shakes your friend's window.
 
-Buzz does not use end-to-end encryption and does not claim to.
+Buzz does not claim encryption yet. Encrypted Messages are built (new
+messages are encrypted on the sender's device, [ADR 0010](docs/adr/0010-messages-are-encrypted-with-a-static-key-per-user.md))
+but have not been checked between two running app instances, and the
+cutover that refuses plaintext is not applied. Until both are done, treat
+messages as readable by anyone with access to the project's database.
 
 ## Status
 
@@ -28,6 +32,7 @@ Buzz does not use end-to-end encryption and does not claim to.
 | Incoming-message alerts, "is now online" toast, tray icon, sounds | Built; checked in the Linux desktop app except the tray itself (see design.md, Requirement 16) |
 | Responsive windows (220x400 up to maximized) | Built; see [docs/responsive-checks.md](docs/responsive-checks.md) |
 | Installer config (task 17.1) and two-user integration tests | Not yet |
+| Encrypted Messages: keys, encrypt and decrypt, Safety Number, key-changed warning | Built; unit-tested and the database rules are checked. Not yet checked between two running apps. Keychain checked on Linux only; Windows and macOS not verified |
 
 The migrations in [supabase/README.md](supabase/README.md) are applied to a
 real Supabase project, and `npm run test:rls` (three-user checks: signup
@@ -220,7 +225,7 @@ skin, offline messages, typing indicator.
 
 Out: sending or receiving files and photos, voice/video calls, SMS,
 phone calls, games and plug-ins, advertising, group chat and chat rooms,
-tabbed chats, a mobile app, and any end-to-end encryption claim. Buzz is
+tabbed chats, a mobile app, and any encryption claim until it is verified (ADR 0010). Buzz is
 chat and Buzz! only.
 
 All art and sound are original; Buzz is not affiliated with Yahoo.

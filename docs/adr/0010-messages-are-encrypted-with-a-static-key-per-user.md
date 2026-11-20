@@ -13,8 +13,9 @@ Message bodies are encrypted on the sender's device and decrypted on the friend'
 
 ## Decisions that follow
 
+- Each Encrypted Message row carries the sender's public key as it was when the message was sent. A friend who later starts fresh therefore does not make their older messages to you unreadable; only the person who started fresh loses their own history. Authenticity is as strong as the trust in that key (see Key swap above).
 - One key per account, kept in the OS keychain on desktop. A new device or reinstall starts a fresh key, and older Encrypted Messages cannot be read there. No recovery in the first version. A recovery file can be added later without changing the message format.
-- No plaintext fallback. If a friend has no key yet, sending is blocked with a clear message.
+- No plaintext fallback. If a friend has no key yet, or this computer has no keychain, sending is blocked with a clear message. A Linux machine without a Secret Service (gnome-keyring, KWallet) therefore cannot send messages.
 - Messages stored before this change stay as they are and are marked not encrypted. They remain readable by anyone with database access. The database refuses new plaintext inserts once the app ships.
 - Body and format are encrypted together as one payload.
 - Product wording: "Messages are encrypted on your device. Only you and your friend can read them." Buzz makes this claim only after the feature ships and passes the two-user check.

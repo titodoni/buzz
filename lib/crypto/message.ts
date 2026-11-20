@@ -27,16 +27,22 @@ export async function encryptMessage(
 }
 
 /**
- * Reads a row for the signed-in user. A message I sent is read from the
- * sender copy with my own public key; one I received is read from the
- * receiver copy with the sender's public key. Null means "can't be read".
+ * Reads a row for the signed-in user. Both copies were made with the sender's
+ * key as it was at send time, which the row carries, so a friend who later
+ * starts fresh does not make their older messages unreadable. A message I sent
+ * is read from the sender copy; one I received, from the receiver copy.
+ * Null means "can't be read".
  */
 export async function decryptMessage(
-  row: { senderId: string; cipherReceiver: string; cipherSender: string },
-  me: { id: string; publicKey: string; privateKey: string },
-  senderPublicKey: string,
+  row: { senderId: string; senderPublicKey: string; cipherReceiver: string; cipherSender: string },
+  me: { id: string; privateKey: string },
 ): Promise<MessagePayload | null> {
   const mine = row.senderId === me.id
-  const json = await open(mine ? row.cipherSender : row.cipherReceiver, mine ? me.publicKey : senderPublicKey, me.privateKey)
-  return json === null ? null : decodePayload(json)
+  try {
+    const json = await open(mine ? row.cipherSender : row.cipherReceiver, row.senderPublicKey, me.privateKey)
+    return json === null ? null : decodePayload(json)
+  } catch {
+    // A malformed key on the row: unreadable, not a crash.
+    return null
+  }
 }

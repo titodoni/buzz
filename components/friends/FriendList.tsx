@@ -7,10 +7,12 @@ import { deleteGroup, moveFriend, renameGroup, type ContactGroup, type GroupMemb
 import { ignoreUser, unignoreUser } from "@/lib/friends/ignore"
 import type { PresenceState } from "@/lib/presence/state"
 import { hasNowPlaying, shouldShowField } from "@/lib/profile/render"
-import { sendMessage } from "@/lib/chat/api"
+import { sendEncryptedMessage } from "@/lib/chat/api"
 import { DEFAULT_FORMAT } from "@/lib/chat/format"
+import type { KeyPair } from "@/lib/crypto/box"
 import { SAY_HI_TEXT, canSayHi } from "@/lib/status/sayHi"
 import { openChatWindow } from "@/lib/tauri/windows"
+import { SafetyNumber } from "@/components/chat/SafetyNumber"
 import { FriendListItem } from "./FriendListItem"
 
 /** Key used to remember a group's collapsed state; the default group has no id. */
@@ -41,6 +43,8 @@ export interface FriendListProps {
   /** People I have ignored (their menu offers Stop Ignoring). */
   ignoredIds: ReadonlySet<string>
   onIgnoreChanged: () => void
+  /** My encryption key: a pair, "unavailable" with no keychain, or null while it loads (ADR 0010). */
+  keys: KeyPair | "unavailable" | null
   view: BuddyView
   /** Text from the Buddy List search box. */
   search: string
@@ -58,6 +62,7 @@ export function FriendList({
   unreadBySender = {},
   ignoredIds,
   onIgnoreChanged,
+  keys,
   view,
   search,
   onToggleGroup,
@@ -104,11 +109,16 @@ export function FriendList({
     }
     sayHiAt.current.set(f.id, now)
     const online = (presence[f.id] ?? "offline") !== "offline"
-    const res = await sendMessage(
-      { id: crypto.randomUUID(), sender_id: me, receiver_id: f.id, body: SAY_HI_TEXT, created_at: new Date().toISOString(), format: DEFAULT_FORMAT },
-      DEFAULT_FORMAT,
-      online,
-    )
+    const res = await sendEncryptedMessage({
+      me,
+      friendId: f.id,
+      friendName: f.displayName,
+      body: SAY_HI_TEXT,
+      format: DEFAULT_FORMAT,
+      id: crypto.randomUUID(),
+      delivered: online,
+      keys,
+    })
     if (!res.ok) {
       sayHiAt.current.delete(f.id)
       setNote(res.message)
@@ -426,6 +436,9 @@ export function FriendList({
           <p className="m-0 font-bold">{overlay.friend.displayName}</p>
           {shouldShowField(overlay.friend.statusMessage) ? <p className="m-0 text-xs">{overlay.friend.statusMessage}</p> : null}
           {hasNowPlaying(overlay.friend.nowPlaying) ? <p className="m-0 text-xs">♪ {overlay.friend.nowPlaying}</p> : null}
+          {keys !== null && keys !== "unavailable" ? (
+            <SafetyNumber myPublicKey={keys.publicKey} friendId={overlay.friend.id} friendName={overlay.friend.displayName} />
+          ) : null}
           <button type="button" className="ym-button mt-1" autoFocus onClick={() => setOverlay(null)}>
             Close
           </button>

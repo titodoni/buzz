@@ -59,40 +59,60 @@ describe("stored size", () => {
 })
 
 describe("two copies in one row", () => {
+  const keysOf = (me: { publicKey: string; privateKey: string }, friend: { publicKey: string }) => ({
+    friendPublicKey: friend.publicKey,
+    myPublicKey: me.publicKey,
+    myPrivateKey: me.privateKey,
+  })
+
   it("sender reads the sender copy, friend reads the receiver copy", async () => {
     const me = await generateKeyPair()
     const ann = await generateKeyPair()
-    const r = await encryptMessage("hello", BIG_FORMAT, { friendPublicKey: ann.publicKey, myPublicKey: me.publicKey, myPrivateKey: me.privateKey })
+    const r = await encryptMessage("hello", BIG_FORMAT, keysOf(me, ann))
     if (!r.ok) throw new Error("encrypt failed")
-    const row = { senderId: "me", cipherReceiver: r.pair.cipherReceiver, cipherSender: r.pair.cipherSender }
-    const asSender = await decryptMessage(row, { id: "me", publicKey: me.publicKey, privateKey: me.privateKey }, me.publicKey)
-    const asFriend = await decryptMessage(row, { id: "ann", publicKey: ann.publicKey, privateKey: ann.privateKey }, me.publicKey)
-    expect(asSender).toEqual({ body: "hello", format: BIG_FORMAT })
-    expect(asFriend).toEqual({ body: "hello", format: BIG_FORMAT })
+    const row = { senderId: "me", senderPublicKey: me.publicKey, cipherReceiver: r.pair.cipherReceiver, cipherSender: r.pair.cipherSender }
+    expect(await decryptMessage(row, { id: "me", privateKey: me.privateKey })).toEqual({ body: "hello", format: BIG_FORMAT })
+    expect(await decryptMessage(row, { id: "ann", privateKey: ann.privateKey })).toEqual({ body: "hello", format: BIG_FORMAT })
   })
   it("the friend cannot read the sender copy and the sender cannot read the receiver copy", async () => {
     const me = await generateKeyPair()
     const ann = await generateKeyPair()
-    const r = await encryptMessage("hello", DEFAULT_FORMAT, { friendPublicKey: ann.publicKey, myPublicKey: me.publicKey, myPrivateKey: me.privateKey })
+    const r = await encryptMessage("hello", DEFAULT_FORMAT, keysOf(me, ann))
     if (!r.ok) throw new Error("encrypt failed")
-    const swapped = { senderId: "me", cipherReceiver: r.pair.cipherSender, cipherSender: r.pair.cipherReceiver }
-    expect(await decryptMessage(swapped, { id: "ann", publicKey: ann.publicKey, privateKey: ann.privateKey }, me.publicKey)).toBeNull()
-    expect(await decryptMessage(swapped, { id: "me", publicKey: me.publicKey, privateKey: me.privateKey }, me.publicKey)).toBeNull()
+    const swapped = { senderId: "me", senderPublicKey: me.publicKey, cipherReceiver: r.pair.cipherSender, cipherSender: r.pair.cipherReceiver }
+    expect(await decryptMessage(swapped, { id: "ann", privateKey: ann.privateKey })).toBeNull()
+    expect(await decryptMessage(swapped, { id: "me", privateKey: me.privateKey })).toBeNull()
   })
-  it("a message from a swapped sender key is unreadable", async () => {
+  it("a row that names the wrong sender key is unreadable", async () => {
     const me = await generateKeyPair()
     const ann = await generateKeyPair()
     const eve = await generateKeyPair()
-    const r = await encryptMessage("hello", DEFAULT_FORMAT, { friendPublicKey: ann.publicKey, myPublicKey: me.publicKey, myPrivateKey: me.privateKey })
+    const r = await encryptMessage("hello", DEFAULT_FORMAT, keysOf(me, ann))
     if (!r.ok) throw new Error("encrypt failed")
-    const row = { senderId: "me", cipherReceiver: r.pair.cipherReceiver, cipherSender: r.pair.cipherSender }
-    expect(await decryptMessage(row, { id: "ann", publicKey: ann.publicKey, privateKey: ann.privateKey }, eve.publicKey)).toBeNull()
+    const row = { senderId: "me", senderPublicKey: eve.publicKey, cipherReceiver: r.pair.cipherReceiver, cipherSender: r.pair.cipherSender }
+    expect(await decryptMessage(row, { id: "ann", privateKey: ann.privateKey })).toBeNull()
+  })
+  it("a malformed sender key is unreadable, not a crash", async () => {
+    const me = await generateKeyPair()
+    const ann = await generateKeyPair()
+    const r = await encryptMessage("hello", DEFAULT_FORMAT, keysOf(me, ann))
+    if (!r.ok) throw new Error("encrypt failed")
+    const row = { senderId: "me", senderPublicKey: "nope", cipherReceiver: r.pair.cipherReceiver, cipherSender: r.pair.cipherSender }
+    expect(await decryptMessage(row, { id: "ann", privateKey: ann.privateKey })).toBeNull()
+  })
+  it("old messages stay readable after the sender starts fresh", async () => {
+    const oldKey = await generateKeyPair()
+    const ann = await generateKeyPair()
+    const r = await encryptMessage("from the old key", DEFAULT_FORMAT, keysOf(oldKey, ann))
+    if (!r.ok) throw new Error("encrypt failed")
+    // The sender has since made a new key; the row still names the one it was sent with.
+    const row = { senderId: "me", senderPublicKey: oldKey.publicKey, cipherReceiver: r.pair.cipherReceiver, cipherSender: r.pair.cipherSender }
+    expect(await decryptMessage(row, { id: "ann", privateKey: ann.privateKey })).toEqual({ body: "from the old key", format: DEFAULT_FORMAT })
   })
   it("refuses an empty or oversized body before encrypting", async () => {
     const me = await generateKeyPair()
     const ann = await generateKeyPair()
-    const keys = { friendPublicKey: ann.publicKey, myPublicKey: me.publicKey, myPrivateKey: me.privateKey }
-    expect(await encryptMessage(" ", DEFAULT_FORMAT, keys)).toEqual({ ok: false, reason: "empty" })
-    expect(await encryptMessage("a".repeat(1001), DEFAULT_FORMAT, keys)).toEqual({ ok: false, reason: "too long" })
+    expect(await encryptMessage(" ", DEFAULT_FORMAT, keysOf(me, ann))).toEqual({ ok: false, reason: "empty" })
+    expect(await encryptMessage("a".repeat(1001), DEFAULT_FORMAT, keysOf(me, ann))).toEqual({ ok: false, reason: "too long" })
   })
 })

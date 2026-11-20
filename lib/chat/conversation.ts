@@ -10,6 +10,8 @@ export interface MessageRow {
   created_at: string;
   /** As stored; checked by parseFormat before it is shown (Req 17.4). */
   format?: unknown;
+  /** An Encrypted Message this device could not read; `body` holds the notice text. */
+  unreadable?: boolean;
 }
 
 /**
@@ -27,6 +29,8 @@ export interface MessageItem {
   status: MessageStatus;
   /** Always valid: the default when the row had none or a bad one. */
   format: MessageFormat;
+  /** True for an Encrypted Message this device could not read. */
+  unreadable?: boolean;
 }
 
 /** A centered line that is not a chat message, e.g. Nudge notices. */
@@ -92,6 +96,7 @@ function toItem(me: string, m: MessageRow, status: MessageStatus): MessageItem {
     createdAt: m.created_at,
     status,
     format: parseFormat(m.format),
+    ...(m.unreadable ? { unreadable: true } : {}),
   };
 }
 

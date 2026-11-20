@@ -4,13 +4,14 @@ import { useCallback, useEffect, useRef } from "react"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { closeChannel, openChannel } from "@/lib/realtime/channel"
 import { pairKey } from "@/lib/friends/search"
-import type { MessageRow } from "@/lib/chat/conversation"
+import type { WireRow } from "@/lib/chat/wire"
 import type { TypingSignal } from "@/lib/typing/broadcast"
 
 export interface ChatChannelOptions {
   me: string
   friendId: string
-  onMessage: (message: MessageRow) => void
+  /** A stored row, still encrypted when it is an Encrypted Message; the window reads it. */
+  onMessage: (message: WireRow) => void
   /** A typing broadcast from the friend; `at` is the local receive time (ms). */
   onTyping: (signal: TypingSignal, at: number) => void
   onNudge: () => void
@@ -24,14 +25,14 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null
 }
 
-function isMessageRow(v: unknown): v is MessageRow {
+function isWireRow(v: unknown): v is WireRow {
   if (!isRecord(v)) return false
   const r = v
   return (
     typeof r.id === "string" &&
     typeof r.sender_id === "string" &&
     typeof r.receiver_id === "string" &&
-    typeof r.body === "string" &&
+    (typeof r.body === "string" || r.body === null) &&
     typeof r.created_at === "string"
   )
 }
@@ -85,7 +86,7 @@ export function useChatChannel(options: ChatChannelOptions): {
       // the conversation reducer dedupes by id.
       const onInsert = (payload: { new: unknown }) => {
         const row = payload.new
-        if (!isMessageRow(row)) return
+        if (!isWireRow(row)) return
         const fromFriend = row.sender_id === friendId && row.receiver_id === me
         const fromMe = row.sender_id === me && row.receiver_id === friendId
         if (fromFriend || fromMe) handlers.current.onMessage(row)
