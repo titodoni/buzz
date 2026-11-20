@@ -53,7 +53,7 @@ Components: `HangoutBanner` (shared by Buddy List and Chat Window),
 
 ## Live profile updates (R0)
 
-`useFriendProfiles` in `lib/friends/` subscribes to `postgres_changes`
+`useProfileUpdates` (`lib/friends/profileFeed.ts`) in `lib/friends/` subscribes to `postgres_changes`
 UPDATE on `profiles` with filter `id=in.(<friend ids>)` (Realtime caps an
 `in` filter at 100 values; chunk channels beyond that). `profiles` is
 already in the `supabase_realtime` publication (migration `...000200`).
