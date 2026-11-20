@@ -13,7 +13,7 @@ Calendar: today is 20 Nov 2026. Freeze 1 Dec, submit 4 Dec. If the freeze comes 
 ## Phase 1. Keys (E1)
 
 - [x] 1.1 `libsodium-wrappers` 0.8.4 approved and added (ships its own types). `lib/crypto/box.ts`, `payload.ts`, `message.ts` with 23 unit tests: round trip, wrong key and tampering fail, 1000 character limit, worst-case size fits `MAX_CIPHER_LENGTH` (6000), two copies. CSP gained `'wasm-unsafe-eval'` (checked in headless Chrome: fails without it, works with it). _E1, E2.6_
-- [ ] 1.2 `lib/crypto/safetyNumber.ts` and `trust.ts` with unit tests. _E3_
+- [x] 1.2 `lib/crypto/safetyNumber.ts` and `trust.ts` with unit tests. _E3_
 - [ ] 1.3 Approve and add the keychain package. `keyStore.ts` for desktop and dev. Check on Linux, Windows, macOS. _E1.2, E1.3_
 - [ ] 1.4 Migration `...001500_user_keys.sql`, `keys.ts`, create and publish on first open. Extend `test:rls`: friend reads key, stranger cannot, nobody writes another's key. _E1.1, E1.4_
 - [x] Checkpoint: commit.
