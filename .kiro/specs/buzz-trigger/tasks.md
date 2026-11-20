@@ -54,7 +54,7 @@ Dependencies approved 20 Nov: `mpris` (Linux only), `windows` (Windows only). ma
 - [x] 5.2 `lib/nowPlaying/auto.ts` pure rules with unit tests: format, 140 cut, 30 s pause grace, manual line wins, 10 s write throttle. _R7.2 to R7.5_
 - [x] 5.3 Rust `now_playing` module, Linux first (MPRIS). Commands and `now-playing` event. `cargo fmt`, `cargo clippy`. _R7.2, R7.6_
 - [x] 5.4 Setting "Share what I'm playing" (off by default) and `useAutoNowPlaying` in the Buddy List window. _R7.1, R7.8_
-- [~] 5.5 (20 Nov: silent MPRIS test player on Linux, line saved to the profile and received over Realtime) Two-user check on Linux: play Spotify, then a YouTube video in a browser, then pause. Friend sees each change and the clear. _R7_
+- [~] 5.5 (20 Nov, Linux: test player shown within 5 s, cleared 30 s after stop, Spotify shown 1 s after play; YouTube in a browser not checked yet) Two-user check on Linux: play Spotify, then a YouTube video in a browser, then pause. Friend sees each change and the clear. _R7_
 - [ ] 5.6 Windows (SMTC) and macOS (AppleScript) readers. Verify on real machines or in CI builds; anything unverified is marked so in the README. _R7.7_
 
 **Feature freeze 1 Dec.** If behind, cut 5.6 first, then 4.2, never 5.3 to 5.5 (the demo uses them).
