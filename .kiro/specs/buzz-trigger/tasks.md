@@ -37,7 +37,7 @@ Calendar: today is 20 Nov 2026. Submit on 4 Dec. Feature freeze 1 Dec.
 - [ ] 3.3 Chat Window Hangout button and `HangoutPicker`: templates, custom field, pending guard, Busy hint, Offline disabled with reason. _R3.1, R3.6 to R3.8_
 - [ ] 3.4 `useHangouts` and `HangoutBanner` in Buddy List and Chat Window. Banner within 2 seconds. _R3.2_
 - [ ] 3.5 Accept, Decline, expiry, system lines for both sides. Verify all three paths. _R3.3 to R3.5_
-- [ ] Checkpoint: Hangout in `GLOSSARY.md`; ADR 0010 "Hangouts are stored, Nudges are not"; commit.
+- [ ] Checkpoint: Hangout in `GLOSSARY.md`; ADR 0011 "Hangouts are stored, Nudges are not" (0010 is encryption); commit.
 
 ## Phase 4. Nudge, extended: trigger 3 (29 to 30 Nov)
 

@@ -21,4 +21,8 @@ engineering.
   instant, with a cooldown that prevents spam.
 - Privacy is simple: only friends see each other. No public profiles,
   no stranger discovery beyond a direct friend request.
-- Never claim end-to-end encryption. It is not built, so it is not claimed.
+- Encryption claims must be true today. Until Encrypted Messages ship and
+  pass the two-user check (docs/adr/0010), claim nothing. After that, the only
+  wording is "Messages are encrypted on your device. Only you and your friend
+  can read them." Never say Buzz hides who talks to whom, Presence, Status, or
+  Now Playing, and never say a stranger or the server cannot see them.

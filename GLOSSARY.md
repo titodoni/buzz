@@ -86,6 +86,14 @@ _Avoid_: IM window, conversation tab, DM
 Text one friend sends another in a chat window, possibly containing emoticons.
 _Avoid_: IM, chat (as a noun for one message)
 
+**Encrypted Message**:
+A Message that only the two friends can read; what Buzz keeps on its servers is unreadable. It hides what was said, not who spoke to whom or when, and not Presence, Status, or Now Playing. If a user starts fresh on a new device, their old Encrypted Messages can no longer be read there.
+_Avoid_: Secure message, private message, E2E message
+
+**Safety Number**:
+A short code on a friend's profile that two friends can compare out loud to confirm nobody has swapped the key their Encrypted Messages use. If a friend's key changes, the chat says so and asks you to confirm before sending.
+_Avoid_: Fingerprint, security code, key hash
+
 **Offline Message**:
 A message sent while the friend was offline; it waits and reaches them when they come back.
 _Avoid_: Queued message, pending message
