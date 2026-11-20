@@ -1,6 +1,6 @@
 import { getSupabase } from "@/lib/supabase/browser-client"
 import type { Database } from "@/lib/supabase/database.types"
-import { checkAvatar } from "@/lib/validation/profile"
+import { checkAvatar, isValidNowPlaying } from "@/lib/validation/profile"
 import { planProfileSave, type ProfileDraft, type ProfileFields } from "./save"
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
@@ -47,6 +47,18 @@ export async function updateProfile(
     const { error } = await getSupabase().from("profiles").update(plan.patch).eq("id", userId)
     if (error) return { ok: false, message: MSG_PROFILE_SAVE }
     return { ok: true }
+  } catch {
+    return { ok: false, message: MSG_PROFILE_SAVE }
+  }
+}
+
+/** Writes only Now Playing (automatic Now Playing, buzz-trigger R7). Blank is saved as null. */
+export async function setMyNowPlaying(userId: string, line: string | null): Promise<ProfileResult> {
+  const value = line && line.trim() !== "" ? line : null
+  if (value !== null && !isValidNowPlaying(value)) return { ok: false, message: MSG_PROFILE_SAVE }
+  try {
+    const { error } = await getSupabase().from("profiles").update({ now_playing: value }).eq("id", userId)
+    return error ? { ok: false, message: MSG_PROFILE_SAVE } : { ok: true }
   } catch {
     return { ok: false, message: MSG_PROFILE_SAVE }
   }

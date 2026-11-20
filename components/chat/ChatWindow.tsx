@@ -17,7 +17,7 @@ import { conversation, earlierCursor, emptyConversation, type MessageRow } from 
 import { EARLIER_PAGE_SIZE, loadEarlier, loadHistory, markConversationRead, sendMessage } from "@/lib/chat/api";
 import { conversationText, copyText } from "@/lib/chat/copy";
 import { useChatView } from "@/lib/chat/useChatView";
-import { hasNowPlaying, shouldShowField } from "@/lib/profile/render";
+import { hasNowPlaying, shouldShowField, shownNowPlaying } from "@/lib/profile/render";
 import { useChatChannel } from "@/lib/realtime/chat";
 import { useFriendPresence } from "@/lib/realtime/presence";
 import { ignoreUser, isIgnoredByMe, unignoreUser, useIgnorers } from "@/lib/friends/ignore";
@@ -356,6 +356,12 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
             <span className="ym-truncate" style={{ fontSize: 12, color: "var(--text-muted)" }}>
               {friend?.statusMessage ? `"${friend.statusMessage}"` : presenceLabel(presence)}
             </span>
+            {hasNowPlaying(friend?.nowPlaying) ? (
+              <span className="ym-truncate" style={{ fontSize: 12 }} title={friend?.nowPlaying ?? undefined}>
+                <span aria-hidden="true">♪ </span>
+                {shownNowPlaying(friend?.nowPlaying ?? "")}
+              </span>
+            ) : null}
           </>
         }
         notice={

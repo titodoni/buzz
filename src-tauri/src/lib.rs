@@ -1,3 +1,5 @@
+mod now_playing;
+
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::Duration;
 
@@ -399,7 +401,9 @@ pub fn run() {
             flash_chat_window,
             show_toast,
             set_tray_status,
-            quit_app
+            quit_app,
+            now_playing::now_playing_supported,
+            now_playing::set_now_playing_enabled
         ])
         .run(tauri::generate_context!())
         .expect("error while running Buzz");

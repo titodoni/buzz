@@ -1,6 +1,6 @@
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { hasNowPlaying, shouldShowField } from "../render";
+import { NOW_PLAYING_SHOWN_MAX, hasNowPlaying, shouldShowField, shownNowPlaying } from "../render";
 
 // Feature: buzz, Property 20: Status and Now_Playing display
 describe("Property 20: Status and Now_Playing display", () => {
@@ -23,3 +23,20 @@ describe("Property 20: Status and Now_Playing display", () => {
     );
   });
 });
+
+describe("shownNowPlaying (buzz-trigger R5.1)", () => {
+  it("keeps a line of 40 characters or fewer", () => {
+    expect(shownNowPlaying("Copeland - Love Affair")).toBe("Copeland - Love Affair")
+    expect(shownNowPlaying("x".repeat(NOW_PLAYING_SHOWN_MAX))).toBe("x".repeat(NOW_PLAYING_SHOWN_MAX))
+  })
+
+  it("cuts a longer line to 40 characters ending in ...", () => {
+    const out = shownNowPlaying("A very long artist name - An even longer song title here")
+    expect([...out]).toHaveLength(NOW_PLAYING_SHOWN_MAX)
+    expect(out.endsWith("...")).toBe(true)
+  })
+
+  it("never splits a character", () => {
+    expect([...shownNowPlaying("é".repeat(100))]).toHaveLength(NOW_PLAYING_SHOWN_MAX)
+  })
+})

@@ -3,7 +3,7 @@
 import type { KeyboardEvent, MouseEvent } from "react"
 import { PresenceDot } from "@/components/PresenceDot"
 import type { PresenceState } from "@/lib/presence/state"
-import { hasNowPlaying, shouldShowField } from "@/lib/profile/render"
+import { hasNowPlaying, shouldShowField, shownNowPlaying } from "@/lib/profile/render"
 import type { FriendEntry } from "@/lib/friends/api"
 
 export interface FriendListItemProps {
@@ -53,9 +53,9 @@ export function FriendListItem({ friend, presence, unread, bold = true, onOpen, 
           <div className="truncate text-xs">{friend.statusMessage}</div>
         ) : null}
         {hasNowPlaying(friend.nowPlaying) ? (
-          <div className="truncate text-xs">
+          <div className="truncate text-xs" title={friend.nowPlaying ?? undefined}>
             <span aria-hidden="true">♪ </span>
-            {friend.nowPlaying}
+            {shownNowPlaying(friend.nowPlaying ?? "")}
           </div>
         ) : null}
       </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSignOut } from "@/components/AuthGuard"
 import { WindowFrame } from "@/components/WindowFrame"
 import { AboutDialog } from "@/components/AboutDialog"
@@ -24,6 +24,7 @@ import { useSession } from "@/lib/auth/session"
 import { hasNowPlaying, shouldShowField } from "@/lib/profile/render"
 import { useOfflineDelivery } from "@/lib/offline/useOfflineDelivery"
 import { useNudgeInbox } from "@/lib/realtime/inbox"
+import { useAutoNowPlaying, useShareNowPlaying } from "@/lib/nowPlaying/useAutoNowPlaying"
 import { usePresenceTracker } from "@/lib/realtime/presence"
 import { openChatWindow } from "@/lib/tauri/windows"
 
@@ -89,6 +90,18 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
     if (friendIds.includes(sender) && !ignoredIds.has(sender)) void openChatWindow(sender, { nudge: true })
   })
   const totalUnread = Object.values(unreadBySender).reduce((a, b) => a + b, 0)
+  // What the computer is playing goes into Now Playing, only if the user turns it on (buzz-trigger R7).
+  const share = useShareNowPlaying()
+  const onNowPlayingWritten = useCallback(
+    (line: string | null) => setMine((m) => (m ? { ...m, nowPlaying: line } : m)),
+    [],
+  )
+  useAutoNowPlaying({
+    me,
+    profileLine: mine ? mine.nowPlaying : undefined,
+    enabled: share.enabled,
+    onWritten: onNowPlayingWritten,
+  })
 
   useEffect(() => {
     let active = true
@@ -122,6 +135,22 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
       label: "Messenger",
       items: [
         { label: "My Status", onSelect: () => setStatusMenu(true) },
+        ...(share.supported
+          ? [
+              {
+                label: "Share What I'm Playing",
+                checked: share.enabled,
+                onSelect: () => {
+                  share.setEnabled(!share.enabled)
+                  setNote(
+                    share.enabled
+                      ? "Buzz stopped sharing what you're playing."
+                      : "Friends now see what you're playing. Only the artist and title are shared.",
+                  )
+                },
+              },
+            ]
+          : []),
         { label: "Preferences", onSelect: () => setNote("Preferences are coming soon.") },
         { label: "Sign Out", onSelect: () => void onSignOut() },
       ],
