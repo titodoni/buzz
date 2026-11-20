@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { WindowFrame } from "@/components/WindowFrame";
 import { PresenceDot, presenceLabel } from "@/components/PresenceDot";
 import { NudgeButton, type NudgeButtonHandle } from "@/components/chat/NudgeButton";
@@ -23,6 +23,8 @@ import { useFriendPresence } from "@/lib/realtime/presence";
 import { ignoreUser, isIgnoredByMe, unignoreUser, useIgnorers } from "@/lib/friends/ignore";
 import { playNudgeSound, shakeChatWindow } from "@/lib/nudge/effects";
 import { getProfile, type PublicProfile } from "@/lib/friends/api";
+import { useProfileUpdates } from "@/lib/friends/profileFeed";
+import { mergeOne, type ProfileFields } from "@/lib/friends/profileMerge";
 import { onSend as typingOnSend, type TypingState } from "@/lib/typing/state";
 import { receiveTypingSignal, type TypingSignal } from "@/lib/typing/broadcast";
 import { reportActivity } from "@/lib/realtime/activity";
@@ -153,6 +155,11 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
       active = false;
     };
   }, [me, friendId, reload]);
+
+  // The friend's new Status or Now Playing reaches the header without a reload (buzz-trigger R0).
+  const friendIds = useMemo(() => [friendId], [friendId]);
+  const onFriendProfile = useCallback((p: ProfileFields) => setFriend((cur) => mergeOne(cur, p)), []);
+  useProfileUpdates(`profiles:chat:${me}:${friendId}`, friendIds, onFriendProfile);
 
   // Unread messages stay unread until the window is focused and visible again.
   useEffect(() => {

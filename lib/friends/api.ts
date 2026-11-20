@@ -1,10 +1,12 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import type { RealtimeChannel } from "@supabase/supabase-js"
 import { closeChannel, openChannel } from "@/lib/realtime/channel"
 import { getSupabase } from "@/lib/supabase/browser-client"
 import type { Database } from "@/lib/supabase/database.types"
+import { useProfileUpdates } from "./profileFeed"
+import { mergeProfile } from "./profileMerge"
 import { canSendRequest, MAX_SEARCH_RESULTS } from "./search"
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"]
@@ -243,6 +245,17 @@ export function useFriends(me: string): FriendsData {
       if (opened) void closeChannel(topic, opened)
     }
   }, [me, reload])
+
+  // A friend's new Status, Now Playing, name, or Avatar shows without a reload (buzz-trigger R0).
+  const friendIds = useMemo(() => data.friends.map((f) => f.id), [data.friends])
+  const onProfile = useCallback(
+    (p: PublicProfile) => setData((d) => {
+      const friends = mergeProfile(d.friends, p)
+      return friends === d.friends ? d : { ...d, friends }
+    }),
+    [],
+  )
+  useProfileUpdates(`profiles:buddylist:${me}`, friendIds, onProfile)
 
   return { ...data, loading, error, reload }
 }
