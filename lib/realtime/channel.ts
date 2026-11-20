@@ -39,10 +39,20 @@ export async function openChannel(
   return getSupabase().channel(name, options);
 }
 
-/** Removes `channel` and records the removal so `openChannel` can wait for it. */
-export function closeChannel(name: string, channel: RealtimeChannel): Promise<void> {
-  const removal: Promise<void> = getSupabase()
-    .removeChannel(channel)
+/**
+ * Removes `channel` and records the removal so `openChannel` can wait for it.
+ * The removal is recorded at once, before `before` (such as an untrack) runs,
+ * so a reopen in the meantime can never be handed the old channel.
+ */
+export function closeChannel(
+  name: string,
+  channel: RealtimeChannel,
+  before?: () => Promise<unknown>,
+): Promise<void> {
+  const removal: Promise<void> = Promise.resolve()
+    .then(() => before?.())
+    .catch(() => undefined) // a failed untrack must not stop the removal
+    .then(() => getSupabase().removeChannel(channel))
     .then(
       () => undefined,
       () => undefined, // a failed removal must not block reopening the topic

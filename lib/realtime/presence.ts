@@ -97,9 +97,9 @@ function openPresence(opts: {
       const ch = channel
       channel = null
       if (!ch) return
-      if (opts.key && joined) await ch.untrack().catch(() => undefined)
+      const untrack = opts.key && joined ? () => ch.untrack() : undefined
       joined = false
-      await closeChannel(PRESENCE_CHANNEL, ch)
+      await closeChannel(PRESENCE_CHANNEL, ch, untrack)
     },
   }
 }
