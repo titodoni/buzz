@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import {
-  UP_FOR_CHAT_KEY,
+  upForChatKey,
   UP_FOR_CHAT_MS,
   UP_FOR_CHAT_TEXT,
   clearUpForChat,
@@ -83,11 +83,12 @@ describe("storage", () => {
   it("round-trips and clears", () => {
     const s = mem()
     const state = startUpForChat("x", T0)
-    saveUpForChat(s, state)
-    expect(s.getItem(UP_FOR_CHAT_KEY)).not.toBeNull()
-    expect(loadUpForChat(s)).toEqual(state)
-    clearUpForChat(s)
-    expect(loadUpForChat(s)).toBeNull()
+    saveUpForChat(s, "u1", state)
+    expect(s.getItem(upForChatKey("u1"))).not.toBeNull()
+    expect(loadUpForChat(s, "u1")).toEqual(state)
+    expect(loadUpForChat(s, "u2")).toBeNull()
+    clearUpForChat(s, "u1")
+    expect(loadUpForChat(s, "u1")).toBeNull()
   })
   it("treats malformed values as none", () => {
     for (const raw of [null, "", "nope", "null", "[]", '{"startedAt":"1","previousText":null}', '{"startedAt":1,"previousText":5}']) {

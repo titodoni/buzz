@@ -2,7 +2,7 @@
 
 export const UP_FOR_CHAT_TEXT = "Up for chat, say hi!"
 export const UP_FOR_CHAT_MS = 60 * 60 * 1000
-export const UP_FOR_CHAT_KEY = "buzz.upForChat"
+export const upForChatKey = (me: string) => `buzz:up-for-chat:${me}`
 
 /** What Buzz remembers while Up for Chat is on. Lives in localStorage only (R2.4). */
 export interface UpForChatState {
@@ -72,14 +72,14 @@ export function parseUpForChat(raw: string | null): UpForChatState | null {
   }
 }
 
-export function loadUpForChat(store: Pick<Storage, "getItem">): UpForChatState | null {
-  return parseUpForChat(store.getItem(UP_FOR_CHAT_KEY))
+export function loadUpForChat(store: Pick<Storage, "getItem">, me: string): UpForChatState | null {
+  return parseUpForChat(store.getItem(upForChatKey(me)))
 }
 
-export function saveUpForChat(store: Pick<Storage, "setItem">, state: UpForChatState): void {
-  store.setItem(UP_FOR_CHAT_KEY, JSON.stringify(state))
+export function saveUpForChat(store: Pick<Storage, "setItem">, me: string, state: UpForChatState): void {
+  store.setItem(upForChatKey(me), JSON.stringify(state))
 }
 
-export function clearUpForChat(store: Pick<Storage, "removeItem">): void {
-  store.removeItem(UP_FOR_CHAT_KEY)
+export function clearUpForChat(store: Pick<Storage, "removeItem">, me: string): void {
+  store.removeItem(upForChatKey(me))
 }

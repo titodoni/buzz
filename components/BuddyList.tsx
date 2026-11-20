@@ -26,6 +26,7 @@ import { useOfflineDelivery } from "@/lib/offline/useOfflineDelivery"
 import { useNudgeInbox } from "@/lib/realtime/inbox"
 import { useAutoNowPlaying, useShareNowPlaying } from "@/lib/nowPlaying/useAutoNowPlaying"
 import { usePresenceTracker } from "@/lib/realtime/presence"
+import { useUpForChat } from "@/lib/status/useUpForChat"
 import { openChatWindow } from "@/lib/tauri/windows"
 
 type Panel = "search" | "pick" | "about" | "newGroup" | "ignore" | null
@@ -102,6 +103,12 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
     enabled: share.enabled,
     onWritten: onNowPlayingWritten,
   })
+
+  const onStatusSaved = useCallback(
+    (status: string | null) => setMine((m) => (m ? { ...m, statusMessage: status } : m)),
+    [],
+  )
+  const upForChat = useUpForChat({ me, profile: mine, myState, setAvailable, onStatusSaved })
 
   useEffect(() => {
     let active = true
@@ -182,7 +189,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
           onAvailable={setAvailable}
           onBusy={setBusy}
           onInvisible={setInvisible}
-          onStatusSaved={(status) => setMine((m) => (m ? { ...m, statusMessage: status } : m))}
+          onStatusSaved={onStatusSaved}
           menuOpen={statusMenu}
           onMenuOpenChange={setStatusMenu}
         />
@@ -197,9 +204,26 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
               {mine?.nowPlaying}
             </div>
           ) : null}
-          <Link href="/profile/" className="text-xs underline">
-            Edit profile
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="ym-button"
+              style={{ minHeight: 28 }}
+              aria-pressed={upForChat.on}
+              disabled={!mine || upForChat.busy}
+              onClick={upForChat.toggle}
+            >
+              {upForChat.on ? "Up for Chat: on" : "Up for Chat"}
+            </button>
+            <Link href="/profile/" className="text-xs underline">
+              Edit profile
+            </Link>
+          </div>
+          {upForChat.error ? (
+            <p role="alert" className="m-0 text-xs" style={{ color: "var(--buzz-red)" }}>
+              {upForChat.error}
+            </p>
+          ) : null}
         </div>
       </header>
 
