@@ -11,11 +11,11 @@ Decisions and limits: ADR 0010. Requirements: [requirements.md](./requirements.m
 
 ## Data
 
-Migrations, in order:
+Migrations, in order (`...001300` is taken by Hangouts in `buzz-trigger`):
 
-1. `...001300_privacy_hardening.sql` (E0): narrower `profiles` select policy, `avatar_url` check, drop `avatars_read_all`.
-2. `...001400_user_keys.sql`: table `user_keys (user_id pk references profiles, public_key text not null, created_at)`. RLS: select for self and accepted friends, insert and update only for self. Add to the Realtime publication so a friend's key change reaches open chats.
-3. `...001500_encrypted_messages.sql`: on `messages` add `encrypted boolean not null default false`, `cipher_receiver text`, `cipher_sender text`. Make `body` nullable. Check: an encrypted row has both ciphers, a size limit, and a null body. A plaintext row keeps the old body check. Insert policy requires `encrypted = true`. This migration is applied only after the updated app is released, because it makes old clients fail to send.
+1. `...001400_privacy_hardening.sql` (E0): narrower `profiles` select policy, `avatar_url` check, drop `avatars_read_all`.
+2. `...001500_user_keys.sql`: table `user_keys (user_id pk references profiles, public_key text not null, created_at)`. RLS: select for self and accepted friends, insert and update only for self. Add to the Realtime publication so a friend's key change reaches open chats.
+3. `...001600_encrypted_messages.sql`: on `messages` add `encrypted boolean not null default false`, `cipher_receiver text`, `cipher_sender text`. Make `body` nullable. Check: an encrypted row has both ciphers, a size limit, and a null body. A plaintext row keeps the old body check. Insert policy requires `encrypted = true`. This migration is applied only after the updated app is released, because it makes old clients fail to send.
 
 Each cipher is `base64(nonce || box)` of a JSON payload `{ body, format }`.
 
