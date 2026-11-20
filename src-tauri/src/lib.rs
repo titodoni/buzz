@@ -1,3 +1,4 @@
+mod key_store;
 mod now_playing;
 
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -403,7 +404,11 @@ pub fn run() {
             set_tray_status,
             quit_app,
             now_playing::now_playing_supported,
-            now_playing::set_now_playing_enabled
+            now_playing::set_now_playing_enabled,
+            key_store::key_store_available,
+            key_store::key_store_get,
+            key_store::key_store_set,
+            key_store::key_store_delete
         ])
         .run(tauri::generate_context!())
         .expect("error while running Buzz");

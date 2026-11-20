@@ -13,6 +13,10 @@
     "core:window:allow-set-position",
     "core:window:allow-outer-position",
     "core:window:allow-is-maximized",
-    "core:window:allow-request-user-attention"
+    "core:window:allow-request-user-attention",
+    "allow-key-store-available",
+    "allow-key-store-get",
+    "allow-key-store-set",
+    "allow-key-store-delete"
   ]
 }

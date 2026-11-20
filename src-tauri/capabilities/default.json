@@ -11,6 +11,10 @@
     "core:window:allow-close",
     "core:window:allow-start-dragging",
     "core:event:allow-listen",
-    "core:event:allow-unlisten"
+    "core:event:allow-unlisten",
+    "allow-key-store-available",
+    "allow-key-store-get",
+    "allow-key-store-set",
+    "allow-key-store-delete"
   ]
 }

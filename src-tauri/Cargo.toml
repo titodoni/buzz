@@ -15,6 +15,9 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["macos-private-api", "tray-icon", "image-png"] }
 
+# The Message private key lives in the OS keychain (buzz-encryption E1.2, ADR 0010).
+keyring = "4.2"
+
 # Automatic Now Playing on Linux: reads MPRIS players over D-Bus (buzz-trigger R7).
 [target.'cfg(target_os = "linux")'.dependencies]
 mpris = "2.1"
