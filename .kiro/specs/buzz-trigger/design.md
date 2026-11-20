@@ -13,7 +13,7 @@ module layout and the order of dependencies.
 
 ## Data
 
-One migration: `supabase/migrations/20250101001300_hangouts.sql`.
+One migration: `supabase/migrations/20250101001700_hangouts.sql (not 1300: 1400 to 1600 are taken by buzz-encryption)`.
 
 - Table `hangouts` (columns, checks, indexes as in spec 7.1).
 - Partial unique index on `(least(sender_id, receiver_id), greatest(sender_id, receiver_id)) where status = 'pending'`.

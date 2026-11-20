@@ -5,10 +5,10 @@ Calendar: today is 20 Nov 2026. Freeze 1 Dec, submit 4 Dec. If the freeze comes 
 
 ## Phase 0. Security hardening (E0)
 
-- [~] 0.1 (written, not applied, tests not run: needs your approval and SUPABASE_DB_URL) Migration `...001400_privacy_hardening.sql`: `profiles` select limited to self, accepted friends, pending parties; `avatar_url` check; drop `avatars_read_all`. Extend `test:rls`: a stranger sees only themselves, cannot list avatars, cannot set a foreign avatar URL. _E0.1 to E0.3_
-- [ ] 0.2 Content Security Policy in `src-tauri/tauri.conf.json`; check the app still loads Supabase, avatars, fonts. _E0.4_
-- [ ] 0.3 README and ADR 0003: say plainly that presence is public and spoofable. _E0.5_
-- [ ] Checkpoint: commit.
+- [x] 0.1 (applied 20 Nov to project mkeozqwudranxrdferai via MCP; the 10 checks passed in a rolled-back transaction; also `…001401` revokes `handle_new_user` from anon and authenticated) Migration `...001400_privacy_hardening.sql`: `profiles` select limited to self, accepted friends, pending parties; `avatar_url` check; drop `avatars_read_all`. Extend `test:rls`: a stranger sees only themselves, cannot list avatars, cannot set a foreign avatar URL. _E0.1 to E0.3_
+- [x] 0.2 (policy builds; headless Chrome shows no violations and a control shows violations are detected; a real signed-in window is still to be checked in the next two-user run) Content Security Policy in `src-tauri/tauri.conf.json`; check the app still loads Supabase, avatars, fonts. _E0.4_
+- [x] 0.3 README and ADR 0003: say plainly that presence is public and spoofable. _E0.5_
+- [x] Checkpoint: commit.
 
 ## Phase 1. Keys (E1)
 
@@ -16,7 +16,7 @@ Calendar: today is 20 Nov 2026. Freeze 1 Dec, submit 4 Dec. If the freeze comes 
 - [ ] 1.2 `lib/crypto/safetyNumber.ts` and `trust.ts` with unit tests. _E3_
 - [ ] 1.3 Approve and add the keychain package. `keyStore.ts` for desktop and dev. Check on Linux, Windows, macOS. _E1.2, E1.3_
 - [ ] 1.4 Migration `...001500_user_keys.sql`, `keys.ts`, create and publish on first open. Extend `test:rls`: friend reads key, stranger cannot, nobody writes another's key. _E1.1, E1.4_
-- [ ] Checkpoint: commit.
+- [x] Checkpoint: commit.
 
 ## Phase 2. Send and read (E2)
 
@@ -24,7 +24,7 @@ Calendar: today is 20 Nov 2026. Freeze 1 Dec, submit 4 Dec. If the freeze comes 
 - [ ] 2.2 Encrypt on send and decrypt on read in `api.ts`, `conversation.ts`, `chat.ts`, `ChatWindow`. Unreadable-row line. Old rows unchanged. _E2.1, E2.2, E2.7_
 - [ ] 2.3 "Say hi" uses the same encrypt step. Block with "[Name] hasn't set up encryption yet." _E2.3, E2.5_
 - [ ] 2.4 Two-user check: send, reload history, Offline Message on return, sender rereads own message.
-- [ ] Checkpoint: commit. Release the app, then apply 2.1.
+- [x] Checkpoint: commit. Release the app, then apply 2.1.
 
 ## Phase 3. Trust and wording (E3, E4)
 

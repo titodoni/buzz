@@ -36,8 +36,12 @@ re-request, groups, ignore, message format) passes against it. Presence, chat
 delivery, Nudge, and the alerts have been checked with two and three signed-in
 users, including in the Linux desktop app.
 
-Known gap: `presence:global` is a public channel, so a malicious signed-in
-user could fake someone else's presence ([ADR 0003](docs/adr/0003-chat-windows-read-presence-without-tracking.md)).
+Known gap: `presence:global` is a public channel. Anyone who holds the
+app's publishable key can see which user ids are online and in which state
+(Available, Away, Busy). They see no names, avatars, or messages, because
+profiles are readable only by the person themselves and their friends. A
+malicious signed-in user could also fake someone else's presence
+([ADR 0003](docs/adr/0003-chat-windows-read-presence-without-tracking.md)).
 
 ## Stack
 

@@ -26,7 +26,30 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob: https://mkeozqwudranxrdferai.supabase.co",
+        "font-src": "'self' data:",
+        "media-src": "'self' data: blob:",
+        "connect-src": "'self' ipc: http://ipc.localhost https://mkeozqwudranxrdferai.supabase.co wss://mkeozqwudranxrdferai.supabase.co",
+        "object-src": "'none'",
+        "base-uri": "'self'",
+        "form-action": "'self'",
+        "frame-ancestors": "'none'"
+      },
+      "devCsp": {
+        "default-src": "'self'",
+        "script-src": "'self' 'unsafe-inline' 'unsafe-eval'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob: https://mkeozqwudranxrdferai.supabase.co",
+        "font-src": "'self' data:",
+        "media-src": "'self' data: blob:",
+        "connect-src": "'self' ipc: http://ipc.localhost http://localhost:3000 ws://localhost:3000 https://mkeozqwudranxrdferai.supabase.co wss://mkeozqwudranxrdferai.supabase.co",
+        "object-src": "'none'",
+        "base-uri": "'self'"
+      }
     },
     "macOSPrivateApi": true
   },
@@ -41,7 +64,7 @@
       "icons/icon.ico"
     ],
     "publisher": "Buzz",
-    "copyright": "© 2026 the Buzz authors. Not affiliated with Yahoo.",
+    "copyright": "\u00a9 2026 the Buzz authors. Not affiliated with Yahoo.",
     "category": "SocialNetworking",
     "shortDescription": "Chat with your friends, classic messenger style",
     "longDescription": "Buzz brings back the classic desktop messenger: a buddy list that shows who is online, one window per chat, status messages, emoticons, and the Buzz! nudge."

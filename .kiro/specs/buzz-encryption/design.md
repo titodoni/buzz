@@ -11,7 +11,7 @@ Decisions and limits: ADR 0010. Requirements: [requirements.md](./requirements.m
 
 ## Data
 
-Migrations, in order (`...001300` is taken by Hangouts in `buzz-trigger`):
+Migrations, in order (Hangouts in `buzz-trigger` moved to `...001700`):
 
 1. `...001400_privacy_hardening.sql` (E0): narrower `profiles` select policy, `avatar_url` check, drop `avatars_read_all`.
 2. `...001500_user_keys.sql`: table `user_keys (user_id pk references profiles, public_key text not null, created_at)`. RLS: select for self and accepted friends, insert and update only for self. Add to the Realtime publication so a friend's key change reaches open chats.
