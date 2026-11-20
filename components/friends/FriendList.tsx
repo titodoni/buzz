@@ -7,6 +7,9 @@ import { deleteGroup, moveFriend, renameGroup, type ContactGroup, type GroupMemb
 import { ignoreUser, unignoreUser } from "@/lib/friends/ignore"
 import type { PresenceState } from "@/lib/presence/state"
 import { hasNowPlaying, shouldShowField } from "@/lib/profile/render"
+import { sendMessage } from "@/lib/chat/api"
+import { DEFAULT_FORMAT } from "@/lib/chat/format"
+import { SAY_HI_TEXT, canSayHi } from "@/lib/status/sayHi"
 import { openChatWindow } from "@/lib/tauri/windows"
 import { FriendListItem } from "./FriendListItem"
 
@@ -66,6 +69,8 @@ export function FriendList({
   const [renameText, setRenameText] = useState("")
   const [renameError, setRenameError] = useState<string | null>(null)
   const menuRef = useRef<HTMLUListElement>(null)
+  // When "Say hi" last went to each friend; set before the send so a fast second tap cannot double up.
+  const sayHiAt = useRef(new Map<string, number>())
   const byId = new Map(friends.map((f) => [f.id, f]))
   const arranged = arrangeBuddyList({ friends, groups, memberships, presence, showOffline: view.showOffline, search })
   const onlineNow = countOnline(friends, presence)
@@ -90,6 +95,27 @@ export function FriendList({
     }
   }, [menuOpen])
 
+  /** First tap sends the greeting and opens the chat; a second within 60 seconds only opens it (R2.3). */
+  async function sayHi(f: FriendEntry) {
+    const now = Date.now()
+    if (!canSayHi(sayHiAt.current.get(f.id), now)) {
+      void openChatWindow(f.id)
+      return
+    }
+    sayHiAt.current.set(f.id, now)
+    const online = (presence[f.id] ?? "offline") !== "offline"
+    const res = await sendMessage(
+      { id: crypto.randomUUID(), sender_id: me, receiver_id: f.id, body: SAY_HI_TEXT, created_at: new Date().toISOString(), format: DEFAULT_FORMAT },
+      DEFAULT_FORMAT,
+      online,
+    )
+    if (!res.ok) {
+      sayHiAt.current.delete(f.id)
+      setNote(res.message)
+    }
+    // Opened after the insert, so the new window's history already holds the greeting.
+    void openChatWindow(f.id)
+  }
   async function doRemove(f: FriendEntry) {
     const res = await removeFriend(f.friendshipId)
     setNote(res.message ?? null)
@@ -198,6 +224,7 @@ export function FriendList({
                       bold={a.bold}
                       unread={unreadBySender[f.id]}
                       onOpen={(id) => void openChatWindow(id)}
+                      onSayHi={(friend) => void sayHi(friend)}
                       onContextMenu={(friend, x, y) => setOverlay({ kind: "menu", friend, x, y })}
                     />
                   )

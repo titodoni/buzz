@@ -5,6 +5,7 @@ import { PresenceDot } from "@/components/PresenceDot"
 import type { PresenceState } from "@/lib/presence/state"
 import { hasNowPlaying, shouldShowField, shownNowPlaying } from "@/lib/profile/render"
 import type { FriendEntry } from "@/lib/friends/api"
+import { isFriendUpForChat } from "@/lib/status/sayHi"
 
 export interface FriendListItemProps {
   friend: FriendEntry
@@ -14,10 +15,12 @@ export interface FriendListItemProps {
   /** Online friends are bold, offline ones normal weight (Req 14.6). */
   bold?: boolean
   onOpen: (friendId: string) => void
+  /** One tap on "Say hi" for a friend who is Up for Chat. */
+  onSayHi?: (friend: FriendEntry) => void
   onContextMenu: (friend: FriendEntry, x: number, y: number) => void
 }
 
-export function FriendListItem({ friend, presence, unread, bold = true, onOpen, onContextMenu }: FriendListItemProps) {
+export function FriendListItem({ friend, presence, unread, bold = true, onOpen, onSayHi, onContextMenu }: FriendListItemProps) {
   function onKeyDown(e: KeyboardEvent<HTMLLIElement>) {
     if (e.key === "Enter") {
       e.preventDefault()
@@ -33,12 +36,13 @@ export function FriendListItem({ friend, presence, unread, bold = true, onOpen, 
     onContextMenu(friend, e.clientX, e.clientY)
   }
 
+  const upForChat = isFriendUpForChat(friend.statusMessage, presence)
   return (
     <li
-      className="ym-row flex cursor-pointer items-start gap-2 px-2 py-1"
+      className={`ym-row${upForChat ? " ym-up-for-chat" : ""} flex cursor-pointer items-start gap-2 px-2 py-1`}
       style={{ opacity: presence === "offline" ? 0.55 : 1 }}
       tabIndex={0}
-      aria-label={`${friend.displayName}, ${presence}${unread ? `, ${unread} waiting` : ""}. Press Enter to chat.`}
+      aria-label={`${friend.displayName}, ${presence}${unread ? `, ${unread} waiting` : ""}${upForChat ? ", up for chat" : ""}. Press Enter to chat.`}
       onDoubleClick={() => onOpen(friend.id)}
       onKeyDown={onKeyDown}
       onContextMenu={onRightClick}
@@ -59,6 +63,22 @@ export function FriendListItem({ friend, presence, unread, bold = true, onOpen, 
           </div>
         ) : null}
       </div>
+      {upForChat && onSayHi ? (
+        <button
+          type="button"
+          className="ym-button shrink-0 px-2"
+          style={{ minHeight: 28 }}
+          aria-label={`Say hi to ${friend.displayName}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            onSayHi(friend)
+          }}
+          onDoubleClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          Say hi
+        </button>
+      ) : null}
     </li>
   )
 }

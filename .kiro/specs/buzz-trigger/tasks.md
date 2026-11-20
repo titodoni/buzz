@@ -26,7 +26,7 @@ Calendar: today is 20 Nov 2026. Submit on 4 Dec. Feature freeze 1 Dec.
 - [~] 2.0 Live profile updates: `useProfileUpdates` (`lib/friends/profileFeed.ts`), merged into Buddy List and Chat Window header. Closes old task 18.1. Two-user check: Status change shows within 5 seconds. _R0_ Realtime path checked 20 Nov by script with two test accounts (Status 498 ms, Now Playing 303 ms); in-app UI check still open.
 - [x] 2.1 `lib/status/upForChat.ts` with timer, restore rules, stale-on-start clear; unit tests. _R2.2, R2.4_
 - [x] 2.2 Toggle in the Buddy List header; sets Status and Available. _R2.1_
-- [ ] 2.3 Highlighted row and "Say hi" button; double-tap guard; message goes through the normal send path. _R2.1, R2.3_
+- [x] 2.3 Highlighted row and "Say hi" button; double-tap guard; message goes through the normal send path. _R2.1, R2.3_
 - [ ] 2.4 Two-user check: highlight, Say hi sends once, toggle and timer restore the old Status.
 - [ ] Checkpoint: add Up for Chat to `GLOSSARY.md`, commit.
 
