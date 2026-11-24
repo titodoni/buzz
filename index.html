@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buzz — Yahoo Messenger Revival | Kiroween 2026</title>
+  <meta name="description" content="A Yahoo Messenger revival for Kiroween 2026 (Resurrection Category). Native desktop app for Windows, macOS, and Linux built around people being present: live presence, Buddy List, 24 classic emoticons, and the iconic Nudge ('Buzz!').">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%235b21b6'/><text x='16' y='23' font-family='sans-serif' font-size='22' font-weight='900' fill='%23fbbf24' text-anchor='middle'>B!</text></svg>">
+  <style>
+    :root {
+      --primary: #5b21b6;
+      --primary-dark: #4c1d95;
+      --primary-light: #7c3aed;
+      --accent: #f59e0b;
+      --accent-gold: #fbbf24;
+      --buzz-red: #dc2626;
+      --buzz-red-hover: #b91c1c;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --code-bg: #0f172a;
+      --code-text: #f1f5f9;
+      --success: #16a34a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background-color: var(--bg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #3b0764 0%, #5b21b6 50%, #6d28d9 100%);
+      color: white;
+      padding: 3.5rem 1.5rem 3rem 1.5rem;
+      text-align: center;
+      border-bottom: 5px solid var(--accent-gold);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: "";
+      position: absolute;
+      top: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.15) 0%, rgba(91, 33, 182, 0) 70%);
+      pointer-events: none;
+    }
+
+    .badge-jury {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(251, 191, 36, 0.2);
+      border: 1px solid var(--accent-gold);
+      color: var(--accent-gold);
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 0.35rem 1rem;
+      border-radius: 9999px;
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .logo-badge {
+      background: var(--accent-gold);
+      color: var(--primary-dark);
+      font-size: 2.6rem;
+      font-weight: 900;
+      padding: 0.2rem 1rem;
+      border-radius: 14px;
+      display: inline-block;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      border: 3px solid #fef3c7;
+      transform: rotate(-3deg);
+    }
+
+    h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      font-size: 1.25rem;
+      color: #e2e8f0;
+      max-width: 680px;
+      margin: 0.75rem auto 1.5rem auto;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    .header-cta {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .btn-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-download-primary {
+      background: var(--accent-gold);
+      color: var(--primary-dark);
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-download-primary:hover {
+      background: #f59e0b;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(245, 158, 11, 0.5);
+    }
+
+    .btn-jury-secondary {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(4px);
+    }
+
+    .btn-jury-secondary:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: translateY(-2px);
+    }
+
+    /* Container & Layout */
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2.25rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-highlight {
+      border: 2px solid #c084fc;
+      background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
+    }
+
+    h2 {
+      font-size: 1.65rem;
+      margin-bottom: 1.25rem;
+      color: #1e1b4b;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      margin: 1.5rem 0 0.5rem 0;
+      color: #1e293b;
+    }
+
+    /* Jury Specific Box */
+    .jury-header-box {
+      background: #ede9fe;
+      border: 1px solid #ddd6fe;
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      color: #4c1d95;
+    }
+
+    .jury-header-box strong {
+      display: block;
+      font-size: 1.1rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .demo-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin: 1.25rem 0;
+    }
+
+    .demo-step {
+      display: flex;
+      gap: 1rem;
+      background: #ffffff;
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      background: var(--primary);
+      color: white;
+      font-weight: 800;
+      font-size: 0.95rem;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-content strong {
+      color: var(--primary-dark);
+      font-size: 1.05rem;
+    }
+
+    .step-content p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* Downloads Grid */
+    .downloads-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin: 1.5rem 0;
+    }
+
+    .download-btn {
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .download-btn:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(109, 40, 217, 0.12);
+    }
+
+    .download-btn.featured {
+      border-color: var(--primary);
+      background: #faf5ff;
+    }
+
+    .download-title {
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .download-meta {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .download-file {
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 0.5rem;
+      background: #f1f5f9;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.25rem;
+    }
+
+    .feature-item {
+      padding: 1.25rem;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+    }
+
+    .feature-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 0.4rem;
+      color: var(--primary-dark);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .feature-desc {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+    }
+
+    /* Code & Warnings */
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.88rem;
+      margin: 0.75rem 0;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .notice-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+      font-size: 0.95rem;
+      color: #92400e;
+    }
+
+    .step-list {
+      padding-left: 1.5rem;
+      margin: 0.75rem 0;
+    }
+
+    .step-list li {
+      margin-bottom: 0.6rem;
+      font-size: 0.95rem;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 3rem 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--border);
+      background: #ffffff;
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="badge-jury">🎃 Kiroween 2026 Submission &bull; Category: Resurrection</div>
+    <div class="logo-container">
+      <span class="logo-badge">B!</span>
+      <h1>Buzz</h1>
+    </div>
+    <p class="subtitle">A Yahoo Messenger revival for Windows, macOS, and Linux built around people being present &mdash; not around infinite scroll.</p>
+
+    <div class="header-cta">
+      <a class="btn-header btn-download-primary" href="#download">⬇️ Download Beta App</a>
+      <a class="btn-header btn-jury-secondary" href="#jury">👥 Jury Testing Guide</a>
+      <a class="btn-header btn-jury-secondary" href="https://github.com/titodoni/buzz" target="_blank" rel="noopener">💻 View GitHub Repo</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- JURY EVALUATION GUIDE -->
+    <section class="card card-highlight" id="jury">
+      <h2>👥 Instructions for Hackathon Judges</h2>
+      <div class="jury-header-box">
+        <strong>⚡ Important: Buzz requires two accounts to experience!</strong>
+        Buzz is built around presence and real-time interaction between friends. You cannot test the signature Nudge ("Buzz!"), typing indicators, or live presence with only one account. We recommend using two computers (or two accounts on separate windows).
+      </div>
+
+      <p>Test credentials are provided in the private testing notes on Devpost, or you can register two new accounts with any email address.</p>
+
+      <div class="demo-steps">
+        <div class="demo-step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Install and Sign In on Two Clients</strong>
+            <p>Download the installer below for your operating system. Launch Buzz on both computers and sign in as Friend A and Friend B.</p>
+          </div>
+        </div>
+
+        <div class="demo-step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Check the Buddy List &amp; Live Presence</strong>
+            <p>Switch your presence status between <em>Available</em>, <em>Busy</em>, <em>Away</em>, or set a custom status message. Watch the status dot and line update live on your friend's Buddy List!</p>
+          </div>
+        </div>
+
+        <div class="demo-step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Open a Chat &amp; Send Emoticons</strong>
+            <p>Double-click a buddy in the Buddy List to open a dedicated 1:1 chat window. Type messages, observe real-time typing indicators, and try the 24 classic Yahoo Messenger emoticons (e.g. <code>:)</code>, <code>:D</code>, <code>;)</code>, <code>:P</code>).</p>
+          </div>
+        </div>
+
+        <div class="demo-step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <strong>Send a Nudge ("BUZZ!")</strong>
+            <p>In the chat window, click the red <strong>BUZZ!</strong> button (or press <code>Ctrl+G</code>). Notice how it shakes your friend's chat window with the authentic alert sound! (Has a 10-second cooldown limiter to prevent spam).</p>
+          </div>
+        </div>
+
+        <div class="demo-step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <strong>Try Hangouts &amp; Share What I'm Playing</strong>
+            <p>Send a quick 15-minute Hangout invite ("Coffee break?", "Got a minute?"). Optionally enable <em>Messenger &gt; Share What I'm Playing</em> to broadcast what song is currently playing in your media player.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOWNLOAD SECTION -->
+    <section class="card" id="download">
+      <h2>⬇️ Download Buzz Beta (v0.1.0)</h2>
+      <p>Buzz is a native desktop application built with <strong>Tauri v2 (Rust)</strong> and <strong>Next.js App Router</strong> with Supabase as the backend. Select your OS below:</p>
+
+      <div class="downloads-grid">
+        <a class="download-btn featured" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_x64-setup.exe" target="_blank" rel="noopener">
+          <div class="download-title">🪟 Windows</div>
+          <div class="download-meta">Windows 10 / 11 (64-bit installer)</div>
+          <div class="download-file">Buzz_0.1.0_x64-setup.exe</div>
+        </a>
+
+        <a class="download-btn featured" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_aarch64.dmg" target="_blank" rel="noopener">
+          <div class="download-title">🍎 macOS (Apple Silicon)</div>
+          <div class="download-meta">M1, M2, M3, M4 (ARM64 DMG)</div>
+          <div class="download-file">Buzz_0.1.0_aarch64.dmg</div>
+        </a>
+
+        <a class="download-btn" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_x64.dmg" target="_blank" rel="noopener">
+          <div class="download-title">🍏 macOS (Intel)</div>
+          <div class="download-meta">x86_64 Intel Mac (DMG)</div>
+          <div class="download-file">Buzz_0.1.0_x64.dmg</div>
+        </a>
+
+        <a class="download-btn" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_amd64.deb" target="_blank" rel="noopener">
+          <div class="download-title">🐧 Linux (.deb)</div>
+          <div class="download-meta">Ubuntu, Debian, Pop!_OS, Mint</div>
+          <div class="download-file">Buzz_0.1.0_amd64.deb</div>
+        </a>
+
+        <a class="download-btn" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_amd64.AppImage" target="_blank" rel="noopener">
+          <div class="download-title">🐧 Linux (AppImage)</div>
+          <div class="download-meta">Universal Linux standalone binary</div>
+          <div class="download-file">Buzz_0.1.0_amd64.AppImage</div>
+        </a>
+      </div>
+
+      <div class="notice-box">
+        <strong>⚠️ Unsigned Beta Warning:</strong> Because these hackathon build binaries are not yet code-signed with costly commercial certificates, Windows SmartScreen and macOS Gatekeeper will show first-run security warnings. Follow the bypass steps below.
+      </div>
+    </section>
+
+    <!-- INSTALLATION & SECURITY BYPASS -->
+    <section class="card" id="installation">
+      <h2>🛠️ Installation &amp; First Run Steps</h2>
+
+      <h3>Windows 10 &amp; 11</h3>
+      <ol class="step-list">
+        <li>Download and run <code>Buzz_0.1.0_x64-setup.exe</code>.</li>
+        <li>When Windows SmartScreen shows <strong>"Windows protected your PC"</strong>, click <strong>More info</strong> &rarr; then click <strong>Run anyway</strong>.</li>
+        <li>Follow the installer. Buzz will automatically launch and place a shortcut in your Start menu.</li>
+      </ol>
+
+      <h3>macOS</h3>
+      <ol class="step-list">
+        <li>Download the appropriate <code>.dmg</code> (Apple Silicon or Intel) and drag <strong>Buzz</strong> into your <strong>Applications</strong> folder.</li>
+        <li>Open Buzz. If macOS prevents opening:
+          <ul>
+            <li>Open <strong>System Settings &gt; Privacy &amp; Security</strong>, scroll down to the security prompt about Buzz, and click <strong>Open Anyway</strong>.</li>
+            <li>Alternatively, if macOS reports <em>"Buzz is damaged and can't be opened"</em>, run this one command in Terminal to clear the quarantine flag:
+              <pre><code>xattr -dr com.apple.quarantine /Applications/Buzz.app</code></pre>
+            </li>
+          </ul>
+        </li>
+      </ol>
+
+      <h3>Linux</h3>
+      <ul class="step-list">
+        <li><strong>Ubuntu / Debian:</strong>
+          <pre><code>sudo apt install ./Buzz_0.1.0_amd64.deb</code></pre>
+        </li>
+        <li><strong>AppImage:</strong>
+          <pre><code>chmod +x Buzz_0.1.0_amd64.AppImage && ./Buzz_0.1.0_amd64.AppImage</code></pre>
+          <em>(If FUSE is missing on modern Ubuntu 24.04+: <code>sudo apt install libfuse2t64</code>)</em>
+        </li>
+      </ul>
+    </section>
+
+    <!-- PRODUCT & ARCHITECTURE HIGHLIGHTS -->
+    <section class="card" id="features">
+      <h2>✨ Why Buzz? (Yahoo Messenger Resurrection)</h2>
+      <p>Yahoo Messenger died not because it was bad, but because the feed won: modern chat apps turned into infinite feeds and engagement traps. Presence &mdash; the warm feeling of knowing someone is here right now &mdash; vanished.</p>
+      
+      <div class="features-grid">
+        <div class="feature-item">
+          <div class="feature-title">👀 Presence First</div>
+          <div class="feature-desc">The Buddy List is the home screen. See who is Available, Busy, Away, or Offline with zero feed clutter.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-title">💥 The Iconic Nudge ("Buzz!")</div>
+          <div class="feature-desc">Window-shaking, sound-playing wake up call with a 10-second spam limiter and row animation.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-title">😄 24 Classic Emoticons</div>
+          <div class="feature-desc">Pixel-perfect nostalgic Yahoo Messenger emoticons rendered smoothly in every chat window.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-title">🎵 "Now Playing" Broadcast</div>
+          <div class="feature-desc">Broadcast the song currently playing in your media player (Spotify, Apple Music, etc.) to your friends.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-title">☕ Hangouts</div>
+          <div class="feature-desc">Low-pressure 15-minute expiring invitations ("Coffee?", "Quick call?") with one-click responses.</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-title">🔒 True Privacy by Design</div>
+          <div class="feature-desc">Only mutual confirmed friends can see each other. No stranger directory, no tracking, no algorithmic feed.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KIRO SPEC-DRIVEN DEVELOPMENT -->
+    <section class="card" id="kiro">
+      <h2>🤖 Built with Kiro (Spec-Driven Development)</h2>
+      <p>Buzz was built from scratch following Kiro's Spec-Driven Development methodology:</p>
+      <ul class="step-list">
+        <li><strong>Requirements in WHEN/THEN Form:</strong> Auth, presence transitions, chat delivery, and nudge cooldowns were formally specified before code generation.</li>
+        <li><strong>Strict Technical Steering:</strong> Rust toolchain for Tauri v2, Next.js static client export, strict TypeScript (zero untyped <code>any</code>), and full Supabase Row-Level Security (RLS) policies.</li>
+        <li><strong>Automated Agent Hooks:</strong> Custom Kiro hooks enforcing pre-commit security verification and testing reminders.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p><strong>Buzz</strong> &bull; Kiroween 2026 Hackathon (Resurrection Category)</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="https://github.com/titodoni/buzz" target="_blank" rel="noopener">GitHub Repository</a> &bull; 
+      <a href="https://buzz.asmorodonitito.my.id" target="_blank" rel="noopener">Live App URL</a>
+    </p>
+    <p style="margin-top: 0.5rem; font-size: 0.82rem; color: #94a3b8;">
+      Buzz is an open source community tribute inspired by the classic Yahoo! Messenger.
+    </p>
+  </footer>
+</body>
+</html>
