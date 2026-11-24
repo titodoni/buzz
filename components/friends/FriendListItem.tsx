@@ -12,6 +12,10 @@ export interface FriendListItemProps {
   presence: PresenceState
   /** Messages waiting from this friend. */
   unread?: number
+  /** Nudges from this friend whose Chat Window could not take focus (red count, buzz-trigger R4.2). */
+  nudgeBadge?: number
+  /** True for a moment after a Nudge arrives: the row shakes (R4.1). */
+  shaking?: boolean
   /** Online friends are bold, offline ones normal weight (Req 14.6). */
   bold?: boolean
   onOpen: (friendId: string) => void
@@ -20,7 +24,7 @@ export interface FriendListItemProps {
   onContextMenu: (friend: FriendEntry, x: number, y: number) => void
 }
 
-export function FriendListItem({ friend, presence, unread, bold = true, onOpen, onSayHi, onContextMenu }: FriendListItemProps) {
+export function FriendListItem({ friend, presence, unread, nudgeBadge, shaking, bold = true, onOpen, onSayHi, onContextMenu }: FriendListItemProps) {
   function onKeyDown(e: KeyboardEvent<HTMLLIElement>) {
     if (e.key === "Enter") {
       e.preventDefault()
@@ -39,10 +43,10 @@ export function FriendListItem({ friend, presence, unread, bold = true, onOpen, 
   const upForChat = isFriendUpForChat(friend.statusMessage, presence)
   return (
     <li
-      className={`ym-row${upForChat ? " ym-up-for-chat" : ""} flex cursor-pointer items-start gap-2 px-2 py-1`}
+      className={`ym-row${upForChat ? " ym-up-for-chat" : ""}${shaking ? " ym-shake" : ""} flex cursor-pointer items-start gap-2 px-2 py-1`}
       style={{ opacity: presence === "offline" ? 0.55 : 1 }}
       tabIndex={0}
-      aria-label={`${friend.displayName}, ${presence}${unread ? `, ${unread} waiting` : ""}${upForChat ? ", up for chat" : ""}. Press Enter to chat.`}
+      aria-label={`${friend.displayName}, ${presence}${unread ? `, ${unread} waiting` : ""}${nudgeBadge ? `, ${nudgeBadge} missed ${nudgeBadge === 1 ? "Buzz" : "Buzzes"}` : ""}${upForChat ? ", up for chat" : ""}. Press Enter to chat.`}
       onDoubleClick={() => onOpen(friend.id)}
       onKeyDown={onKeyDown}
       onContextMenu={onRightClick}
@@ -52,6 +56,15 @@ export function FriendListItem({ friend, presence, unread, bold = true, onOpen, 
         <div className={`truncate ${bold ? "font-bold" : ""}`}>
           {friend.displayName}
           {unread && unread > 0 ? <span> ({unread})</span> : null}
+          {nudgeBadge && nudgeBadge > 0 ? (
+            <span
+              className="ml-1 rounded px-1 text-xs font-bold"
+              style={{ background: "var(--buzz-red)", color: "#fff" }}
+              title="Buzz! waiting"
+            >
+              {nudgeBadge}
+            </span>
+          ) : null}
         </div>
         {shouldShowField(friend.statusMessage) ? (
           <div className="truncate text-xs">{friend.statusMessage}</div>

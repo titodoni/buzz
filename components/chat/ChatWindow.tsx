@@ -32,6 +32,8 @@ import { onSend as typingOnSend, type TypingState } from "@/lib/typing/state";
 import { receiveTypingSignal, type TypingSignal } from "@/lib/typing/broadcast";
 import { reportActivity } from "@/lib/realtime/activity";
 import { sendNudgeToInbox } from "@/lib/realtime/inbox";
+import { NUDGE_LIMIT_MESSAGE, canNudge } from "@/lib/nudge/limiter";
+import { announceChatSeen, loadSentLog, recordDeliveredNudge } from "@/lib/nudge/store";
 import { clearAttention, closeWindow } from "@/lib/tauri/windows";
 import { HangoutBanner } from "@/components/hangout/HangoutBanner";
 import { HangoutButton } from "@/components/hangout/HangoutButton";
@@ -274,9 +276,26 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     // Chat channel reaches an open window; the inbox opens a closed one. Either is delivery.
     const results = await Promise.all([sendNudge(), sendNudgeToInbox(me, friendId)]);
     const ok = results.some(Boolean);
-    if (ok) dispatch({ type: "nudgeSent", friendName, at: new Date().toISOString() });
+    if (ok) {
+      // A delivered Nudge counts toward the 5-per-10-minutes limit (buzz-trigger R4.5).
+      recordDeliveredNudge(friendId);
+      dispatch({ type: "nudgeSent", friendName, at: new Date().toISOString() });
+    }
     return ok;
   }, [sendNudge, friendId, me, friendName]);
+
+  // Button, Ctrl+G and Actions > Buzz! all reach this check through the Buzz! button.
+  const nudgeBlockReason = useCallback(() => (canNudge(loadSentLog(), Date.now()) ? null : NUDGE_LIMIT_MESSAGE), []);
+
+  // Tell the Buddy List this chat is open and in view, so the red Nudge count on its row clears (R4.2).
+  useEffect(() => {
+    const seen = () => {
+      if (document.hasFocus()) announceChatSeen(friendId);
+    };
+    seen();
+    window.addEventListener("focus", seen);
+    return () => window.removeEventListener("focus", seen);
+  }, [friendId]);
 
   const closePicker = useCallback(() => {
     setPickerOpen(false);
@@ -471,7 +490,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
             >
               Emoticons
             </button>
-            <NudgeButton ref={nudgeRef} friendId={friendId} friendPresence={presence} onNudge={handleNudge} />
+            <NudgeButton ref={nudgeRef} friendId={friendId} friendPresence={presence} onNudge={handleNudge} blockReason={nudgeBlockReason} />
             <HangoutButton
               me={me}
               friendId={friendId}

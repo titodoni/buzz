@@ -5,3 +5,4 @@ A nudge is an ephemeral Realtime broadcast, sent both on the pair's `chat:<pairK
 ## Consequences
 
 - Inbox and chat channels are **private** Realtime channels. RLS policies on `realtime.messages` (migration `20250101000600`) let only me listen on `inbox:<me>`, only my accepted friends send to it, and only the two friends of a pair join or broadcast on `chat:<pair>`. The `sender` field in a payload is still client-supplied, so one friend could claim to be another friend; the Buddy List also ignores senders who aren't friends.
+- The Recent Buzzes list and the limit of 5 Nudges in 10 minutes (buzz-trigger R4.3, R4.5) are also kept in `localStorage` on the sender's or receiver's own computer. A modified client can skip them, so the app and docs never call them enforced. Nudge back from that list goes through the same Offline rule, the same 10 second cooldown and the same limit as the button.

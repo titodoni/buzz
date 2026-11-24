@@ -40,6 +40,12 @@ export interface FriendListProps {
   presence?: Record<string, PresenceState>
   /** Waiting messages per sender id, shown as "(n)" after the name. */
   unreadBySender?: Record<string, number>
+  /** Red Nudge counts per friend id (buzz-trigger R4.2). */
+  nudgeBadges?: Readonly<Record<string, number>>
+  /** Friend ids whose row is shaking right now (R4.1). */
+  shakingIds?: ReadonlySet<string>
+  /** Called when I open a chat from a row, so its red count clears. */
+  onChatOpened?: (friendId: string) => void
   /** People I have ignored (their menu offers Stop Ignoring). */
   ignoredIds: ReadonlySet<string>
   onIgnoreChanged: () => void
@@ -60,6 +66,9 @@ export function FriendList({
   memberships,
   presence = {},
   unreadBySender = {},
+  nudgeBadges = {},
+  shakingIds,
+  onChatOpened,
   ignoredIds,
   onIgnoreChanged,
   keys,
@@ -233,7 +242,12 @@ export function FriendList({
                       presence={a.presence}
                       bold={a.bold}
                       unread={unreadBySender[f.id]}
-                      onOpen={(id) => void openChatWindow(id)}
+                      nudgeBadge={nudgeBadges[f.id]}
+                      shaking={shakingIds?.has(f.id)}
+                      onOpen={(id) => {
+                        onChatOpened?.(id)
+                        void openChatWindow(id)
+                      }}
                       onSayHi={(friend) => void sayHi(friend)}
                       onContextMenu={(friend, x, y) => setOverlay({ kind: "menu", friend, x, y })}
                     />

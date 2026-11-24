@@ -158,3 +158,22 @@ export function useChatChannel(options: ChatChannelOptions): {
 
   return { sendTyping, sendNudge }
 }
+
+/**
+ * Sends a Nudge on the pair's chat channel without a subscription, so a
+ * window that is already open shakes. Used by "Nudge back" from the Buddy List,
+ * which has no chat channel of its own. Resolves true when the server took it.
+ */
+export async function sendNudgeToChat(me: string, friendId: string): Promise<boolean> {
+  const topic = `chat:${pairKey(me, friendId)}`
+  const channel = await openChannel(topic, { config: { private: true } })
+  if (!channel) return false
+  try {
+    const res = await channel.httpSend("nudge", { sender: me })
+    return res.success
+  } catch {
+    return false
+  } finally {
+    void closeChannel(topic, channel)
+  }
+}

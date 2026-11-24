@@ -38,10 +38,11 @@ export async function sendNudgeToInbox(me: string, friendId: string): Promise<bo
 }
 
 /**
- * Buddy List only: calls `onNudge(senderId)` for every nudge arriving in my
- * inbox. The caller decides what to do (open or focus the chat window).
+ * Buddy List only: calls `onNudge(senderId, receivedAt)` for every nudge
+ * arriving in my inbox; `receivedAt` is the local time in ms. The caller
+ * decides what to do (open or focus the chat window).
  */
-export function useNudgeInbox(me: string, onNudge: (senderId: string) => void): void {
+export function useNudgeInbox(me: string, onNudge: (senderId: string, receivedAt: number) => void): void {
   const onNudgeRef = useRef(onNudge);
   useEffect(() => {
     onNudgeRef.current = onNudge;
@@ -60,7 +61,7 @@ export function useNudgeInbox(me: string, onNudge: (senderId: string) => void): 
         .on("broadcast", { event: NUDGE_EVENT }, ({ payload }) => {
           // Payload comes from another client, so check its shape before use.
           const sender = (payload as { sender?: unknown } | null)?.sender;
-          if (typeof sender === "string" && sender !== me) onNudgeRef.current(sender);
+          if (typeof sender === "string" && sender !== me) onNudgeRef.current(sender, Date.now());
         })
         .subscribe();
     })();

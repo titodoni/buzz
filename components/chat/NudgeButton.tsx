@@ -9,11 +9,7 @@ import {
   type NudgeCooldown,
 } from "@/lib/nudge/cooldown";
 import type { PresenceState } from "@/lib/presence/state";
-
-/** localStorage key holding when I last nudged this friend (ms timestamp string). */
-function cooldownKey(friendId: string): string {
-  return `buzz:nudgeCooldown:${friendId}`;
-}
+import { cooldownKey } from "@/lib/nudge/store";
 
 /** Lets the chat window's Actions > Buzz! send through the same cooldown. */
 export interface NudgeButtonHandle {
@@ -22,9 +18,15 @@ export interface NudgeButtonHandle {
 
 export const NudgeButton = forwardRef<
   NudgeButtonHandle,
-  { friendId: string; friendPresence: PresenceState; onNudge: () => Promise<boolean> }
+  {
+    friendId: string;
+    friendPresence: PresenceState;
+    onNudge: () => Promise<boolean>;
+    /** A message when sending is not allowed right now (the 5-per-10-minutes limit), else null. */
+    blockReason?: () => string | null;
+  }
 >(function NudgeButton(props, ref) {
-  const { friendId, friendPresence, onNudge } = props;
+  const { friendId, friendPresence, onNudge, blockReason } = props;
   // Restored from storage so reopening the chat window keeps the cooldown (Req 6.3).
   // A chat window has one friend for its whole life, so reading once is enough.
   const [cooldown, setCooldown] = useState<NudgeCooldown>(() => {
@@ -37,6 +39,7 @@ export const NudgeButton = forwardRef<
   const [now, setNow] = useState(() => Date.now());
   const [sending, setSending] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [blocked, setBlocked] = useState<string | null>(null);
   const sendingRef = useRef(false);
 
   const remainingMs = cooldownRemainingMs(cooldown, now);
@@ -51,10 +54,16 @@ export const NudgeButton = forwardRef<
     return () => window.clearInterval(id);
   }, [inCooldown]);
 
-  const stateRef = useRef({ onNudge, friendPresence, cooldown, friendId });
+  const stateRef = useRef({ onNudge, friendPresence, cooldown, friendId, blockReason });
   useEffect(() => {
-    stateRef.current = { onNudge, friendPresence, cooldown, friendId };
+    stateRef.current = { onNudge, friendPresence, cooldown, friendId, blockReason };
   });
+  // The limit message stays a few seconds, then goes.
+  useEffect(() => {
+    if (blocked === null) return;
+    const id = window.setTimeout(() => setBlocked(null), 5000);
+    return () => window.clearTimeout(id);
+  }, [blocked]);
 
   const sendNudge = useCallback(async () => {
     const cur = stateRef.current;
@@ -62,6 +71,13 @@ export const NudgeButton = forwardRef<
     if (sendingRef.current || !isNudgeEnabled(cur.friendPresence, cur.cooldown, t)) {
       return;
     }
+    const limited = cur.blockReason?.() ?? null;
+    if (limited !== null) {
+      // Blocked before anything is sent: no cooldown starts and nothing counts.
+      setBlocked(limited);
+      return;
+    }
+    setBlocked(null);
     sendingRef.current = true;
     setSending(true);
     setFailed(false);
@@ -102,7 +118,8 @@ export const NudgeButton = forwardRef<
   const remaining = Math.ceil(remainingMs / 1000);
 
   let status = "";
-  if (offline) status = "Your friend is offline.";
+  if (blocked) status = blocked;
+  else if (offline) status = "Your friend is offline.";
   else if (inCooldown) status = `Buzz again in ${remaining}s`;
   else if (failed) status = "Your buzz wasn't delivered. Try again.";
 

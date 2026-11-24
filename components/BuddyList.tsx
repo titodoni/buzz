@@ -28,7 +28,11 @@ import { useAutoNowPlaying, useShareNowPlaying } from "@/lib/nowPlaying/useAutoN
 import { usePresenceTracker } from "@/lib/realtime/presence"
 import { useUpForChat } from "@/lib/status/useUpForChat"
 import { useMyKeys } from "@/lib/crypto/useMyKeys"
-import { openChatWindow } from "@/lib/tauri/windows"
+import { chatWindowState, openChatWindow } from "@/lib/tauri/windows"
+import { RecentNudgesPanel } from "@/components/friends/RecentNudgesPanel"
+import { addBadge, clearBadge, type NudgeBadges, type RecentNudge } from "@/lib/nudge/recent"
+import { nudgeBackText, sendNudgeBack } from "@/lib/nudge/send"
+import { loadRecentNudges, onChatSeen, saveReceivedNudge } from "@/lib/nudge/store"
 import { HangoutBanner } from "@/components/hangout/HangoutBanner"
 import { incomingPending } from "@/lib/hangout/state"
 import { useHangouts } from "@/lib/hangout/useHangouts"
@@ -89,11 +93,52 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
     goOffline,
   })
   const { unreadBySender } = useOfflineDelivery(me, { onMessage: alerts.onMessage })
+  // Recent Buzzes, the row shake, and the red count (buzz-trigger R4.1 to R4.3).
+  const [recentNudges, setRecentNudges] = useState<RecentNudge[]>(() => loadRecentNudges())
+  const [nudgeBadges, setNudgeBadges] = useState<NudgeBadges>({})
+  const [shakingIds, setShakingIds] = useState<ReadonlySet<string>>(new Set())
+  const [nudgePanel, setNudgePanel] = useState(false)
+  const [nudgeNote, setNudgeNote] = useState<string | null>(null)
+  // When the panel was opened; the "3 min ago" texts are measured from here.
+  const [nudgePanelAt, setNudgePanelAt] = useState(0)
+  const shakeRow = useCallback((id: string) => {
+    setShakingIds((cur) => new Set(cur).add(id))
+    window.setTimeout(() => {
+      setShakingIds((cur) => {
+        const next = new Set(cur)
+        next.delete(id)
+        return next
+      })
+    }, 600)
+  }, [])
+  const clearNudgeBadge = useCallback((id: string) => setNudgeBadges((cur) => clearBadge(cur, id)), [])
+  // A Chat Window that is open and in view clears its friend's red count.
+  useEffect(() => onChatSeen(clearNudgeBadge), [clearNudgeBadge])
   // A nudge from an accepted friend pops their chat window open and shakes it.
-  useNudgeInbox(me, (sender) => {
+  useNudgeInbox(me, (sender, receivedAt) => {
     // Nudges from someone I ignore are dropped (Req 15.3); the server blocks them too.
-    if (friendIds.includes(sender) && !ignoredIds.has(sender)) void openChatWindow(sender, { nudge: true })
+    if (!friendIds.includes(sender) || ignoredIds.has(sender)) return
+    setRecentNudges(saveReceivedNudge({ senderId: sender, receivedAt }))
+    shakeRow(sender)
+    void (async () => {
+      try {
+        await openChatWindow(sender, { nudge: true })
+        // Give the window a moment to take focus. If it did not (or this
+        // cannot be told), the row keeps a red count until that chat is seen.
+        await new Promise((resolve) => window.setTimeout(resolve, 600))
+        const state = await chatWindowState(sender).catch(() => null)
+        if (state !== "focused") setNudgeBadges((cur) => addBadge(cur, sender))
+      } catch {
+        setNudgeBadges((cur) => addBadge(cur, sender))
+      }
+    })()
   })
+  async function nudgeBack(friendId: string) {
+    const name = friendNames.get(friendId) ?? "your friend"
+    setNudgeNote(null)
+    const result = await sendNudgeBack(me, friendId, visiblePresence[friendId] ?? "offline")
+    setNudgeNote(nudgeBackText(result, name))
+  }
   // A friend's Hangout shows as a banner at the top of the list (buzz-trigger R3.2).
   const hangouts = useHangouts(me, `hangouts:buddy:${me}`)
   const hangoutBanners = incomingPending(hangouts.rows, me, hangouts.now).filter((h) => friendIds.includes(h.sender_id))
@@ -235,6 +280,18 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
             <Link href="/profile/" className="text-xs underline">
               Edit profile
             </Link>
+            <button
+              type="button"
+              className="ym-button"
+              style={{ minHeight: 28 }}
+              aria-expanded={nudgePanel}
+              onClick={() => {
+                setNudgePanelAt(Date.now())
+                setNudgePanel((v) => !v)
+              }}
+            >
+              Recent Buzzes
+            </button>
           </div>
           {upForChat.error ? (
             <p role="alert" className="m-0 text-xs" style={{ color: "var(--buzz-red)" }}>
@@ -243,6 +300,18 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
           ) : null}
         </div>
       </header>
+
+      {nudgePanel ? (
+        <RecentNudgesPanel
+          items={recentNudges}
+          names={friendNames}
+          presence={visiblePresence}
+          now={nudgePanelAt}
+          note={nudgeNote}
+          onNudgeBack={(id) => void nudgeBack(id)}
+          onClose={() => setNudgePanel(false)}
+        />
+      ) : null}
 
       {hangoutBanners.map((h) => (
         <HangoutBanner
@@ -358,6 +427,9 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
         memberships={memberships}
         presence={visiblePresence}
         unreadBySender={unreadBySender}
+        nudgeBadges={nudgeBadges}
+        shakingIds={shakingIds}
+        onChatOpened={clearNudgeBadge}
         ignoredIds={ignoredIds}
         onIgnoreChanged={reloadIgnore}
         keys={myKeys.status === "ready" ? myKeys.keys : myKeys.status === "unavailable" ? "unavailable" : null}

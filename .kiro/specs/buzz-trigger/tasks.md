@@ -41,10 +41,10 @@ Calendar: today is 20 Nov 2026. Submit on 4 Dec. Feature freeze 1 Dec.
 
 ## Phase 4. Nudge, extended: trigger 3 (29 to 30 Nov)
 
-- [ ] 4.1 Pass `receivedAt` from `useNudgeInbox`; row shake; badge when the window cannot take focus. _R4.1, R4.2_
-- [ ] 4.2 `lib/nudge/recent.ts` and `RecentNudgesPanel` with the bell; "Nudge back". _R4.3, R4.4_
-- [ ] 4.3 `lib/nudge/limiter.ts`, 5 per 10 minutes, message on the sixth. Wire into every Nudge entry point. _R4.5_
-- [ ] 4.4 Two-user check with the Chat Window closed; badge clears on open.
+- [~] 4.1 (Built, NOT RUN: needs two running app instances; the focus check after opening the window is untested on Windows and macOS) Pass `receivedAt` from `useNudgeInbox`; row shake; badge when the window cannot take focus. _R4.1, R4.2_
+- [~] 4.2 (`recent.ts` done with 14 unit tests; panel built, NOT RUN in an app) `lib/nudge/recent.ts` and `RecentNudgesPanel` with the bell; "Nudge back". _R4.3, R4.4_
+- [~] 4.3 (`limiter.ts` done with 8 unit tests; wired into the button, Ctrl+G, Actions > Buzz! and Nudge back; NOT RUN in an app) `lib/nudge/limiter.ts`, 5 per 10 minutes, message on the sixth. Wire into every Nudge entry point. _R4.5_
+- [ ] 4.4 NOT RUN, needs two running app instances: Two-user check with the Chat Window closed; badge clears on open.
 
 ## Phase 5 (moved ahead of Phase 2.1 on 20 Nov, at your request). Now Playing: automatic, and as a conversation starter (30 Nov to 1 Dec)
 
