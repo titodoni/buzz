@@ -46,8 +46,20 @@ When done, delete `~/.buzz-test` to remove both test profiles.
 
 To test without touching the hosted project, start the local stack
 (`supabase/README.md`, "Local stack"), create two users and make them friends,
-put the local URL and key in `.env.local`, then build the app in step 1. Delete
-`.env.local` and rebuild before any shipping build.
+put the local URL and key in `.env.local`, then build the app in step 1. The app's
+Content Security Policy only allows the hosted project, so a build for the local
+stack must also allow `127.0.0.1:54321`. Pass an override at build time and leave
+`tauri.conf.json` alone. Save this as `/tmp/tauri-local.json`:
+
+```json
+{"app":{"security":{"csp":{
+"img-src":"'self' data: blob: http://127.0.0.1:54321",
+"connect-src":"'self' ipc: http://ipc.localhost http://127.0.0.1:54321 ws://127.0.0.1:54321"}}}}
+```
+
+Then build with `npm run tauri build -- --debug --no-bundle --config /tmp/tauri-local.json`.
+Without it, sign-in fails with "Something went wrong. Please try again." Delete
+`.env.local` and rebuild without the override before any shipping build.
 
 ## Checks
 
