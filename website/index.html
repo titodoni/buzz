@@ -260,6 +260,7 @@
       text-align: left;
     }
     .ymx-win * { box-sizing: border-box; }
+    .ymx-win { max-width: 100%; }
     .ymx-win button { font-family: inherit; }
     .ymx-buddy { left: 14px; top: 56px; width: 250px; height: 508px; z-index: 1; }
     .ymx-chat  { right: 14px; top: 18px; width: 380px; height: 556px; z-index: 2; }
@@ -288,7 +289,7 @@
       border: 1px solid rgba(255,255,255,0.6); border-radius: 3px;
       background: linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0.05));
     }
-    .ymx-menubar { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--border); background: #ececec; }
+    .ymx-menubar { display: flex; flex-shrink: 0; overflow: hidden; white-space: nowrap; border-bottom: 1px solid var(--border); background: #ececec; }
     .ymx-menubar span { padding: 4px 8px; cursor: default; }
     .ymx-menubar span:hover { background: var(--row-hover); }
 
@@ -430,7 +431,7 @@
     /* Grid of 6 Features */
     .features-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
       gap: 2rem;
     }
 
@@ -596,7 +597,7 @@
 
     .download-cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
       gap: 1.5rem;
     }
 
@@ -768,7 +769,7 @@
 
     @media (max-width: 900px) {
       .hero-container {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
       }
       .contrast-grid {
         grid-template-columns: 1fr;
@@ -782,6 +783,62 @@
       .contrast-section {
         padding: 2.5rem 1.5rem;
       }
+    }
+    /* ===== Small screens ===== */
+    img, svg { max-width: 100%; }
+    .nav-toggle { display: none; }
+    nav { position: relative; }
+
+    @media (max-width: 760px) {
+      nav { padding: 0.9rem 1.25rem; }
+      .brand-logo { font-size: 1.4rem; }
+      .brand-badge { font-size: 1.15rem; }
+      .nav-toggle {
+        display: inline-flex; flex-direction: column; justify-content: center; gap: 5px;
+        width: 44px; height: 44px; padding: 0 11px; border: 1px solid var(--border); border-radius: 10px;
+        background: white; cursor: pointer;
+      }
+      .nav-toggle span { display: block; height: 2px; background: var(--primary-deep); border-radius: 2px; transition: transform 0.2s ease, opacity 0.2s ease; }
+      .nav-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+      .nav-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+      .nav-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+      .nav-links {
+        display: none; position: absolute; top: 100%; left: 1rem; right: 1rem; z-index: 50;
+        flex-direction: column; align-items: stretch; gap: 0.25rem; padding: 0.75rem;
+        background: white; border: 1px solid var(--border); border-radius: 14px;
+        box-shadow: 0 18px 40px -12px rgba(15, 23, 42, 0.3);
+      }
+      .nav-links.open { display: flex; }
+      .nav-links a { padding: 0.75rem 0.9rem; border-radius: 8px; }
+      .nav-links a:hover { background: #f5f3ff; }
+      .nav-btn { text-align: center; margin-top: 0.25rem; }
+
+      .top-pill { font-size: 0.8rem; padding: 0.5rem 0.75rem; }
+      .hero { padding: 2rem 1.25rem 3rem; }
+      .hero-container { gap: 2.25rem; }
+      .hero h1 { font-size: clamp(2rem, 9vw, 2.6rem); }
+      .hero-desc { font-size: 1.05rem; }
+      .hero-actions { flex-direction: column; align-items: stretch; }
+      .hero-actions a { justify-content: center; text-align: center; }
+      .hero-specs { flex-wrap: wrap; gap: 0.5rem 1rem; }
+      .ymx-label { right: 50%; transform: translateX(50%); white-space: nowrap; font-size: 0.7rem; }
+
+      section { padding: 3.5rem 1.25rem; }
+      .section-header { margin-bottom: 2.25rem; }
+      .section-header h2 { font-size: clamp(1.6rem, 7vw, 2rem); }
+      .section-header p { font-size: 1rem; }
+      .contrast-section { padding: 2rem 1.25rem; border-radius: 16px; margin: 1rem; }
+      .contrast-section h2 { font-size: clamp(1.6rem, 7vw, 2rem) !important; }
+      .emoticon-strip { padding: 1.5rem 0.75rem; margin: 2rem 0; }
+      .emoticon-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; }
+      .emoticon-item { padding: 0.55rem 0.25rem; }
+    }
+
+    @media (max-width: 420px) {
+      .ymx-stage { padding: 18px 8px; border-radius: 12px; }
+      .ymx-chat { height: 500px; }
+      .ymx-buddy { height: 420px; }
+      .ymx-menubar span { padding: 4px 6px; }
     }
   </style>
 </head>
@@ -799,7 +856,10 @@
       <span class="brand-badge">B!</span>
       Buzz!
     </a>
-    <div class="nav-links">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="navLinks" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-links" id="navLinks">
       <a href="#features">Features</a>
       <a href="#emoticons">Emoticons</a>
       <a href="#why-buzz">Philosophy</a>
@@ -1158,7 +1218,7 @@
 
         <div class="faq-card">
           <h4>Why is Buzz a desktop app rather than a website?</h4>
-          <p>Multi-window presence and native system tray integration require real desktop capabilities. With Tauri v2 and Rust, Buzz runs with tiny memory usage and true native windowing.</p>
+          <p>Multi-window presence and native system tray integration require real desktop capabilities. Buzz is built with Tauri v2 and Rust, so every chat is a real window of its own on your desktop.</p>
         </div>
 
         <div class="faq-card">
@@ -1214,6 +1274,18 @@
       <p>&copy; 2026 Buzz Project. Open source tribute. Yahoo! and Yahoo! Messenger are trademarks of Yahoo Inc. Buzz is an independent community project.</p>
     </div>
   </footer>
+
+  <script>
+    (function () {
+      var t = document.querySelector('.nav-toggle'), m = document.getElementById('navLinks');
+      if (!t || !m) return;
+      function set(open) { m.classList.toggle('open', open); t.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+      t.addEventListener('click', function () { set(!m.classList.contains('open')); });
+      m.addEventListener('click', function (e) { if (e.target.closest('a')) set(false); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
+      document.addEventListener('click', function (e) { if (!m.contains(e.target) && !t.contains(e.target)) set(false); });
+    })();
+  </script>
 
   <!-- Live app demo: same windows, skin, emoticons and rules as the desktop app -->
   <script>
