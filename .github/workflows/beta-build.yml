@@ -2,7 +2,11 @@
 # attaches them to a draft pre-release on GitHub. Follows the Tauri guide:
 # https://v2.tauri.app/distribute/pipelines/github/
 #
-# Run it from the Actions tab ("Run workflow"), or push a tag like v0.1.0-beta.1.
+# Run it from the Actions tab ("Run workflow"), or push a tag. A tag with a
+# hyphen (v0.1.0-beta.1) makes a pre-release; a plain tag (v0.1.0) makes a
+# normal release, which is what the landing page links to (docs/adr/0012).
+# The tag must match the version in src-tauri/tauri.conf.json. Releases start
+# as drafts: check the files, then publish by hand.
 # Needs two repository secrets (Settings > Secrets and variables > Actions):
 #   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 # Both are public by design (they ship inside the app); the service key is
@@ -27,6 +31,25 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
+      # An app built without these cannot reach Supabase, so stop here.
+      - name: Supabase build values are set
+        env:
+          URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$URL" || { echo "::error::Secret NEXT_PUBLIC_SUPABASE_URL is not set"; exit 1; }
+          test -n "$KEY" || { echo "::error::Secret NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is not set"; exit 1; }
+      # The installer file names carry the app version, and the landing page
+      # links to them by tag, so the two must agree.
+      - name: Tag matches the app version
+        if: github.ref_type == 'tag'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          base=${TAG#v}
+          base=${base%%-*}
+          test "$base" = "$version" || { echo "::error::Tag $TAG does not match app version $version"; exit 1; }
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
@@ -80,8 +103,8 @@ jobs:
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
         with:
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || 'beta-v__VERSION__' }}
-          releaseName: "Buzz __VERSION__ (beta)"
-          releaseBody: "Beta build for testers. Not code signed yet; see docs/beta-install.md for how to install on each system."
+          releaseName: ${{ (github.ref_type != 'tag' || contains(github.ref_name, '-')) && 'Buzz __VERSION__ (beta)' || 'Buzz __VERSION__' }}
+          releaseBody: "Buzz for Windows, macOS and Linux. Not code signed yet; see docs/beta-install.md for how to install on each system."
           releaseDraft: true
-          prerelease: true
+          prerelease: ${{ github.ref_type != 'tag' || contains(github.ref_name, '-') }}
           args: ${{ matrix.args }}

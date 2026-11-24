@@ -184,8 +184,12 @@ The installer lands in
 
 **Beta builds for all three systems:** `.github/workflows/beta-build.yml`
 runs the checks, then builds on Windows, macOS (Apple Silicon and Intel), and
-Ubuntu 22.04, and attaches the installers to a draft pre-release. Start it
-from the Actions tab or by pushing a tag like `v0.1.0-beta.1`. It needs the
+Ubuntu 22.04, and attaches the installers to a draft release. Start it from
+the Actions tab or by pushing a tag. A tag with a hyphen (`v0.1.0-beta.1`)
+makes a pre-release; a plain tag (`v0.1.0`) makes the normal release that the
+landing page at https://buzz.asmorodonitito.my.id links to
+([ADR 0012](docs/adr/0012-website-is-a-landing-page-jury-tests-the-desktop-app.md)).
+The tag must match the version in `src-tauri/tauri.conf.json`. It needs the
 two `NEXT_PUBLIC_SUPABASE_*` values as repository secrets. The builds are not
 code signed; testers follow [docs/beta-install.md](docs/beta-install.md).
 
