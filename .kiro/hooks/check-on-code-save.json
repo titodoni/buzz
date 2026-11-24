@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Typecheck, lint and test after code edits",
+      "trigger": "PostFileSave",
+      "description": "After a TypeScript file is saved, the agent runs typecheck, lint and the related tests (tech steering workflow).",
+      "matcher": "(app|components|lib)/.*\\.(ts|tsx)$",
+      "action": {
+        "type": "agent",
+        "prompt": "A TypeScript source file was just saved. Before moving to the next task, run `npm run typecheck` and `npm run lint`, and run `npx vitest run` on the test file next to the changed module (or the whole suite if unsure). Fix any error you introduced. If this is a new pure-logic module (validation, presence, nudge, hangout, shortcode, limiter), make sure it has a unit test. Report only failures."
+      }
+    }
+  ]
+}

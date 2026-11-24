@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Two-user check before closing a feature task",
+      "trigger": "PostTaskExec",
+      "description": "When a spec task finishes, the agent must state whether the two-user check was run, and never mark an unrun check as done.",
+      "action": {
+        "type": "agent",
+        "prompt": "A spec task just finished. If it touches chat, presence, nudge, hangout, friends, or encryption, state whether the two-user check (two running app instances or two app windows) was actually run. If not, mark the check in tasks.md as `NOT RUN, needs two running app instances` instead of ticking it. Update the README status table if a feature's state changed. Never claim encryption beyond the wording in .kiro/steering/product.md."
+      }
+    }
+  ]
+}

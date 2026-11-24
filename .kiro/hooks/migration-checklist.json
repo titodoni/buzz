@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Migration checklist on SQL save",
+      "trigger": "PostFileSave",
+      "description": "When a Supabase migration is saved, remind the agent of the RLS and types steps from the tech steering.",
+      "matcher": "supabase/migrations/.*\\.sql$",
+      "action": {
+        "type": "agent",
+        "prompt": "A Supabase migration file was just saved. Check it against .kiro/steering/tech.md: (1) every new table has Row Level Security enabled and policies for select/insert/update/delete as needed; (2) the file name number is unique and higher than the latest in supabase/migrations/ (Hangouts and encryption specs both reserve numbers); (3) realtime tables are added to the publication and private channels have Realtime Authorization policies; (4) SECURITY DEFINER functions set search_path and revoke execute from public/anon. Then add checks to supabase/tests/rls.sql for the new table or rule. Do NOT apply the migration or run SQL against the hosted project; ask the user first. After it is applied, remind them to run `npm run test:rls` and regenerate lib/supabase/database.types.ts."
+      }
+    }
+  ]
+}

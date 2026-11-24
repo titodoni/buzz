@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Block risky commits and pushes",
+      "trigger": "PreToolUse",
+      "description": "Before git commit or git push, blocks forbidden encryption wording, leaked secrets, and .kiro in .gitignore.",
+      "matcher": "bash|shell|execute",
+      "action": {
+        "type": "command",
+        "command": "bash scripts/hooks/precommit-guard.sh",
+        "timeout": 30
+      }
+    }
+  ]
+}
