@@ -124,7 +124,7 @@ export const NudgeButton = forwardRef<
   else if (failed) status = "Your buzz wasn't delivered. Try again.";
 
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+    <span style={{ display: "contents" }}>
       <button
         type="button"
         className="ym-chip ym-chip-buzz"
@@ -135,7 +135,7 @@ export const NudgeButton = forwardRef<
       >
         BUZZ!
       </button>
-      <span id="nudge-status" role="status" aria-live="polite" className="text-xs">
+      <span id="nudge-status" role="status" aria-live="polite" className="ym-chip-status text-xs">
         {status}
       </span>
     </span>

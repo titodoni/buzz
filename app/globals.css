@@ -552,3 +552,12 @@ body {
 .ym-send:active {
   background: linear-gradient(to bottom, #d6d6d6, #ffffff);
 }
+
+/* Status lines ("Buzz again in 8s", why Hangout is off) go after the buttons,
+   so a long one wraps below instead of pushing a button to a new row. */
+.ym-chip-status {
+  order: 99;
+}
+.ym-chip-status:empty {
+  display: none;
+}

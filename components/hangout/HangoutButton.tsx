@@ -68,7 +68,7 @@ export function HangoutButton({
         Hangout
       </button>
       {reasonText ? (
-        <span id="hangout-reason" className="text-xs">
+        <span id="hangout-reason" className="ym-chip-status text-xs">
           {reasonText}
         </span>
       ) : null}
