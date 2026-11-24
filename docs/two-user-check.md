@@ -105,29 +105,48 @@ do not show a badge in the video.
 
 ## Results
 
-Date: ______  Tester: ______  Commit: ______
+Date: 24 Nov 2026  Tester: Kiro (automated), on the local Supabase stack  Commit: 8395cd2
+
+How this run was done: both app instances ran on a private virtual screen
+(Xvfb `:99`, no window manager), driven by xdotool. Every row below was
+checked with a screenshot of the app and, where it applies, a query on the
+local database. Nothing that needs ears or a moving picture was judged.
 
 | Check | Result (PASS / FAIL / NOT RUN / N/A) | Notes |
 | --- | --- | --- |
-| E1 | | |
-| E2 | | |
-| E3 | | |
-| E4 | | |
-| E5 | | |
-| E6 | | |
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | | |
-| 5 | | |
-| 6 | | |
-| 7 | | |
-| 8 | | |
-| 9 | | |
-| 10 | | |
-| N1 | | |
-| N2 | | |
-| N3 | | |
+| E1 | PASS | B read "E1 secret from a". The stored row had no body, two 223-character ciphers, and a sender key. |
+| E2 | PASS | B's chat closed, the whole app restarted, chat reopened: history readable. |
+| E3 | PASS | B signed out; A's message was stored encrypted and undelivered; after B signed in it was delivered and readable. |
+| E4 | PASS | A's chat showed A's own sent messages in plain text. |
+| E5 | PASS | B's private key was removed from the keychain (as on a new computer) and B restarted with a new key. A's next send was refused (no row written) with "b's key changed. Check the Safety Number, then confirm to keep chatting." After "I checked it. Trust the new key." the next message went through and B read it. B's old messages show "This message can't be read on this device", which is expected. |
+| E6 | PASS | Before: both sides showed 07757 64660 79738 78844 65523 72207. After: both showed 33282 24628 11930 78379 78400 54132. |
+| 1 | PASS | B saw A highlighted with "Up for chat, say hi!" and a Say hi button. |
+| 2 | PASS | A's Buddy List showed "b wants to hang out: Just talk for a bit?". Screenshot taken 3 s after sending, so "within 2 seconds" was not measured exactly. |
+| 3 | PASS | Both chats showed "a accepted: Just talk for a bit?". |
+| 4 | PASS (delivery only) | B's chat opened by itself with "BUZZ!!!". The shake and the sound were not judged; a person must watch and listen once. |
+| 5 | PASS | The red count 1 appeared on B's row (no window manager, so the window could not take focus) and cleared when B opened the chat. |
+| 6 | PASS | B's Recent Buzzes listed A; "Nudge back" reached A ("BUZZ!!!" in A's chat). |
+| 7 | PASS | "Buzz again in 8s" after each Buzz; the 6th within 10 minutes showed "Wait a moment before Nudging again" and sent nothing. |
+| 8 | PASS | A saw B Offline; BUZZ! and Hangout disabled with "Your friend is offline." and "b is offline, so a Hangout can't be sent." |
+| 9 | PASS | Hangout sent 14:21:26 and left alone; at 14:37 the row was `expired` and both chats showed "Hangout expired"; B's banner was gone. |
+| 10 | PASS | After B ignored A, A saw B Offline with BUZZ! and Hangout disabled, and no Hangout row was written. Ignore was removed afterwards. |
+| N1 | NOT RUN | Needs Spotify playing on this computer. |
+| N2 | NOT RUN | Needs a browser video. |
+| N3 | NOT RUN | Depends on N1. |
+
+Also checked in this run, after the Tauri permission fix (249f260):
+
+| Check | Result | Notes |
+| --- | --- | --- |
+| "is now online" toast | PASS | A got "b is now online, Click to say hi" when B signed in. |
+| Incoming message opens a closed chat | PASS | B's chat window opened by itself when A's E1 message arrived. |
+| Away after idle | PASS | Both users switched to the Away icon after about 5 idle minutes. |
+| Tray icon follows status | NOT RUN | The virtual screen has no tray. |
+| Buzz shake and sound | NOT RUN | Needs a person to watch and listen. |
+
+Not covered by this run: the hosted database. E1 to E6 passed on the local
+stack with migration 001610 applied there. Per the rule below, apply 001610 to
+the hosted project and run `npm run test:rls` against it before any claim.
 
 ## What the result decides
 
