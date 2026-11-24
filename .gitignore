@@ -13,3 +13,8 @@ next-env.d.ts
 # Supabase CLI scratch files and the early spec archive (the specs live in .kiro/)
 /supabase/.temp/
 /kiroween-buzz-kiro-spec.zip
+
+# Internal documents that must not ship in the public repo
+/docs/cto-audit-response.md
+/docs/buzz-submission-pack.md
+/docs/Buzz CTO*.pdf

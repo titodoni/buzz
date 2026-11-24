@@ -26,3 +26,8 @@ mpris = "2.1"
 # Automatic Now Playing on Windows: reads the system media controls (SMTC) (buzz-trigger R7.7).
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62", features = ["Media_Control", "Foundation", "Foundation_Collections", "Win32_System_WinRT"] }
+
+# Debug builds keep line numbers for backtraces but not full variable info.
+# A full debug build was 13 GB; this keeps `npm run tauri dev` small.
+[profile.dev]
+debug = 1
