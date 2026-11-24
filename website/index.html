@@ -137,7 +137,7 @@
       max-width: 1160px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
       gap: 3.5rem;
       align-items: center;
     }
@@ -232,271 +232,162 @@
       align-items: center;
     }
 
-    /* Interactive Retro Window in Hero */
-    .hero-mockup-wrapper {
-      position: relative;
+    /* ===== Live app demo: the real Buzz windows (Buddy List + Chat), same skin as the desktop app ===== */
+    .ymx-wrap { position: relative; }
+    .ymx-label {
+      position: absolute; top: -14px; right: 16px; z-index: 20;
+      background: #fbbf24; color: #78350f; font-size: 0.75rem; font-weight: 800;
+      padding: 0.2rem 0.7rem; border-radius: 9999px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      text-transform: uppercase; letter-spacing: 0.05em;
     }
-
-    .interactive-label {
-      position: absolute;
-      top: -14px;
-      right: 16px;
-      background: #fbbf24;
-      color: #78350f;
-      font-size: 0.75rem;
-      font-weight: 800;
-      padding: 0.2rem 0.6rem;
-      border-radius: 9999px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      z-index: 10;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .chat-mockup-window {
-      background: #f1f5f9;
-      border-radius: 12px;
-      box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.08);
+    .ymx-stage {
+      position: relative; height: 600px; border-radius: 16px;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(124,58,237,0.16), transparent 55%),
+        radial-gradient(circle at 85% 90%, rgba(251,191,36,0.20), transparent 50%),
+        #ede9fe;
+      border: 1px solid #ddd6fe;
       overflow: hidden;
-      transition: transform 0.05s ease;
-      transform-origin: center center;
+    }
+    .ymx-win {
+      --ym-purple: #6400cd; --ym-purple-deep: #2f1050; --ym-blue: #0067fa;
+      --border: #b8b8b8; --row-hover: #d9e8ff; --muted: #595959; --buzz-red: #cc0000;
+      position: absolute; display: flex; flex-direction: column;
+      font-family: Tahoma, Verdana, "Segoe UI", sans-serif; font-size: 13px; line-height: 1.25;
+      color: #1a1a1a; background: #ececec;
+      border: 1px solid var(--border); border-radius: 10px 10px 6px 6px; overflow: hidden;
+      box-shadow: 0 24px 48px -12px rgba(15,23,42,0.45), 0 0 0 1px rgba(0,0,0,0.05);
+      text-align: left;
+    }
+    .ymx-win * { box-sizing: border-box; }
+    .ymx-win button { font-family: inherit; }
+    .ymx-buddy { left: 14px; top: 56px; width: 250px; height: 508px; z-index: 1; }
+    .ymx-chat  { right: 14px; top: 18px; width: 380px; height: 556px; z-index: 2; }
+    .ymx-chat.ymx-shake { animation: ymxShake 600ms linear 1; }
+    .ymx-row-shake { animation: ymxShake 600ms linear 1; }
+    @keyframes ymxShake {
+      0%,100% { transform: translateX(0); } 10% { transform: translateX(-8px); } 20% { transform: translateX(8px); }
+      30% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 50% { transform: translateX(-6px); }
+      60% { transform: translateX(6px); } 70% { transform: translateX(-4px); } 80% { transform: translateX(4px); }
+      90% { transform: translateX(-2px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      @keyframes ymxShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
     }
 
-    /* Window Header */
-    .mockup-titlebar {
-      background: linear-gradient(180deg, #6d28d9 0%, #4c1d95 100%);
-      color: white;
-      padding: 0.65rem 0.9rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.88rem;
-      font-weight: 700;
+    .ymx-titlebar {
+      display: flex; align-items: center; gap: 6px; padding: 4px 8px; flex-shrink: 0; user-select: none;
+      color: #fff; font-size: 12px; font-weight: bold;
+      background: linear-gradient(to bottom, var(--ym-purple), var(--ym-purple-deep));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.4); border-radius: 9px 9px 0 0;
     }
+    .ymx-titlebar .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ymx-ctl { display: flex; gap: 3px; }
+    .ymx-ctl span {
+      width: 26px; height: 20px; display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(255,255,255,0.6); border-radius: 3px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.3), rgba(255,255,255,0.05));
+    }
+    .ymx-menubar { display: flex; flex-shrink: 0; border-bottom: 1px solid var(--border); background: #ececec; }
+    .ymx-menubar span { padding: 4px 8px; cursor: default; }
+    .ymx-menubar span:hover { background: var(--row-hover); }
 
-    .mockup-titlebar .window-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+    /* Buddy List */
+    .ymx-me { display: flex; align-items: center; gap: 8px; padding: 6px 8px; flex-shrink: 0;
+      background: linear-gradient(to bottom, #f6f3fc, #dcd4ef); border-bottom: 1px solid var(--border); }
+    .ymx-pic { flex: none; display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border); border-radius: 3px; color: #fff; font-weight: 700;
+      background: linear-gradient(to bottom, var(--ym-purple), var(--ym-purple-deep)); }
+    .ymx-me .n { display: flex; align-items: center; gap: 4px; font-weight: bold; }
+    .ymx-me .s { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ymx-tools { display: flex; gap: 2px; padding: 3px 4px; flex-shrink: 0;
+      background: linear-gradient(to bottom, #fff, #e4def2); border-bottom: 1px solid var(--border); }
+    .ymx-tool { width: 52px; min-height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+      padding: 2px; font-size: 10px; border: 1px solid transparent; border-radius: 3px; background: transparent; cursor: pointer; color: #1a1a1a; }
+    .ymx-tool:hover { border-color: var(--border); background: linear-gradient(to bottom, #fff, #e9e9e9); }
+    .ymx-notice { margin: 0; padding: 3px 8px; font-size: 12px; background: #fff6c8; border-bottom: 1px solid #e6d58a; flex-shrink: 0; }
+    .ymx-find { padding: 4px 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .ymx-find input {
+      display: block; width: 100%; min-height: 26px; padding: 2px 6px 2px 24px; font: inherit;
+      border: 1px solid var(--border); border-radius: 3px; color: #1a1a1a;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='6.5' cy='6.5' r='4.5' fill='none' stroke='%23595959' stroke-width='1.8'/%3E%3Cpath d='M10 10l4 4' stroke='%23595959' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 6px center / 13px 13px;
     }
+    .ymx-list { flex: 1; min-height: 0; overflow-y: auto; background: #fff; }
+    .ymx-group { padding: 3px 8px; font-weight: bold; background: linear-gradient(to bottom, #f4f4f4, #e2e2e2);
+      border-top: 1px solid #fff; border-bottom: 1px solid var(--border); }
+    .ymx-friend { display: flex; align-items: center; gap: 6px; padding: 3px 8px; cursor: pointer; list-style: none; }
+    .ymx-friend:hover { background: var(--row-hover); }
+    .ymx-friend.is-open { background: #e8f0ff; }
+    .ymx-friend.is-offline { opacity: 0.55; }
+    .ymx-friend.is-up { background: #fff3b8; box-shadow: inset 3px 0 0 var(--ym-purple); }
+    .ymx-friend.is-up:hover { background: #ffeb8a; }
+    .ymx-friend .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ymx-friend .sub { color: var(--muted); }
+    .ymx-friend .np { color: var(--ym-blue); text-decoration: underline; }
+    .ymx-friend .badge { margin-left: 4px; padding: 0 4px; border-radius: 3px; background: var(--buzz-red); color: #fff; font-size: 11px; font-weight: bold; }
+    .ymx-sayhi { flex: none; min-height: 22px; padding: 0 8px; font-size: 12px; color: #fff; cursor: pointer;
+      border: 1px solid var(--ym-purple-deep); border-radius: 4px;
+      background: linear-gradient(to bottom, var(--ym-purple), var(--ym-purple-deep)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.4); }
+    .ymx-sayhi:hover { filter: brightness(1.15); }
 
-    .window-controls {
-      display: flex;
-      gap: 0.4rem;
-    }
+    /* Chat */
+    .ymx-head { display: flex; align-items: center; gap: 6px; padding: 4px 8px; min-width: 0; flex-shrink: 0; border-bottom: 1px solid var(--border); }
+    .ymx-head .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .ymx-head .m { font-size: 12px; color: var(--muted); }
+    .ymx-head .np { font-size: 12px; color: var(--ym-blue); }
+    .ymx-body { display: flex; flex: 1; min-height: 0; }
+    .ymx-main { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+    .ymx-log { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; background: #fff; font-size: 14px; line-height: 1.3; }
+    .ymx-log .msg { margin: 2px 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .ymx-log .who { font-weight: 700; }
+    .ymx-log .me { color: #0067fa; } .ymx-log .fr { color: #cc3300; }
+    .ymx-log .sys { text-align: center; font-style: italic; margin: 6px 0; color: #666; font-size: 13px; }
+    .ymx-log .sys.nudge { color: var(--buzz-red); font-weight: 700; text-transform: uppercase; }
+    .ymx-log img { width: 18px; height: 18px; vertical-align: middle; display: inline-block; }
+    .ymx-typing { min-height: 18px; padding: 0 8px; font-size: 12px; font-style: italic; color: #555; background: #fff; }
+    .ymx-bar { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 3px 6px; flex-shrink: 0;
+      background: linear-gradient(to bottom, #fff, #e4def2); border-top: 1px solid var(--border); }
+    .ymx-chip { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; font-size: 12px; color: #1a1a1a; cursor: pointer;
+      border: 1px solid transparent; border-radius: 3px; background: transparent; }
+    .ymx-chip:hover:not(:disabled) { border-color: var(--border); background: linear-gradient(to bottom, #fff, #e9e9e9); }
+    .ymx-chip[aria-expanded="true"] { border-color: var(--ym-purple); background: linear-gradient(to bottom, #f3ecff, #ddd0f5); }
+    .ymx-chip:disabled { opacity: 0.5; cursor: default; }
+    .ymx-chip img { width: 18px; height: 18px; }
+    .ymx-chip-buzz { font-weight: 800; letter-spacing: 0.5px; color: var(--buzz-red); }
+    .ymx-chip-status { order: 99; font-size: 12px; color: #444; }
+    .ymx-chip-status:empty { display: none; }
+    .ymx-picker { position: absolute; left: 6px; bottom: 100%; z-index: 5; display: none; width: 236px; padding: 6px;
+      background: #fff; border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .ymx-picker.open { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .ymx-picker button { width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 3px; background: transparent; cursor: pointer; }
+    .ymx-picker button:hover { border-color: var(--ym-purple); background: #f3ecff; }
+    .ymx-picker img { width: 22px; height: 22px; }
+    .ymx-inputrow { display: flex; gap: 6px; padding: 4px 6px; flex-shrink: 0; }
+    .ymx-inputrow textarea { flex: 1; min-width: 0; height: 4.8em; resize: none; padding: 4px; font: inherit; font-size: 14px;
+      border: 1px solid var(--border); border-radius: 3px; color: #1a1a1a; background: #fff; }
+    .ymx-send { flex: none; width: 64px; font-weight: 700; color: #1a1a1a; cursor: pointer; border: 1px solid #8f8f8f; border-radius: 3px;
+      background: linear-gradient(to bottom, #fff, #d6d6d6); box-shadow: inset 0 1px 0 #fff; }
+    .ymx-send:hover { background: linear-gradient(to bottom, #fff, #e6e6e6); }
+    .ymx-send:active { background: linear-gradient(to bottom, #d6d6d6, #fff); }
+    .ymx-pics { flex: none; width: 88px; padding: 8px; overflow-y: auto; border-left: 1px solid var(--border); }
+    .ymx-pics .p { text-align: center; margin-bottom: 8px; font-size: 11px; overflow-wrap: anywhere; }
+    .ymx-pics .p .ymx-pic { width: 64px; height: 64px; font-size: 22px; margin: 0 auto 2px; border-radius: 0; }
+    .ymx-win :focus-visible { outline: 2px solid var(--ym-purple); outline-offset: 1px; }
+    .ymx-win .ymx-titlebar :focus-visible { outline-color: #fff; }
 
-    .window-btn {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.35);
-      display: inline-block;
+    @media (max-width: 1200px) and (min-width: 901px) { .ymx-buddy { display: none; } .ymx-chat { right: 50%; transform: translateX(50%); } .ymx-chat.ymx-shake { animation-name: ymxShakeC; } }
+    @keyframes ymxShakeC {
+      0%,100% { transform: translateX(50%); } 10% { transform: translateX(calc(50% - 8px)); } 20% { transform: translateX(calc(50% + 8px)); }
+      30% { transform: translateX(calc(50% - 8px)); } 40% { transform: translateX(calc(50% + 8px)); } 60% { transform: translateX(calc(50% + 5px)); }
+      80% { transform: translateX(calc(50% - 3px)); }
     }
-
-    /* Window Contact Header */
-    .mockup-contact-bar {
-      background: #ffffff;
-      padding: 0.85rem 1rem;
-      border-bottom: 1px solid #e2e8f0;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
+    @media (max-width: 900px) {
+      .ymx-stage { height: auto; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 24px 12px; }
+      .ymx-win { position: relative; left: auto; right: auto; top: auto; transform: none; }
+      .ymx-chat { width: 100%; max-width: 420px; height: 540px; order: 1; }
+      .ymx-buddy { width: 100%; max-width: 420px; height: 440px; order: 2; }
     }
-
-    .avatar {
-      width: 42px;
-      height: 42px;
-      border-radius: 8px;
-      background: #ddd6fe;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      color: #5b21b6;
-      font-size: 1.1rem;
-      position: relative;
-    }
-
-    .avatar .online-badge {
-      position: absolute;
-      bottom: -2px;
-      right: -2px;
-      width: 12px;
-      height: 12px;
-      background: var(--status-online);
-      border: 2px solid white;
-      border-radius: 50%;
-    }
-
-    .contact-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .contact-name {
-      font-weight: 700;
-      font-size: 0.95rem;
-      color: #0f172a;
-    }
-
-    .contact-status {
-      font-size: 0.82rem;
-      color: #64748b;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-
-    .now-playing-icon {
-      color: #16a34a;
-      font-weight: 700;
-    }
-
-    /* Message Stream */
-    .mockup-messages {
-      background: #ffffff;
-      height: 230px;
-      padding: 1rem;
-      overflow-y: auto;
-      font-size: 0.9rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.65rem;
-    }
-
-    .msg-row {
-      display: flex;
-      flex-direction: column;
-      line-height: 1.4;
-    }
-
-    .msg-header {
-      font-size: 0.76rem;
-      color: #94a3b8;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
-
-    .msg-header span.user-me {
-      color: #0284c7;
-    }
-
-    .msg-header span.user-friend {
-      color: #7c3aed;
-    }
-
-    .msg-bubble {
-      color: #1e293b;
-      font-size: 0.9rem;
-    }
-
-    .msg-nudge-event {
-      text-align: center;
-      background: #fee2e2;
-      color: #b91c1c;
-      font-weight: 700;
-      padding: 0.45rem 0.75rem;
-      border-radius: 6px;
-      border: 1px dashed #f87171;
-      font-size: 0.85rem;
-      animation: popIn 0.3s ease;
-    }
-
-    /* Chat Toolbar */
-    .mockup-toolbar {
-      background: #f8fafc;
-      padding: 0.5rem 0.9rem;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-
-    .toolbar-btn {
-      background: white;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 0.35rem 0.65rem;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      transition: all 0.15s ease;
-    }
-
-    .toolbar-btn:hover {
-      background: #f1f5f9;
-      border-color: #94a3b8;
-    }
-
-    .btn-nudge-shake {
-      background: var(--buzz-red);
-      color: white;
-      border-color: #b91c1c;
-      font-weight: 800;
-      box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
-      padding: 0.4rem 0.9rem;
-    }
-
-    .btn-nudge-shake:hover {
-      background: var(--buzz-red-hover);
-      transform: scale(1.04);
-    }
-
-    .btn-nudge-shake:active {
-      transform: scale(0.96);
-    }
-
-    /* Input Row */
-    .mockup-input-bar {
-      background: #ffffff;
-      padding: 0.75rem 0.9rem;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .mockup-text-input {
-      flex: 1;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 0.45rem 0.75rem;
-      font-size: 0.88rem;
-      outline: none;
-      font-family: inherit;
-    }
-
-    .mockup-send-btn {
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 0.45rem 1rem;
-      font-weight: 700;
-      font-size: 0.88rem;
-      cursor: pointer;
-    }
-
-    /* Window Shake Animation */
-    @keyframes windowShake {
-      0% { transform: translate(0, 0) rotate(0deg); }
-      15% { transform: translate(-8px, 6px) rotate(-1deg); }
-      30% { transform: translate(8px, -6px) rotate(1deg); }
-      45% { transform: translate(-7px, -4px) rotate(-1deg); }
-      60% { transform: translate(7px, 5px) rotate(1deg); }
-      75% { transform: translate(-4px, 2px) rotate(0deg); }
-      90% { transform: translate(4px, -2px) rotate(0deg); }
-      100% { transform: translate(0, 0) rotate(0deg); }
-    }
-
-    .shake-active {
-      animation: windowShake 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-    }
+    @media (max-width: 420px) { .ymx-pics { display: none; } }
 
     /* Section Styles */
     section {
@@ -947,71 +838,54 @@
         </div>
       </div>
 
-      <!-- Interactive Mockup Window -->
-      <div class="hero-mockup-wrapper">
-        <div class="interactive-label">👆 Try clicking BUZZ! below</div>
-        <div class="chat-mockup-window" id="demoChatWindow">
-          
-          <!-- Title bar -->
-          <div class="mockup-titlebar">
-            <div class="window-title">
-              <span>B!</span> Conversation with <strong>sarah_99</strong>
-            </div>
-            <div class="window-controls">
-              <span class="window-btn"></span>
-              <span class="window-btn"></span>
-              <span class="window-btn"></span>
-            </div>
-          </div>
+      <!-- Live app demo: the real Buzz windows -->
+      <div class="ymx-wrap">
+        <div class="ymx-label">👆 Try BUZZ! and double-click a friend</div>
+        <div class="ymx-stage" id="ymxStage">
 
-          <!-- Contact Info -->
-          <div class="mockup-contact-bar">
-            <div class="avatar">
-              S
-              <span class="online-badge"></span>
-            </div>
-            <div class="contact-info">
-              <div class="contact-name">Sarah Jenkins (sarah_99)</div>
-              <div class="contact-status">
-                <span class="now-playing-icon">🎵</span>
-                <span>The Postal Service — Such Great Heights</span>
+          <!-- Chat window -->
+          <div class="ymx-win ymx-chat" id="ymxChat" role="group" aria-label="Demo chat window">
+            <div class="ymx-titlebar"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="Buzz" style="flex:none"><defs><linearGradient id="bl1-tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7828c8"/><stop offset="1" stop-color="#400080"/></linearGradient><clipPath id="bl1-clip"><rect x="4" y="4" width="92" height="92" rx="20"/></clipPath><g id="bl1-b" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M24 24V76M24 24H43C60 24 60 49 43 49H24M24 49H47C67 49 67 76 47 76H24"/></g><g id="bl1-bang" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M81 24V58"/><path d="M81 76V76.1"/></g></defs><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#bl1-tile)"/><rect x="7" y="6" width="86" height="42" rx="17" fill="#fff" fill-opacity=".14"/><g transform="translate(4.5 4.5) scale(.91)"><use href="#bl1-b" stroke="#3a2a00" stroke-width="19"/><use href="#bl1-bang" stroke="#3a2a00" stroke-width="23"/><use href="#bl1-b" stroke="#ffcc00" stroke-width="11"/><use href="#bl1-bang" stroke="#ffcc00" stroke-width="15"/></g></svg><span id="ymxTitleDot" style="display:inline-flex"></span><span class="t" id="ymxTitle">Sarah Jenkins - Instant Message</span><div class="ymx-ctl" aria-hidden="true"><span><svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="7" width="8" height="2" fill="#fff"/></svg></span><span><svg width="10" height="10" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="#fff" stroke-width="1.5"/></svg></span><span><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2 L8 8 M8 2 L2 8" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span></div></div>
+            <div class="ymx-menubar" aria-hidden="true"><span>Conversation</span><span>Edit</span><span>View</span><span>Actions</span><span>Help</span></div>
+            <header class="ymx-head"><span id="ymxHeadDot" style="display:inline-flex"></span><strong class="t" id="ymxHeadName"></strong><span class="t m" id="ymxHeadStatus"></span><span class="t np" id="ymxHeadNp"></span></header>
+            <div class="ymx-body">
+              <div class="ymx-main">
+                <div class="ymx-log" id="ymxLog" role="log" aria-live="polite" aria-label="Conversation"></div>
+                <div class="ymx-typing" id="ymxTyping" role="status" aria-live="polite"></div>
+                <div class="ymx-bar">
+                  <button type="button" class="ymx-chip" id="ymxSmile" aria-expanded="false" aria-label="Emoticons" title="Emoticons"><img src="assets/emoticons/smile.svg" alt="" width="18" height="18"></button>
+                  <button type="button" class="ymx-chip ymx-chip-buzz" id="ymxBuzz" title="Buzz! (Ctrl+G)" aria-describedby="ymxStatus">BUZZ!</button>
+                  <button type="button" class="ymx-chip" id="ymxHangout">Hangout</button>
+                  <span class="ymx-chip-status" id="ymxStatus" role="status" aria-live="polite"></span>
+                  <div class="ymx-picker" id="ymxPicker" role="group" aria-label="Emoticons"></div>
+                </div>
+                <div class="ymx-inputrow">
+                  <textarea id="ymxInput" aria-label="Message" maxlength="1000" placeholder="Type a message..."></textarea>
+                  <button type="button" class="ymx-send" id="ymxSend">Send</button>
+                </div>
               </div>
+              <aside class="ymx-pics" aria-label="Pictures">
+                <div class="p"><div class="ymx-pic" id="ymxPicFriend" role="img">SJ</div><div id="ymxPicFriendName">Sarah</div></div>
+                <div class="p"><div class="ymx-pic" role="img">YO</div><div>You</div></div>
+              </aside>
             </div>
           </div>
 
-          <!-- Chat messages stream -->
-          <div class="mockup-messages" id="mockupMessages">
-            <div class="msg-row">
-              <div class="msg-header"><span class="user-friend">sarah_99</span> (4:38 PM):</div>
-              <div class="msg-bubble">hey! did you install Buzz yet? 😄</div>
+          <!-- Buddy List window -->
+          <div class="ymx-win ymx-buddy" role="group" aria-label="Demo Buddy List">
+            <div class="ymx-titlebar"><svg width="16" height="16" viewBox="0 0 100 100" role="img" aria-label="Buzz" style="flex:none"><defs><linearGradient id="bl2-tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7828c8"/><stop offset="1" stop-color="#400080"/></linearGradient><clipPath id="bl2-clip"><rect x="4" y="4" width="92" height="92" rx="20"/></clipPath><g id="bl2-b" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M24 24V76M24 24H43C60 24 60 49 43 49H24M24 49H47C67 49 67 76 47 76H24"/></g><g id="bl2-bang" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M81 24V58"/><path d="M81 76V76.1"/></g></defs><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#bl2-tile)"/><rect x="7" y="6" width="86" height="42" rx="17" fill="#fff" fill-opacity=".14"/><g transform="translate(4.5 4.5) scale(.91)"><use href="#bl2-b" stroke="#3a2a00" stroke-width="19"/><use href="#bl2-bang" stroke="#3a2a00" stroke-width="23"/><use href="#bl2-b" stroke="#ffcc00" stroke-width="11"/><use href="#bl2-bang" stroke="#ffcc00" stroke-width="15"/></g></svg><span id="ymxMeDot" style="display:inline-flex"></span><span class="t">Buzz</span><div class="ymx-ctl" aria-hidden="true"><span><svg width="10" height="10" viewBox="0 0 10 10"><rect x="1" y="7" width="8" height="2" fill="#fff"/></svg></span><span><svg width="10" height="10" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="#fff" stroke-width="1.5"/></svg></span><span><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2 L8 8 M8 2 L2 8" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></span></div></div>
+            <div class="ymx-menubar" aria-hidden="true"><span>Messenger</span><span>Contacts</span><span>Actions</span><span>Help</span></div>
+            <div class="ymx-me">
+              <div class="ymx-pic" style="width:48px;height:48px;font-size:18px" aria-hidden="true">YO</div>
+              <div style="min-width:0;flex:1"><div class="n">You</div><div class="s">trying out Buzz!</div></div>
             </div>
-            <div class="msg-row">
-              <div class="msg-header"><span class="user-me">You</span> (4:39 PM):</div>
-              <div class="msg-bubble">just did! this feels so nostalgic. the windowing is so fast.</div>
+            <div class="ymx-tools" aria-hidden="true"><button type="button" class="ymx-tool" title="Add" tabindex="-1"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="4" fill="#ffcc00" stroke="#3a2a00" stroke-width="1.5"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7z" fill="#ffcc00" stroke="#3a2a00" stroke-width="1.5"/><circle cx="18.5" cy="15.5" r="4.5" fill="#2e9e2e" stroke="#145214"/><path d="M18.5 13v5M16 15.5h5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg><span>Add</span></button><button type="button" class="ymx-tool" title="IM" tabindex="-1"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v12H10l-5 4v-4H3z" fill="#fff" stroke="#0067fa" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 8.5h10M7 11.5h7" stroke="#0067fa" stroke-width="1.6" stroke-linecap="round"/></svg><span>IM</span></button><button type="button" class="ymx-tool" title="Up for chat" tabindex="-1"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><g stroke="#e8820a" stroke-width="1.6" stroke-linecap="round"><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></g><circle cx="12" cy="12" r="6.5" fill="#ffcc00" stroke="#3a2a00" stroke-width="1.3"/><circle cx="9.8" cy="10.6" r=".9" fill="#3a2a00"/><circle cx="14.2" cy="10.6" r=".9" fill="#3a2a00"/><path d="M9 13.5c1.6 2 4.4 2 6 0" fill="none" stroke="#3a2a00" stroke-width="1.2" stroke-linecap="round"/></svg><span>Up for chat</span></button><button type="button" class="ymx-tool" title="Buzzes" tabindex="-1"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 1 6 6v4l2 3H4l2-3V9a6 6 0 0 1 6-6z" fill="#ffcc00" stroke="#3a2a00" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0" fill="none" stroke="#3a2a00" stroke-width="1.5"/><path d="M2 6l2 1M22 6l-2 1M2.5 11h2M21.5 11h-2" stroke="#cc0000" stroke-width="1.5" stroke-linecap="round"/></svg><span>Buzzes</span></button></div>
+            <p class="ymx-notice">You have 1 offline message</p>
+            <div class="ymx-find"><input type="search" placeholder="Find a contact" aria-label="Find a contact" tabindex="-1" readonly></div>
+            <div class="ymx-list">
+              <div class="ymx-group" id="ymxGroup"></div>
+              <ul id="ymxFriends" style="margin:0;padding:0"></ul>
             </div>
-            <div class="msg-row">
-              <div class="msg-header"><span class="user-friend">sarah_99</span> (4:40 PM):</div>
-              <div class="msg-bubble">hit that red BUZZ button right now!! 😜</div>
-            </div>
-          </div>
-
-          <!-- Toolbar with Nudge Button -->
-          <div class="mockup-toolbar">
-            <button class="toolbar-btn btn-nudge-shake" id="btnNudgeDemo" title="Send a Nudge! (Ctrl+G)">
-              💥 BUZZ!
-            </button>
-            <button class="toolbar-btn" id="btnHangoutDemo">
-              ☕ Hangout
-            </button>
-            <button class="toolbar-btn" id="btnSmileyDemo">
-              😊 Smiley
-            </button>
-          </div>
-
-          <!-- Input Bar -->
-          <div class="mockup-input-bar">
-            <input type="text" class="mockup-text-input" id="mockupInput" placeholder="Type a message or press Buzz!..." value="">
-            <button class="mockup-send-btn" id="mockupSend">Send</button>
           </div>
         </div>
       </div>
@@ -1119,55 +993,55 @@
       <div class="emoticon-strip">
         <div class="emoticon-grid">
           <div class="emoticon-item">
-            <span class="emoji-icon">😊</span>
+            <img class="emoji-icon" src="assets/emoticons/smile.svg" alt="" width="34" height="34">
             <span class="code">:)</span>
           </div>
           <div class="emoticon-item">
-            <span class="emoji-icon">😃</span>
+            <img class="emoji-icon" src="assets/emoticons/grin.svg" alt="" width="34" height="34">
             <span class="code">:D</span>
           </div>
           <div class="emoticon-item">
-            <span class="emoji-icon">😉</span>
+            <img class="emoji-icon" src="assets/emoticons/wink.svg" alt="" width="34" height="34">
             <span class="code">;)</span>
           </div>
           <div class="emoticon-item">
-            <span class="emoji-icon">😜</span>
+            <img class="emoji-icon" src="assets/emoticons/tongue.svg" alt="" width="34" height="34">
             <span class="code">:P</span>
           </div>
           <div class="emoticon-item">
-            <span class="emoji-icon">😎</span>
+            <img class="emoji-icon" src="assets/emoticons/cool.svg" alt="" width="34" height="34">
             <span class="code">B-)</span>
           </div>
           <div class="emoticon-item">
-            <span class="emoji-icon">😡</span>
-            <span class="code">X-(</span>
+            <img class="emoji-icon" src="assets/emoticons/angry.svg" alt="" width="34" height="34">
+            <span class="code">X(</span>
           </div>
           <div class="emoticon-item">
-            <span class="emoji-icon">😢</span>
+            <img class="emoji-icon" src="assets/emoticons/cry.svg" alt="" width="34" height="34">
             <span class="code">:((</span>
           </div>
           <div class="emoticon-item">
-            <span class="emoji-icon">😇</span>
+            <img class="emoji-icon" src="assets/emoticons/angel.svg" alt="" width="34" height="34">
             <span class="code">O:-)</span>
           </div>
           <div class="emoticon-item">
-            <span class="emoji-icon">😘</span>
+            <img class="emoji-icon" src="assets/emoticons/kiss.svg" alt="" width="34" height="34">
             <span class="code">:-*</span>
           </div>
           <div class="emoticon-item">
-            <span class="emoji-icon">🤣</span>
+            <img class="emoji-icon" src="assets/emoticons/rofl.svg" alt="" width="34" height="34">
             <span class="code">=))</span>
           </div>
           <div class="emoticon-item">
-            <span class="emoji-icon">🤔</span>
+            <img class="emoji-icon" src="assets/emoticons/thinking.svg" alt="" width="34" height="34">
             <span class="code">:-?</span>
           </div>
           <div class="emoticon-item">
-            <span class="emoji-icon">😴</span>
-            <span class="code">I-)</span>
+            <img class="emoji-icon" src="assets/emoticons/sleeping.svg" alt="" width="34" height="34">
+            <span class="code">|-)</span>
           </div>
         </div>
-        <p style="margin-top: 1.5rem; font-size: 0.9rem; color: #94a3b8;">Over 60 animated and classic SVG shortcodes supported natively in the app.</p>
+        <p style="margin-top: 1.5rem; font-size: 0.9rem; color: #94a3b8;">58 shortcodes, drawn as SVG, render inline in every chat.</p>
       </div>
     </div>
   </section>
@@ -1341,120 +1215,307 @@
     </div>
   </footer>
 
-  <!-- Interactive JavaScript: Web Audio Chime + Screen Shake -->
+  <!-- Live app demo: same windows, skin, emoticons and rules as the desktop app -->
   <script>
-    (function() {
-      let audioCtx = null;
+    (function () {
+      const EMO = [[":)", "smile"], [":(", "frown"], [";)", "wink"], [":D", "grin"], [";;)", "lashes"], [">:D<", "hug"], [":-/", "confused"], [":x", "love"], [":\">", "blush"], [":P", "tongue"], [":-*", "kiss"], ["=((", "brokenheart"], [":-O", "surprise"], ["X(", "angry"], [":>", "smug"], ["B-)", "cool"], [":-S", "worried"], ["#:-S", "whew"], [">:)", "devil"], [":((", "cry"], [":))", "laugh"], [":|", "straight"], ["/:)", "eyebrow"], ["=))", "rofl"], ["O:-)", "angel"], [":-B", "nerd"], ["=;", "talktohand"], ["|-)", "sleeping"], ["8-|", "rollingeyes"], [":-&", "sick"], [":-$", "donttell"], ["[-(", "notalking"], [":O)", "clown"], ["8-}", "silly"], ["<:-P", "party"], ["(:|", "yawn"], ["=P~", "drooling"], [":-?", "thinking"], ["#-o", "doh"], ["=D>", "applause"], [":-c", "callme"], [":)>-", "peace"], [":@)", "pig"], ["3:-O", "cow"], [":(|)", "monkey"], ["~:>", "chicken"], ["@};-", "rose"], ["8-X", "skull"], [":-\"", "whistling"], [":D/", "dancing"], ["~X(", "witsend"], [":-L", "frustrated"], ["[-O<", "praying"], ["$-)", "money"], [":-<", "sigh"], [">:/", "bringit"], [";))", "heehee"], ["@-)", "hypnotized"]];
+      const PICK = [[":)", "Smiling", "smile"], [":(", "Frowning", "frown"], [";)", "Winking", "wink"], [":D", "Big Grin", "grin"], [";;)", "Battling Eyelashes", "lashes"], [">:D<", "Big Hug", "hug"], [":-/", "Confused", "confused"], [":x", "In Love", "love"], [":\">", "Blushing", "blush"], [":P", "Tongue Out", "tongue"], [":-*", "Kiss", "kiss"], ["=((", "Broken Heart", "brokenheart"], [":-O", "Surprise", "surprise"], ["X(", "Angry", "angry"], [":>", "Smug", "smug"], ["B-)", "Sunglasses", "cool"], [":-S", "Worried", "worried"], ["#:-S", "Whew!", "whew"], [">:)", "Devil", "devil"], [":((", "Crying", "cry"], [":))", "Laughing", "laugh"], [":|", "Straight Face", "straight"], ["/:)", "Raised Eyebrow", "eyebrow"], ["=))", "Rolling on the Floor", "rofl"], ["O:-)", "Angel", "angel"], [":-B", "Nerd", "nerd"], ["=;", "Talk to the Hand", "talktohand"], ["|-)", "Sleeping", "sleeping"], ["8-|", "Rolling Eyes", "rollingeyes"], [":-&", "Sick", "sick"], [":-$", "Don't Tell", "donttell"], ["[-(", "No Talking", "notalking"], [":O)", "Clown", "clown"], ["8-}", "Silly", "silly"], ["<:-P", "Party", "party"], ["(:|", "Yawn", "yawn"], ["=P~", "Drooling", "drooling"], [":-?", "Thinking", "thinking"], ["#-o", "Doh!", "doh"], ["=D>", "Clapping", "applause"], [":-c", "Call Me", "callme"], [":)>-", "Peace Sign", "peace"]];
+      const EMO_DIR = 'assets/emoticons/';
+      const MAX_LEN = Math.max.apply(null, EMO.map(function (e) { return e[0].length; }));
+      const LOOKUP = new Map(EMO.map(function (e) { return [e[0].toLowerCase(), e[1]]; }));
+      const COOLDOWN_MS = 10000; // same as the app: lib/nudge/cooldown.ts
 
-      function getAudioContext() {
-        if (!audioCtx) {
-          const Ctor = window.AudioContext || window.webkitAudioContext;
-          if (Ctor) audioCtx = new Ctor();
+      const FRIENDS = {
+        sarah: { id: 'sarah', name: 'Sarah Jenkins', short: 'Sarah', state: 'online', status: "coffee o'clock", playing: 'The Postal Service \u2014 Such Great Heights', initials: 'SJ' },
+        dimas: { id: 'dimas', name: 'Dimas', short: 'Dimas', state: 'online', status: 'Up for chat!', up: true, initials: 'DI' },
+        maya:  { id: 'maya',  name: 'Maya',  short: 'Maya',  state: 'busy', status: 'in a meeting', initials: 'MA' },
+        raka:  { id: 'raka',  name: 'Raka',  short: 'Raka',  state: 'away', status: 'brb', initials: 'RA' },
+        lena:  { id: 'lena',  name: 'Lena',  short: 'Lena',  state: 'offline', status: 'last seen yesterday', initials: 'LE' }
+      };
+      const ORDER = ['sarah', 'dimas', 'maya', 'raka', 'lena'];
+      const REPLIES = {
+        sarah: ['haha yes!! :))', 'wait, say that again ;)', 'brb, coffee ☕ :D', 'this is so much better than a group chat :)'],
+        dimas: ['hey hey! :D', 'was hoping someone would show up', 'want to hang out? B-)'],
+        maya: ["in a meeting, will answer later :)", 'ttyl!'],
+        raka: ['back! sorry :P', 'what did I miss?']
+      };
+
+      const ME = { name: 'You' };
+      const histories = {
+        sarah: [
+          { k: 'msg', mine: false, body: 'hey! did you install Buzz yet? :)', t: '16:38' },
+          { k: 'msg', mine: true, body: 'just did! this feels so nostalgic. the windowing is so fast.', t: '16:39' },
+          { k: 'msg', mine: false, body: 'hit that red BUZZ! button right now!! ;)', t: '16:40' }
+        ], dimas: [], maya: [], raka: [], lena: []
+      };
+      let current = 'sarah';
+      let lastNudgeAt = null;
+      let badges = {};
+      let cdTimer = null, typingTimer = null;
+
+      const $ = function (id) { return document.getElementById(id); };
+      const winEl = $('ymxChat'), logEl = $('ymxLog'), inputEl = $('ymxInput');
+      const buzzBtn = $('ymxBuzz'), statusEl = $('ymxStatus'), typingEl = $('ymxTyping');
+
+      /* ---------- presence smiley (same art as the app's PresenceDot) ---------- */
+      const INK = '#3a2a00';
+      function smiley(fill, op) {
+        return '<g opacity="' + (op || 1) + '"><circle cx="8" cy="8" r="7" fill="' + fill + '" stroke="' + INK + '"/>' +
+          '<ellipse cx="5.6" cy="6.3" rx="1" ry="1.4" fill="' + INK + '"/><ellipse cx="10.4" cy="6.3" rx="1" ry="1.4" fill="' + INK + '"/>' +
+          '<path d="M4.3 9.6 Q8 13.2 11.7 9.6" fill="none" stroke="' + INK + '" stroke-width="1.2" stroke-linecap="round"/>' +
+          '<ellipse cx="5.6" cy="3.6" rx="3" ry="1.3" fill="#fff" opacity="0.35"/></g>';
+      }
+      const LABEL = { online: 'Online', away: 'Away', busy: 'Busy', offline: 'Offline' };
+      function dot(state, size) {
+        let g;
+        if (state === 'online') g = smiley('#ffcc00');
+        else if (state === 'offline') g = smiley('#8a8a8a', 0.55);
+        else if (state === 'away') g = '<circle cx="8" cy="8" r="7" fill="#ffcc00" stroke="' + INK + '"/><circle cx="8" cy="8" r="5.2" fill="#fff" stroke="' + INK + '" stroke-width="0.6"/><path d="M8 4.4 V8 L10.4 9.4" fill="none" stroke="' + INK + '" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>';
+        else g = '<circle cx="8" cy="8" r="7" fill="#e8820a" stroke="#5a0f0f"/><rect x="3.8" y="6.6" width="8.4" height="2.8" rx="1" fill="#fff"/>';
+        return '<svg role="img" aria-label="' + LABEL[state] + '" width="' + size + '" height="' + size + '" viewBox="0 0 16 16" style="flex:none">' + g + '</svg>';
+      }
+
+      /* ---------- emoticon rendering (same longest-match rule as the app) ---------- */
+      function appendRich(el, body) {
+        let text = '', i = 0;
+        function flush() { if (text) { el.appendChild(document.createTextNode(text)); text = ''; } }
+        while (i < body.length) {
+          let hit = false;
+          for (let len = Math.min(MAX_LEN, body.length - i); len >= 1; len--) {
+            const src = body.slice(i, i + len);
+            const slug = LOOKUP.get(src.toLowerCase());
+            if (slug) {
+              flush();
+              const img = document.createElement('img');
+              img.src = EMO_DIR + slug + '.svg'; img.alt = src; img.width = 18; img.height = 18;
+              el.appendChild(img);
+              i += len; hit = true; break;
+            }
+          }
+          if (!hit) { text += body[i]; i++; }
         }
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume();
+        flush();
+      }
+
+      /* ---------- Buddy List ---------- */
+      function renderList() {
+        const ul = $('ymxFriends');
+        ul.textContent = '';
+        let online = 0;
+        ORDER.forEach(function (id) {
+          const f = FRIENDS[id];
+          if (f.state !== 'offline') online++;
+          const li = document.createElement('li');
+          li.className = 'ymx-friend' + (f.up ? ' is-up' : '') + (f.state === 'offline' ? ' is-offline' : '') + (id === current ? ' is-open' : '');
+          li.id = 'ymx-row-' + id;
+          li.tabIndex = 0;
+          li.setAttribute('aria-label', f.name + ', ' + f.state + '. Press Enter to chat.');
+          li.innerHTML = dot(f.state, 16);
+          const nm = document.createElement('div');
+          nm.className = 'nm';
+          const b = document.createElement('span');
+          b.style.fontWeight = f.state === 'offline' ? 'normal' : 'bold';
+          b.textContent = f.name;
+          nm.appendChild(b);
+          if (badges[id]) { const bd = document.createElement('span'); bd.className = 'badge'; bd.textContent = badges[id]; bd.title = 'Buzz! waiting'; nm.appendChild(bd); }
+          const sub = document.createElement('span');
+          if (f.playing) { sub.className = 'np'; sub.textContent = ' \u266A ' + f.playing; }
+          else { sub.className = 'sub'; sub.textContent = ' - ' + f.status; }
+          nm.appendChild(sub);
+          li.appendChild(nm);
+          if (f.up) {
+            const hi = document.createElement('button');
+            hi.type = 'button'; hi.className = 'ymx-sayhi'; hi.textContent = 'Say hi';
+            hi.setAttribute('aria-label', 'Say hi to ' + f.name);
+            hi.addEventListener('click', function (e) { e.stopPropagation(); open(id); send('hi! :)'); });
+            li.appendChild(hi);
+          }
+          li.addEventListener('dblclick', function () { open(id); });
+          li.addEventListener('click', function () { open(id); });
+          li.addEventListener('keydown', function (e) { if (e.key === 'Enter') open(id); });
+          ul.appendChild(li);
+        });
+        $('ymxGroup').textContent = '\u25BC Friends (' + online + '/' + ORDER.length + ')';
+      }
+
+      /* ---------- Chat ---------- */
+      function addMsg(id, item) { histories[id].push(item); if (id === current) renderLog(); }
+      function renderLog() {
+        const f = FRIENDS[current];
+        logEl.textContent = '';
+        const items = histories[current];
+        if (!items.length) {
+          const p = document.createElement('p');
+          p.className = 'sys'; p.textContent = 'Say hi to ' + f.short + '!';
+          logEl.appendChild(p);
         }
-        return audioCtx;
+        items.forEach(function (it) {
+          if (it.k === 'sys') {
+            const p = document.createElement('p');
+            p.className = 'sys' + (it.tone === 'nudge' ? ' nudge' : '');
+            p.textContent = it.text; logEl.appendChild(p); return;
+          }
+          const d = document.createElement('div');
+          d.className = 'msg';
+          const w = document.createElement('span');
+          w.className = 'who ' + (it.mine ? 'me' : 'fr');
+          w.textContent = (it.mine ? ME.name : f.short) + ' (' + it.t + '): ';
+          d.appendChild(w);
+          appendRich(d, it.body);
+          logEl.appendChild(d);
+        });
+        if (f.state === 'offline') {
+          const p = document.createElement('p');
+          p.className = 'sys'; p.textContent = f.short + ' is offline. Your messages will be waiting when they sign in.';
+          logEl.appendChild(p);
+        }
+        logEl.scrollTop = logEl.scrollHeight;
       }
-
-      // Recreate Buzz! Nudge Sound via Web Audio API
-      function playBuzzSound() {
-        try {
-          const ctx = getAudioContext();
-          if (!ctx) return;
-          const t0 = ctx.currentTime;
-          const dur = 0.45;
-
-          const osc = ctx.createOscillator();
-          osc.type = "sawtooth";
-          osc.frequency.setValueAtTime(170, t0);
-          osc.frequency.linearRampToValueAtTime(150, t0 + dur);
-
-          const env = ctx.createGain();
-          env.gain.setValueAtTime(0.0001, t0);
-          env.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
-          env.gain.setValueAtTime(0.35, t0 + dur - 0.12);
-          env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-
-          const trem = ctx.createGain();
-          trem.gain.value = 0.5;
-          const lfo = ctx.createOscillator();
-          lfo.type = "square";
-          lfo.frequency.value = 28;
-          const lfoDepth = ctx.createGain();
-          lfoDepth.gain.value = 0.5;
-          lfo.connect(lfoDepth).connect(trem.gain);
-
-          osc.connect(trem).connect(env).connect(ctx.destination);
-          osc.start(t0);
-          lfo.start(t0);
-          osc.stop(t0 + dur + 0.05);
-          lfo.stop(t0 + dur + 0.05);
-        } catch(e) {}
+      function renderHeader() {
+        const f = FRIENDS[current];
+        $('ymxTitle').textContent = f.name + ' - Instant Message';
+        $('ymxTitleDot').innerHTML = dot(f.state, 14);
+        $('ymxHeadDot').innerHTML = dot(f.state, 16);
+        $('ymxHeadName').textContent = f.name;
+        $('ymxHeadStatus').textContent = f.status ? '"' + f.status + '"' : LABEL[f.state];
+        const np = $('ymxHeadNp');
+        np.textContent = f.playing ? '\u266A ' + f.playing : '';
+        $('ymxPicFriend').textContent = f.initials;
+        $('ymxPicFriendName').textContent = f.short;
+        inputEl.placeholder = f.state === 'offline' ? f.short + ' is offline' : 'Type a message...';
+        $('ymxHangout').disabled = f.state === 'offline';
       }
-
-      const windowEl = document.getElementById('demoChatWindow');
-      const btnNudge = document.getElementById('btnNudgeDemo');
-      const messagesEl = document.getElementById('mockupMessages');
-      const inputEl = document.getElementById('mockupInput');
-      const btnSend = document.getElementById('mockupSend');
-
-      // Trigger Nudge Action
-      function triggerNudge() {
-        playBuzzSound();
-        windowEl.classList.remove('shake-active');
-        // trigger reflow
-        void windowEl.offsetWidth;
-        windowEl.classList.add('shake-active');
-
-        // Append nudge event to chat stream
-        const nudgeNotice = document.createElement('div');
-        nudgeNotice.className = 'msg-nudge-event';
-        nudgeNotice.innerHTML = '💥 <strong>BUZZ!</strong> You sent a buzz.';
-        messagesEl.appendChild(nudgeNotice);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+      function open(id) {
+        current = id;
+        delete badges[id];
+        renderHeader(); renderList(); renderLog(); refreshBuzz();
+        if (!window.matchMedia('(pointer: coarse)').matches) inputEl.focus({ preventScroll: true });
       }
+      function hhmm() { const d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
 
-      btnNudge.addEventListener('click', triggerNudge);
-
-      // Simple send action
-      function sendMessage() {
-        const text = inputEl.value.trim();
+      function send(text) {
+        text = (text || '').trim();
         if (!text) return;
-        const msgRow = document.createElement('div');
-        msgRow.className = 'msg-row';
-        msgRow.innerHTML = `
-          <div class="msg-header"><span class="user-me">You</span> (Just now):</div>
-          <div class="msg-bubble">${text}</div>
-        `;
-        messagesEl.appendChild(msgRow);
-        inputEl.value = '';
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+        const id = current;
+        addMsg(id, { k: 'msg', mine: true, body: text.slice(0, 1000), t: hhmm() });
+        if (FRIENDS[id].state !== 'offline') scheduleReply(id);
+      }
+      function scheduleReply(id) {
+        clearTimeout(typingTimer);
+        const pool = REPLIES[id];
+        if (!pool) return;
+        typingTimer = setTimeout(function () {
+          if (current === id) typingEl.textContent = FRIENDS[id].short + ' is typing...';
+          typingTimer = setTimeout(function () {
+            typingEl.textContent = '';
+            const line = pool[Math.floor(Math.random() * pool.length)];
+            addMsg(id, { k: 'msg', mine: false, body: line, t: hhmm() });
+          }, 1400);
+        }, 600);
       }
 
-      btnSend.addEventListener('click', sendMessage);
-      inputEl.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') sendMessage();
+      /* ---------- Buzz! ---------- */
+      let audioCtx = null;
+      function playBuzz() {
+        try {
+          const Ctor = window.AudioContext || window.webkitAudioContext;
+          if (!Ctor) return;
+          if (!audioCtx) audioCtx = new Ctor();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+          const ctx = audioCtx, t0 = ctx.currentTime, dur = 0.45;
+          const osc = ctx.createOscillator(); osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(170, t0); osc.frequency.linearRampToValueAtTime(150, t0 + dur);
+          const env = ctx.createGain();
+          env.gain.setValueAtTime(0.0001, t0); env.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
+          env.gain.setValueAtTime(0.35, t0 + dur - 0.12); env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+          const trem = ctx.createGain(); trem.gain.value = 0.5;
+          const lfo = ctx.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 28;
+          const depth = ctx.createGain(); depth.gain.value = 0.5;
+          lfo.connect(depth).connect(trem.gain);
+          osc.connect(trem).connect(env).connect(ctx.destination);
+          osc.start(t0); lfo.start(t0); osc.stop(t0 + dur + 0.05); lfo.stop(t0 + dur + 0.05);
+        } catch (e) { /* sound is a bonus */ }
+      }
+      function shake(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+      function refreshBuzz() {
+        const f = FRIENDS[current];
+        const left = lastNudgeAt === null ? 0 : Math.max(0, lastNudgeAt + COOLDOWN_MS - Date.now());
+        const cooling = left > 0;
+        buzzBtn.disabled = f.state === 'offline' || cooling;
+        statusEl.textContent = f.state === 'offline' ? 'Your friend is offline.' : cooling ? 'Buzz again in ' + Math.ceil(left / 1000) + 's' : '';
+        clearInterval(cdTimer);
+        if (cooling) cdTimer = setInterval(function () { if (Date.now() >= lastNudgeAt + COOLDOWN_MS) { clearInterval(cdTimer); } refreshBuzz(); }, 250);
+      }
+      function nudge() {
+        if (buzzBtn.disabled) return;
+        const id = current;
+        lastNudgeAt = Date.now();
+        playBuzz();
+        addMsg(id, { k: 'sys', tone: 'info', text: 'You nudged ' + FRIENDS[id].short });
+        refreshBuzz();
+        if (id === 'sarah') {
+          setTimeout(function () {
+            // Sarah buzzes back: the chat window shakes, the log gets the red line.
+            playBuzz();
+            shake(winEl, 'ymx-shake');
+            addMsg('sarah', { k: 'sys', tone: 'nudge', text: 'BUZZ!!!' });
+          }, 1600);
+        }
+      }
+
+      /* ---------- wiring ---------- */
+      buzzBtn.addEventListener('click', nudge);
+      document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'g' && winEl.contains(document.activeElement)) { e.preventDefault(); nudge(); }
+      });
+      $('ymxSend').addEventListener('click', function () { send(inputEl.value); inputEl.value = ''; inputEl.focus({ preventScroll: true }); });
+      inputEl.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(inputEl.value); inputEl.value = ''; }
+      });
+      $('ymxHangout').addEventListener('click', function () {
+        const id = current, f = FRIENDS[id];
+        addMsg(id, { k: 'sys', tone: 'info', text: 'Hangout sent: Coffee break?' });
+        setTimeout(function () { addMsg(id, { k: 'sys', tone: 'info', text: f.short + ' accepted: Coffee break?' }); }, 1800);
       });
 
-      // Quick toolbar triggers
-      document.getElementById('btnHangoutDemo').addEventListener('click', () => {
-        const notice = document.createElement('div');
-        notice.style.background = '#ede9fe';
-        notice.style.color = '#5b21b6';
-        notice.style.padding = '0.5rem 0.75rem';
-        notice.style.borderRadius = '6px';
-        notice.style.fontSize = '0.85rem';
-        notice.style.fontWeight = '600';
-        notice.innerHTML = '☕ <em>Hangout invitation sent: "Coffee break?" (expires in 15m)</em>';
-        messagesEl.appendChild(notice);
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+      // Emoticon picker
+      const picker = $('ymxPicker'), smileBtn = $('ymxSmile');
+      PICK.forEach(function (p) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.title = p[1] + '  ' + p[0]; b.setAttribute('aria-label', p[1]);
+        const im = document.createElement('img'); im.src = EMO_DIR + p[2] + '.svg'; im.alt = ''; b.appendChild(im);
+        b.addEventListener('click', function () {
+          const s = inputEl.selectionStart || inputEl.value.length;
+          inputEl.value = inputEl.value.slice(0, s) + p[0] + inputEl.value.slice(inputEl.selectionEnd || s);
+          setPicker(false); inputEl.focus({ preventScroll: true });
+          inputEl.setSelectionRange(s + p[0].length, s + p[0].length);
+        });
+        picker.appendChild(b);
       });
+      function setPicker(on) { picker.classList.toggle('open', on); smileBtn.setAttribute('aria-expanded', on ? 'true' : 'false'); }
+      smileBtn.addEventListener('click', function () { setPicker(!picker.classList.contains('open')); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setPicker(false); });
+      document.addEventListener('click', function (e) { if (!picker.contains(e.target) && !smileBtn.contains(e.target)) setPicker(false); });
 
-      document.getElementById('btnSmileyDemo').addEventListener('click', () => {
-        inputEl.value += ' =)) ';
-        inputEl.focus();
-      });
+      // After a short while Dimas buzzes you from the Buddy List: row shakes, red count appears.
+      let dimasShown = false;
+      const io = 'IntersectionObserver' in window ? new IntersectionObserver(function (en) {
+        if (en[0].isIntersecting && !dimasShown) {
+          dimasShown = true;
+          setTimeout(function () {
+            if (current === 'dimas') return;
+            playBuzzQuiet();
+            badges.dimas = 1; renderList();
+            const row = $('ymx-row-dimas'); if (row) shake(row, 'ymx-row-shake');
+          }, 9000);
+        }
+      }, { threshold: 0.5 }) : null;
+      function playBuzzQuiet() { /* no sound until the visitor has interacted */ if (audioCtx) playBuzz(); }
+      if (io) io.observe($('ymxStage'));
+
+      $('ymxMeDot').innerHTML = dot('online', 16);
+      renderHeader(); renderList(); renderLog(); refreshBuzz();
     })();
   </script>
 </body>

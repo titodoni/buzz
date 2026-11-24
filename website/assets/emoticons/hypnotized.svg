@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-2 -4 36 36" role="img" aria-label="hypnotized">
+<defs><radialGradient id="g" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff27a"/><stop offset="1" stop-color="#f2b800"/></radialGradient></defs>
+<circle cx="16" cy="16" r="15" fill="url(#g)" stroke="#5a3b00" stroke-width="1.6"/>
+<path d="M10 12 m-1 0 a1 1 0 1 1 2 0 a2 2 0 1 1 -4 0 a3 3 0 1 1 6 0" fill="none" stroke="#5a3b00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /><path d="M22 12 m-1 0 a1 1 0 1 1 2 0 a2 2 0 1 1 -4 0 a3 3 0 1 1 6 0" fill="none" stroke="#5a3b00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+<path d="M8 21 q8 7 16 0" fill="none" stroke="#5a3b00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+
+</svg>

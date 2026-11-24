@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-2 -4 36 36" role="img" aria-label="skull">
+<defs><radialGradient id="g" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b8b8b8"/></radialGradient></defs>
+<circle cx="16" cy="16" r="15" fill="url(#g)" stroke="#5a3b00" stroke-width="1.6"/>
+<path d="M7 9 l6 6 M13 9 l-6 6" fill="none" stroke="#5a3b00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /><path d="M19 9 l6 6 M25 9 l-6 6" fill="none" stroke="#5a3b00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+<rect x="9" y="20" width="14" height="6" rx="2" fill="#fff" stroke="#5a3b00" stroke-width="2"/><path d="M16 20 v6" fill="none" stroke="#5a3b00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+
+</svg>
