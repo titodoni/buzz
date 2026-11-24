@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Buddy List window: window controls and the tray's shell events",
+  "description": "Buddy List window: window controls, the tray's shell events, opening chats, alerts, tray status, Now Playing, and the key store",
   "windows": [
     "main"
   ],
@@ -15,6 +15,15 @@
     "allow-key-store-available",
     "allow-key-store-get",
     "allow-key-store-set",
-    "allow-key-store-delete"
+    "allow-key-store-delete",
+    "allow-open-chat-window",
+    "allow-chat-window-state",
+    "allow-flash-chat-window",
+    "allow-show-toast",
+    "allow-set-tray-status",
+    "allow-quit-app",
+    "allow-now-playing-supported",
+    "allow-now-playing-platform",
+    "allow-set-now-playing-enabled"
   ]
 }

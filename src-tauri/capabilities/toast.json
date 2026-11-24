@@ -1,11 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "toast",
-  "description": "The \"is now online\" toast: it can only close itself",
+  "description": "The \"is now online\" toast: it can close itself and open that friend's chat",
   "windows": [
     "toast"
   ],
   "permissions": [
-    "core:window:allow-close"
+    "core:window:allow-close",
+    "allow-open-chat-window"
   ]
 }

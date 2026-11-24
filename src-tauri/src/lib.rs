@@ -119,6 +119,20 @@ fn open_chat_window(
     nudge: Option<bool>,
     focus: Option<bool>,
 ) -> Result<String, String> {
+    let result = open_chat_window_inner(app, friend_id, nudge, focus);
+    if let Err(e) = &result {
+        // The webview drops rejected promises silently, so say it where a tester can see it.
+        eprintln!("buzz: could not open a chat window: {e}");
+    }
+    result
+}
+
+fn open_chat_window_inner(
+    app: AppHandle,
+    friend_id: String,
+    nudge: Option<bool>,
+    focus: Option<bool>,
+) -> Result<String, String> {
     if !is_valid_friend_id(&friend_id) {
         return Err("invalid friend id".into());
     }
