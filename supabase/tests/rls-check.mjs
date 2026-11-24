@@ -26,6 +26,10 @@ const check = async (name, fn, expect) => {
   results.push({ check: name, got: String(got).slice(0, 60), ok: ok ? "PASS" : "FAIL" });
 };
 await c.query("begin");
+// Since migration 20250101001610 only encrypted rows are accepted, so message
+// checks insert the encrypted shape: no body, two ciphers, a sender key.
+const ENC_COLS = "encrypted, cipher_receiver, cipher_sender, sender_public_key";
+const ENC_VALS = "true, 'x', 'y', '" + "A".repeat(43) + "'";
 for (const [id, email] of [[A, "ann@buzz.test"], [B, "bob@buzz.test"], [C, "cat@buzz.test"]])
   await c.query(`insert into auth.users (id, email, aud, role, instance_id) values ($1, $2, 'authenticated', 'authenticated', '00000000-0000-0000-0000-000000000000')`, [id, email]);
 await check("signup trigger creates profile from email prefix", async () => (await c.query(`select display_name from profiles where id=$1`, [A])).rows[0]?.display_name, "ann");
@@ -60,8 +64,8 @@ await check("A cannot file stranger C into a group (only friends)", async () => 
 // ---- Ignore list enforcement (Req 15.2, 15.4, 15.6). A ignores friend B.
 const ignoreB = async () => { await as(A); await c.query(`insert into ignored_users (owner_id, ignored_id) values ($1,$2)`, [A, B]); };
 await check("ignored B cannot message A (Req 15.2)", async () => { await ignoreB(); await as(B); await c.query(`insert into messages (sender_id, receiver_id, body) values ($1,$2,'hello?')`, [B, A]); return "inserted"; }, (g) => /row-level security/.test(g));
-await check("A can still message B, who A ignored", async () => { await ignoreB(); await as(A); return (await c.query(`insert into messages (sender_id, receiver_id, body) values ($1,$2,'hi')`, [A, B])).rowCount; }, 1);
-await check("B messages A again after A un-ignores B (Req 15.6)", async () => { await ignoreB(); await as(A); await c.query(`delete from ignored_users where owner_id=$1 and ignored_id=$2`, [A, B]); await as(B); return (await c.query(`insert into messages (sender_id, receiver_id, body) values ($1,$2,'back')`, [B, A])).rowCount; }, 1);
+await check("A can still message B, who A ignored", async () => { await ignoreB(); await as(A); return (await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}) values ($1,$2,${ENC_VALS})`, [A, B])).rowCount; }, 1);
+await check("B messages A again after A un-ignores B (Req 15.6)", async () => { await ignoreB(); await as(A); await c.query(`delete from ignored_users where owner_id=$1 and ignored_id=$2`, [A, B]); await as(B); return (await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}) values ($1,$2,${ENC_VALS})`, [B, A])).rowCount; }, 1);
 await check("ignored C cannot send A a friend request (Req 15.4)", async () => { await as(A); await c.query(`insert into ignored_users (owner_id, ignored_id) values ($1,$2)`, [A, C]); await as(C); await c.query(`insert into friendships (requester_id, addressee_id, status) values ($1,$2,'pending')`, [C, A]); return "inserted"; }, (g) => /row-level security/.test(g));
 await check("ignored B cannot re-request A after removal", async () => { await ignoreB(); await asAdmin(); await c.query(`update friendships set status='removed' where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]); await as(B); await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2 where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [B, A]); return "updated"; }, (g) => /request not allowed/.test(g));
 await check("is_ignored_by tells B that A ignores B", async () => { await ignoreB(); await as(B); return (await c.query(`select public.is_ignored_by($1) x`, [A])).rows[0].x; }, true);
@@ -70,8 +74,12 @@ await check("is_ignored_by can't read someone else's list: C asks about A, who i
 await check("is_ignored_by is false for a malformed id", async () => { await as(B); return (await c.query(`select public.is_ignored_by('not-a-uuid') x`)).rows[0].x; }, false);
 // Message formatting (Req 17.2, 17.4): the CHECK and the receipt guard.
 const fmt = (o) => JSON.stringify({ font: "Verdana", size: 14, color: "#cc0000", bold: true, italic: false, underline: false, ...o });
-const sendFormatted = async (f) => { await as(A); return (await c.query(`insert into messages (sender_id, receiver_id, body, format) values ($1,$2,'styled',$3::jsonb)`, [A, B, f])).rowCount; };
-await check("A sends a message with an allowed format", async () => sendFormatted(fmt({})), 1);
+// The format column only describes rows stored before encryption (a new encrypted
+// row keeps its format inside the cipher), and users can no longer insert plaintext,
+// so its CHECK is exercised as the table owner.
+const sendFormatted = async (f) => { await asAdmin(); return (await c.query(`insert into messages (sender_id, receiver_id, body, format) values ($1,$2,'styled',$3::jsonb)`, [A, B, f])).rowCount; };
+await check("an encrypted row with a plaintext format is refused", async () => { await as(A); await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}, format) values ($1,$2,${ENC_VALS},$3::jsonb)`, [A, B, fmt({})]); return "inserted"; }, (g) => /check constraint/.test(g));
+await check("a stored row accepts an allowed format", async () => sendFormatted(fmt({})), 1);
 await check("format rejects a font Buzz doesn't offer", async () => sendFormatted(fmt({ font: "Comic Sans MS" })), (g) => /check constraint/.test(g));
 await check("format rejects size 25", async () => sendFormatted(fmt({ size: 25 })), (g) => /check constraint/.test(g));
 await check("format rejects a fractional size", async () => sendFormatted(fmt({ size: 12.5 })), (g) => /check constraint/.test(g));
@@ -113,7 +121,7 @@ await check("an encrypted message with a readable body is refused", async () => 
 await check("an encrypted message with one copy is refused", async () => sendEnc({ encrypted: true, cipher_receiver: "x", sender_public_key: K }), (g) => /check constraint/.test(g));
 await check("an encrypted message without a sender key is refused", async () => sendEnc({ encrypted: true, cipher_receiver: "x", cipher_sender: "y" }), (g) => /check constraint/.test(g));
 await check("a cipher over 6000 characters is refused", async () => sendEnc({ encrypted: true, cipher_receiver: "x".repeat(6001), cipher_sender: "y", sender_public_key: K }), (g) => /check constraint/.test(g));
-await check("a plaintext message carrying a cipher is refused", async () => sendEnc({ body: "hi", cipher_receiver: "x" }), (g) => /check constraint/.test(g));
+await check("a plaintext message carrying a cipher is refused", async () => sendEnc({ body: "hi", cipher_receiver: "x" }), (g) => /check constraint|row-level security/.test(g));
 await check("receiver B cannot edit a cipher or clear the encrypted flag", async () => { await asAdmin(); await c.query(`insert into messages (id, sender_id, receiver_id, encrypted, cipher_receiver, cipher_sender, sender_public_key) values (gen_random_uuid(), $1,$2,true,'x','y',$3)`, [A, B, K]); await as(B); await c.query(`update messages set cipher_receiver='tampered' where receiver_id=$1 and encrypted`, [B]); return "updated"; }, (g) => g.startsWith("ERROR"));
 await check("receiver B can still set read_at on an encrypted message", async () => { await asAdmin(); await c.query(`insert into messages (id, sender_id, receiver_id, encrypted, cipher_receiver, cipher_sender, sender_public_key) values (gen_random_uuid(), $1,$2,true,'x','y',$3)`, [A, B, K]); await as(B); return (await c.query(`update messages set read_at=now() where receiver_id=$1 and encrypted`, [B])).rowCount; }, (g) => Number(g) >= 1);
 // ---- Hangouts (migration 20250101001700): parties only, one pending per pair, guarded transitions.

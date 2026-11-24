@@ -63,6 +63,24 @@ broadcast. Private channels need no extra dashboard setting; leaving
 "Allow public access" on keeps `presence:global` working (see
 `docs/adr/0003` for its known gap).
 
+## Local stack (Docker)
+
+`supabase/config.toml` configures a local stack that applies every migration
+on a fresh database. This is the safe place to try a migration before it
+touches the hosted project (the `supabase-local` Kiro Power's workflow).
+
+```sh
+npx supabase start                # needs Docker; first run pulls about 7 GB of images
+npx supabase migration list --local
+npx supabase stop
+```
+
+To run the RLS checks against it, use a copy of the script without the SSL
+option (the local database does not offer SSL) and the local URL
+`postgresql://postgres:postgres@127.0.0.1:54322/postgres`. To run the app
+against it, put the local URL and publishable key from `npx supabase status`
+in `.env.local` (git-ignored) and delete that file before any shipping build.
+
 ## Checking RLS
 
 `npm run test:rls` runs `supabase/tests/rls-check.mjs` against the database
@@ -70,6 +88,10 @@ in `SUPABASE_DB_URL`. It creates three throwaway users inside a transaction,
 exercises the policies and triggers as each of them, prints PASS/FAIL per
 check, and rolls everything back. `supabase/tests/rls.sql` holds the same
 scenarios as commented SQL for running by hand.
+
+Since migration `20250101001610`, the database refuses plaintext messages, so
+the message checks insert the encrypted shape. The old plaintext `format`
+column is checked on stored rows inserted as the table owner.
 
 The Realtime Authorization policies (`realtime.messages`) are not covered by
 this script, because they only apply to live Realtime connections. Check

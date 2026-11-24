@@ -42,6 +42,13 @@ clash.
 
 When done, delete `~/.buzz-test` to remove both test profiles.
 
+### Running against a local database
+
+To test without touching the hosted project, start the local stack
+(`supabase/README.md`, "Local stack"), create two users and make them friends,
+put the local URL and key in `.env.local`, then build the app in step 1. Delete
+`.env.local` and rebuild before any shipping build.
+
 ## Checks
 
 ### A. Encrypted Messages (buzz-encryption 2.4 and 3.2)
