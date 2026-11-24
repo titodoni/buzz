@@ -9,6 +9,8 @@ import { PresenceDot } from "@/components/PresenceDot"
 import { hasPresenceStarted, loadSignInOptions, markPresenceStarted } from "@/components/auth/remember"
 import { shouldStartInvisible } from "@/lib/auth/options"
 import { StatusSelector } from "@/components/StatusSelector"
+import { BuddyPicture } from "@/components/BuddyPicture"
+import { AddFriendIcon, RecentBuzzesIcon, SendImIcon, ToolButton, UpForChatIcon } from "@/components/ToolButton"
 import { FriendList } from "@/components/friends/FriendList"
 import { FriendSearch } from "@/components/friends/FriendSearch"
 import { MenuBar, type MenuDef } from "@/components/friends/MenuBar"
@@ -240,56 +242,34 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
 
   return (
     <WindowFrame title="Buzz" icon={<PresenceDot state={myState} size={14} />} menuBar={<MenuBar menus={menus} />}>
-      <header className="flex items-start gap-2 border-b px-2 py-2">
-        <StatusSelector
-          me={me}
-          state={myState}
-          profile={mine}
-          onAvailable={setAvailable}
-          onBusy={setBusy}
-          onInvisible={setInvisible}
-          onStatusSaved={onStatusSaved}
-          menuOpen={statusMenu}
-          onMenuOpenChange={setStatusMenu}
-        />
+      <header className="ym-me">
+        <Link href="/profile/" title="Edit my profile" aria-label="Edit my profile" className="shrink-0">
+          <BuddyPicture name={mine?.displayName ?? "Me"} url={mine?.avatarUrl ?? null} size={48} />
+        </Link>
         <div className="min-w-0 flex-1">
-          <div className="truncate font-bold">{mine?.displayName ?? "Me"}</div>
+          <div className="flex min-w-0 items-center gap-1">
+            <StatusSelector
+              me={me}
+              state={myState}
+              profile={mine}
+              onAvailable={setAvailable}
+              onBusy={setBusy}
+              onInvisible={setInvisible}
+              onStatusSaved={onStatusSaved}
+              menuOpen={statusMenu}
+              onMenuOpenChange={setStatusMenu}
+            />
+            <span className="truncate font-bold">{mine?.displayName ?? "Me"}</span>
+          </div>
           {shouldShowField(mine?.statusMessage) ? (
-            <div className="truncate text-xs">{mine?.statusMessage}</div>
+            <div className="ym-friend-sub truncate text-xs">{mine?.statusMessage}</div>
           ) : null}
           {hasNowPlaying(mine?.nowPlaying) ? (
-            <div className="truncate text-xs">
+            <div className="ym-friend-sub truncate text-xs">
               <span aria-hidden="true">♪ </span>
               {mine?.nowPlaying}
             </div>
           ) : null}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="ym-button"
-              style={{ minHeight: 28 }}
-              aria-pressed={upForChat.on}
-              disabled={!mine || upForChat.busy}
-              onClick={upForChat.toggle}
-            >
-              {upForChat.on ? "Up for Chat: on" : "Up for Chat"}
-            </button>
-            <Link href="/profile/" className="text-xs underline">
-              Edit profile
-            </Link>
-            <button
-              type="button"
-              className="ym-button"
-              style={{ minHeight: 28 }}
-              aria-expanded={nudgePanel}
-              onClick={() => {
-                setNudgePanelAt(Date.now())
-                setNudgePanel((v) => !v)
-              }}
-            >
-              Recent Buzzes
-            </button>
-          </div>
           {upForChat.error ? (
             <p role="alert" className="m-0 text-xs" style={{ color: "var(--buzz-red)" }}>
               {upForChat.error}
@@ -297,6 +277,40 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
           ) : null}
         </div>
       </header>
+      <div className="ym-toolbar" role="toolbar" aria-label="Buddy List tools">
+        <ToolButton
+          label="Add"
+          title="Add a Friend"
+          icon={AddFriendIcon}
+          expanded={panel === "search"}
+          onClick={() => (panel === "search" ? setPanel(null) : openAddFriend(""))}
+        />
+        <ToolButton
+          label="Message"
+          title="Send an Instant Message"
+          icon={SendImIcon}
+          expanded={panel === "pick"}
+          onClick={() => setPanel(panel === "pick" ? null : "pick")}
+        />
+        <ToolButton
+          label="Up for Chat"
+          title={upForChat.on ? "Up for Chat is on. Tap to turn it off." : "Tell friends you're up for chat"}
+          icon={UpForChatIcon}
+          pressed={upForChat.on}
+          disabled={!mine || upForChat.busy}
+          onClick={upForChat.toggle}
+        />
+        <ToolButton
+          label="Buzzes"
+          title="Recent Buzzes"
+          icon={RecentBuzzesIcon}
+          expanded={nudgePanel}
+          onClick={() => {
+            setNudgePanelAt(Date.now())
+            setNudgePanel((v) => !v)
+          }}
+        />
+      </div>
 
       {nudgePanel ? (
         <RecentNudgesPanel
@@ -341,24 +355,15 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
       {loading ? <p className="px-2 text-xs">Loading your buddies...</p> : null}
 
       {totalUnread > 0 ? (
-        <p role="status" className="m-0 px-2 py-1 text-xs font-bold">
+        <p role="status" className="ym-notice">
           You have {totalUnread} offline {totalUnread === 1 ? "message" : "messages"}
         </p>
       ) : null}
-      <div className="flex flex-wrap items-center gap-1 border-b px-2 py-1" role="toolbar" aria-label="Buddy List tools">
-        <button
-          type="button"
-          className="ym-button shrink-0 px-2"
-          style={{ minHeight: 28 }}
-          aria-expanded={panel === "search"}
-          onClick={() => (panel === "search" ? setPanel(null) : openAddFriend(""))}
-        >
-          + Add a Friend
-        </button>
+      <div className="border-b px-2 py-1">
         <input
           type="search"
           aria-label="Find a friend in your list, or type an email and press Enter to add someone"
-          placeholder="Find a friend"
+          placeholder="Find a contact"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => {
@@ -370,8 +375,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
               setSearch("")
             }
           }}
-          className="min-w-0 flex-1"
-          style={{ minHeight: 28, minWidth: 96 }}
+          className="ym-find"
         />
       </div>
       {panel === "search" ? (

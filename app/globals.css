@@ -382,3 +382,112 @@ body {
     border-radius: 3px;
   }
 }
+
+/* ---- Classic Buddy List (YM-style) ---- */
+
+/* Profile strip: my status, name, status line, and picture on the right. */
+.ym-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: linear-gradient(to bottom, #f6f3fc, #dcd4ef);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Toolbar of icon buttons with a short word under each. */
+.ym-toolbar {
+  display: flex;
+  gap: 2px;
+  padding: 3px 4px;
+  background: linear-gradient(to bottom, #ffffff, #e4def2);
+  border-bottom: 1px solid var(--border);
+}
+.ym-tool {
+  flex: 0 0 auto;
+  width: 52px;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 2px;
+  font: inherit;
+  color: var(--text-body);
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+}
+.ym-tool:hover:not(:disabled) {
+  border-color: var(--border);
+  background: linear-gradient(to bottom, #ffffff, #e9e9e9);
+}
+.ym-tool[aria-pressed="true"],
+.ym-tool[aria-expanded="true"] {
+  border-color: var(--ym-purple);
+  background: linear-gradient(to bottom, #f3ecff, #ddd0f5);
+}
+.ym-tool:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.ym-tool-icon {
+  display: inline-flex;
+}
+.ym-tool-label {
+  max-width: 100%;
+  font-size: 10px;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "Find a contact" box across the whole list. */
+.ym-find {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 26px;
+  padding: 2px 6px 2px 24px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: #ffffff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='6.5' cy='6.5' r='4.5' fill='none' stroke='%23595959' stroke-width='1.8'/%3E%3Cpath d='M10 10l4 4' stroke='%23595959' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E")
+    no-repeat 6px center / 13px 13px;
+}
+
+/* Group header bar: "▼ Friends (1/3)". */
+.ym-group-head {
+  background: linear-gradient(to bottom, #f4f4f4, #e2e2e2);
+  border-top: 1px solid #ffffff;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Yellow notice strip, e.g. "You have 1 offline message". */
+.ym-notice {
+  margin: 0;
+  padding: 3px 8px;
+  font-size: 12px;
+  background: #fff6c8;
+  border-bottom: 1px solid #e6d58a;
+  color: #1a1a1a;
+}
+
+.ym-friend-sub {
+  color: var(--text-muted);
+}
+
+/* The contact list is white, like the classic list pane. */
+.ym-list {
+  background: #ffffff;
+  min-height: 100%;
+}
+
+/* A friend's song, shown in place of the status line. */
+.ym-now-playing {
+  color: var(--ym-blue);
+  text-decoration: underline;
+}

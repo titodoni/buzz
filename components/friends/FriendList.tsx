@@ -200,13 +200,13 @@ export function FriendList({
   })
 
   return (
-    <section aria-label="Friends">
+    <section aria-label="Friends" className="ym-list">
       {friends.length === 0 && !searching ? (
-        <p className="px-2 text-xs">No friends yet. Use “Add a Friend” to find someone!</p>
+        <p className="px-2 text-xs">No friends yet. Tap “Add” to find someone!</p>
       ) : null}
       {searching && arranged.length === 0 ? <p className="px-2 text-xs">No friends match “{search.trim()}”.</p> : null}
       {friends.length > 0 && !searching ? (
-        <p role="status" aria-live="polite" className="m-0 px-2 py-1 text-xs font-bold">
+        <p role="status" aria-live="polite" className="ym-friend-sub m-0 px-2 py-1 text-xs">
           {onlineNow > 0 ? `${onlineNow} online now` : "No one is around right now."}
         </p>
       ) : null}
@@ -216,15 +216,15 @@ export function FriendList({
         const open = searching || !view.collapsed.includes(key)
         return (
           <div key={key} role="group" aria-label={`${g.name}, ${g.online} of ${g.total} online`}>
-            <h2 className="m-0 text-sm">
+            <h2 className="ym-group-head m-0 text-sm">
               <button
                 type="button"
                 aria-expanded={open}
                 onClick={() => onToggleGroup(key)}
                 onKeyDown={(e) => onHeaderKey(e, g)}
                 onContextMenu={(e) => onHeaderContext(e, g)}
-                className="ym-row w-full cursor-pointer border-0 bg-transparent px-2 py-1 text-left font-bold"
-                style={{ color: "var(--ym-blue)" }}
+                className="w-full cursor-pointer border-0 bg-transparent px-2 py-1 text-left font-bold"
+                style={{ color: "var(--text-body)" }}
               >
                 <span aria-hidden="true">{open ? "▼" : "▶"} </span>
                 {g.name} ({g.online}/{g.total})

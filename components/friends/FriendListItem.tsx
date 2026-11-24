@@ -43,7 +43,7 @@ export function FriendListItem({ friend, presence, unread, nudgeBadge, shaking, 
   const upForChat = isFriendUpForChat(friend.statusMessage, presence)
   return (
     <li
-      className={`ym-row${upForChat ? " ym-up-for-chat" : ""}${shaking ? " ym-shake" : ""} flex cursor-pointer items-start gap-2 px-2 py-1`}
+      className={`ym-row${upForChat ? " ym-up-for-chat" : ""}${shaking ? " ym-shake" : ""} flex cursor-pointer items-center gap-1.5 px-2 py-0.5`}
       style={{ opacity: presence === "offline" ? 0.55 : 1 }}
       tabIndex={0}
       aria-label={`${friend.displayName}, ${presence}${unread ? `, ${unread} waiting` : ""}${nudgeBadge ? `, ${nudgeBadge} missed ${nudgeBadge === 1 ? "Buzz" : "Buzzes"}` : ""}${upForChat ? ", up for chat" : ""}. Press Enter to chat.`}
@@ -52,35 +52,34 @@ export function FriendListItem({ friend, presence, unread, nudgeBadge, shaking, 
       onContextMenu={onRightClick}
     >
       <PresenceDot state={presence} />
-      <div className="min-w-0 flex-1">
-        <div className={`truncate ${bold ? "font-bold" : ""}`}>
-          {friend.displayName}
-          {unread && unread > 0 ? <span> ({unread})</span> : null}
-          {nudgeBadge && nudgeBadge > 0 ? (
-            <span
-              className="ml-1 rounded px-1 text-xs font-bold"
-              style={{ background: "var(--buzz-red)", color: "#fff" }}
-              title="Buzz! waiting"
-            >
-              {nudgeBadge}
-            </span>
-          ) : null}
-        </div>
-        {shouldShowField(friend.statusMessage) ? (
-          <div className="truncate text-xs">{friend.statusMessage}</div>
+      <div className="min-w-0 flex-1 truncate">
+        <span className={bold ? "font-bold" : ""}>{friend.displayName}</span>
+        {unread && unread > 0 ? <span className={bold ? "font-bold" : ""}> ({unread})</span> : null}
+        {nudgeBadge && nudgeBadge > 0 ? (
+          <span
+            className="ml-1 rounded px-1 text-xs font-bold"
+            style={{ background: "var(--buzz-red)", color: "#fff" }}
+            title="Buzz! waiting"
+          >
+            {nudgeBadge}
+          </span>
         ) : null}
         {hasNowPlaying(friend.nowPlaying) ? (
-          <div className="truncate text-xs" title={friend.nowPlaying ?? undefined}>
-            <span aria-hidden="true">♪ </span>
-            {shownNowPlaying(friend.nowPlaying ?? "")}
-          </div>
+          <span className="ym-now-playing" title={friend.nowPlaying ?? undefined}>
+            {" "}
+            <span aria-hidden="true">♪</span> {shownNowPlaying(friend.nowPlaying ?? "")}
+          </span>
+        ) : shouldShowField(friend.statusMessage) ? (
+          <span className="ym-friend-sub" title={friend.statusMessage ?? undefined}>
+            {" "}- {friend.statusMessage}
+          </span>
         ) : null}
       </div>
       {upForChat && onSayHi ? (
         <button
           type="button"
-          className="ym-button shrink-0 px-2"
-          style={{ minHeight: 28 }}
+          className="ym-button shrink-0 px-2 text-xs"
+          style={{ minHeight: 22, padding: "0 8px" }}
           aria-label={`Say hi to ${friend.displayName}`}
           onClick={(e) => {
             e.stopPropagation()
