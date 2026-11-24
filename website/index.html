@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buzz — Yahoo Messenger Revival | Kiroween 2026</title>
-  <meta name="description" content="A Yahoo Messenger revival for Kiroween 2026 (Resurrection Category). Native desktop app for Windows, macOS, and Linux built around people being present: live presence, Buddy List, 24 classic emoticons, and the iconic Nudge ('Buzz!').">
+  <title>Buzz! — The Yahoo Messenger Revival</title>
+  <meta name="description" content="Buzz! is a native desktop chat app for Windows, macOS, and Linux that brings back real presence: a live Buddy List, one chat window per friend, classic emoticons, and the iconic screen-shaking Nudge.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%235b21b6'/><text x='16' y='23' font-family='sans-serif' font-size='22' font-weight='900' fill='%23fbbf24' text-anchor='middle'>B!</text></svg>">
   <style>
     :root {
       --primary: #5b21b6;
-      --primary-dark: #4c1d95;
+      --primary-dark: #431407;
+      --primary-deep: #3b0764;
       --primary-light: #7c3aed;
       --accent: #f59e0b;
       --accent-gold: #fbbf24;
@@ -17,12 +18,15 @@
       --buzz-red-hover: #b91c1c;
       --bg: #f8fafc;
       --card-bg: #ffffff;
-      --text: #0f172a;
+      --text-main: #0f172a;
       --text-muted: #64748b;
       --border: #e2e8f0;
       --code-bg: #0f172a;
-      --code-text: #f1f5f9;
-      --success: #16a34a;
+      --status-online: #22c55e;
+      --status-busy: #ef4444;
+      --status-away: #f59e0b;
+      --ym-window-bg: #ece9d8;
+      --ym-blue: #0055ea;
     }
 
     * {
@@ -33,573 +37,1425 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: var(--text);
+      color: var(--text-main);
       background-color: var(--bg);
       line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
-    /* Header */
-    header {
-      background: linear-gradient(135deg, #3b0764 0%, #5b21b6 50%, #6d28d9 100%);
-      color: white;
-      padding: 3.5rem 1.5rem 3rem 1.5rem;
+    /* Top Banner */
+    .top-pill {
+      background: #3b0764;
+      color: #fbbf24;
       text-align: center;
-      border-bottom: 5px solid var(--accent-gold);
-      position: relative;
-      overflow: hidden;
+      padding: 0.5rem 1rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+    }
+    .top-pill a {
+      color: #ffffff;
+      text-decoration: underline;
+      margin-left: 0.5rem;
     }
 
-    header::before {
-      content: "";
-      position: absolute;
-      top: -50px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 600px;
-      height: 300px;
-      background: radial-gradient(circle, rgba(251, 191, 36, 0.15) 0%, rgba(91, 33, 182, 0) 70%);
-      pointer-events: none;
-    }
-
-    .badge-jury {
-      display: inline-flex;
+    /* Navbar */
+    nav {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 0.5rem;
-      background: rgba(251, 191, 36, 0.2);
-      border: 1px solid var(--accent-gold);
-      color: var(--accent-gold);
-      font-size: 0.85rem;
-      font-weight: 700;
-      padding: 0.35rem 1rem;
-      border-radius: 9999px;
-      margin-bottom: 1.25rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
     }
 
-    .logo-container {
+    .brand-logo {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 1rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .logo-badge {
-      background: var(--accent-gold);
-      color: var(--primary-dark);
-      font-size: 2.6rem;
+      gap: 0.6rem;
+      text-decoration: none;
+      color: var(--primary-deep);
       font-weight: 900;
-      padding: 0.2rem 1rem;
-      border-radius: 14px;
-      display: inline-block;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-      border: 3px solid #fef3c7;
-      transform: rotate(-3deg);
-    }
-
-    h1 {
-      font-size: 2.75rem;
-      font-weight: 800;
+      font-size: 1.7rem;
       letter-spacing: -0.03em;
     }
 
-    .subtitle {
-      font-size: 1.25rem;
-      color: #e2e8f0;
-      max-width: 680px;
-      margin: 0.75rem auto 1.5rem auto;
-      font-weight: 400;
-      line-height: 1.5;
+    .brand-badge {
+      background: var(--accent-gold);
+      color: var(--primary-deep);
+      font-size: 1.4rem;
+      font-weight: 900;
+      padding: 0.1rem 0.55rem;
+      border-radius: 8px;
+      display: inline-block;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+      transform: rotate(-3deg);
     }
 
-    .header-cta {
+    .nav-links {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 1rem;
-      margin-top: 1.5rem;
+      align-items: center;
+      gap: 1.75rem;
     }
 
-    .btn-header {
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: color 0.15s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    .nav-btn {
+      background: var(--primary);
+      color: white !important;
+      padding: 0.55rem 1.2rem;
+      border-radius: 8px;
+      font-weight: 700 !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .nav-btn:hover {
+      background: var(--primary-light);
+      transform: translateY(-1px);
+    }
+
+    /* Hero Section */
+    .hero {
+      position: relative;
+      padding: 4rem 1.5rem 5rem 1.5rem;
+      background: radial-gradient(circle at 50% 0%, #faf5ff 0%, #f8fafc 100%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-container {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 3.5rem;
+      align-items: center;
+    }
+
+    .hero-tag {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      font-size: 0.85rem;
       font-weight: 700;
-      border-radius: 8px;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 {
+      font-size: 3.4rem;
+      line-height: 1.12;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #0f172a;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 span.gradient-text {
+      background: linear-gradient(135deg, #6d28d9 0%, #b45309 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 1.22rem;
+      color: #475569;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      max-width: 580px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn-main-download {
+      background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+      color: white;
+      text-decoration: none;
+      font-size: 1.1rem;
+      font-weight: 700;
+      padding: 0.9rem 2rem;
+      border-radius: 10px;
+      box-shadow: 0 10px 24px -4px rgba(109, 40, 217, 0.4);
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .btn-main-download:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px -4px rgba(109, 40, 217, 0.5);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 0.9rem 1.5rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
       text-decoration: none;
       transition: all 0.2s ease;
     }
 
-    .btn-download-primary {
-      background: var(--accent-gold);
-      color: var(--primary-dark);
-      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+    .btn-secondary:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
     }
 
-    .btn-download-primary:hover {
-      background: #f59e0b;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(245, 158, 11, 0.5);
+    .hero-specs {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
     }
 
-    .btn-jury-secondary {
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      backdrop-filter: blur(4px);
+    /* Interactive Retro Window in Hero */
+    .hero-mockup-wrapper {
+      position: relative;
     }
 
-    .btn-jury-secondary:hover {
-      background: rgba(255, 255, 255, 0.25);
-      transform: translateY(-2px);
+    .interactive-label {
+      position: absolute;
+      top: -14px;
+      right: 16px;
+      background: #fbbf24;
+      color: #78350f;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      z-index: 10;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
-    /* Container & Layout */
-    .container {
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 2.5rem 1.5rem;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
+    .chat-mockup-window {
+      background: #f1f5f9;
       border-radius: 12px;
-      padding: 2.25rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      transition: transform 0.05s ease;
+      transform-origin: center center;
     }
 
-    .card-highlight {
-      border: 2px solid #c084fc;
-      background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
+    /* Window Header */
+    .mockup-titlebar {
+      background: linear-gradient(180deg, #6d28d9 0%, #4c1d95 100%);
+      color: white;
+      padding: 0.65rem 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88rem;
+      font-weight: 700;
     }
 
-    h2 {
-      font-size: 1.65rem;
-      margin-bottom: 1.25rem;
-      color: #1e1b4b;
+    .mockup-titlebar .window-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .window-btn {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      display: inline-block;
+    }
+
+    /* Window Contact Header */
+    .mockup-contact-bar {
+      background: #ffffff;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: #ddd6fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #5b21b6;
+      font-size: 1.1rem;
+      position: relative;
+    }
+
+    .avatar .online-badge {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 12px;
+      height: 12px;
+      background: var(--status-online);
+      border: 2px solid white;
+      border-radius: 50%;
+    }
+
+    .contact-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .contact-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #0f172a;
+    }
+
+    .contact-status {
+      font-size: 0.82rem;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .now-playing-icon {
+      color: #16a34a;
+      font-weight: 700;
+    }
+
+    /* Message Stream */
+    .mockup-messages {
+      background: #ffffff;
+      height: 230px;
+      padding: 1rem;
+      overflow-y: auto;
+      font-size: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .msg-row {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.4;
+    }
+
+    .msg-header {
+      font-size: 0.76rem;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .msg-header span.user-me {
+      color: #0284c7;
+    }
+
+    .msg-header span.user-friend {
+      color: #7c3aed;
+    }
+
+    .msg-bubble {
+      color: #1e293b;
+      font-size: 0.9rem;
+    }
+
+    .msg-nudge-event {
+      text-align: center;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-weight: 700;
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      border: 1px dashed #f87171;
+      font-size: 0.85rem;
+      animation: popIn 0.3s ease;
+    }
+
+    /* Chat Toolbar */
+    .mockup-toolbar {
+      background: #f8fafc;
+      padding: 0.5rem 0.9rem;
+      border-top: 1px solid #e2e8f0;
       display: flex;
       align-items: center;
       gap: 0.6rem;
     }
 
-    h3 {
-      font-size: 1.2rem;
-      margin: 1.5rem 0 0.5rem 0;
-      color: #1e293b;
+    .toolbar-btn {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s ease;
     }
 
-    /* Jury Specific Box */
-    .jury-header-box {
-      background: #ede9fe;
-      border: 1px solid #ddd6fe;
-      border-radius: 10px;
-      padding: 1.25rem;
-      margin-bottom: 1.5rem;
-      color: #4c1d95;
+    .toolbar-btn:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
     }
 
-    .jury-header-box strong {
-      display: block;
-      font-size: 1.1rem;
-      margin-bottom: 0.35rem;
+    .btn-nudge-shake {
+      background: var(--buzz-red);
+      color: white;
+      border-color: #b91c1c;
+      font-weight: 800;
+      box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+      padding: 0.4rem 0.9rem;
     }
 
-    .demo-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin: 1.25rem 0;
+    .btn-nudge-shake:hover {
+      background: var(--buzz-red-hover);
+      transform: scale(1.04);
     }
 
-    .demo-step {
-      display: flex;
-      gap: 1rem;
+    .btn-nudge-shake:active {
+      transform: scale(0.96);
+    }
+
+    /* Input Row */
+    .mockup-input-bar {
       background: #ffffff;
-      padding: 1rem 1.25rem;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-      align-items: flex-start;
+      padding: 0.75rem 0.9rem;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      gap: 0.5rem;
     }
 
-    .step-num {
+    .mockup-text-input {
+      flex: 1;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.88rem;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .mockup-send-btn {
       background: var(--primary);
       color: white;
-      font-weight: 800;
-      font-size: 0.95rem;
-      width: 28px;
-      height: 28px;
+      border: none;
+      border-radius: 6px;
+      padding: 0.45rem 1rem;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+
+    /* Window Shake Animation */
+    @keyframes windowShake {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      15% { transform: translate(-8px, 6px) rotate(-1deg); }
+      30% { transform: translate(8px, -6px) rotate(1deg); }
+      45% { transform: translate(-7px, -4px) rotate(-1deg); }
+      60% { transform: translate(7px, 5px) rotate(1deg); }
+      75% { transform: translate(-4px, 2px) rotate(0deg); }
+      90% { transform: translate(4px, -2px) rotate(0deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+    .shake-active {
+      animation: windowShake 0.48s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    /* Section Styles */
+    section {
+      padding: 5rem 1.5rem;
+    }
+
+    .container {
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto 3.5rem auto;
+    }
+
+    .section-header .section-tag {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-header h2 {
+      font-size: 2.5rem;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: #0f172a;
+      margin-bottom: 1rem;
+    }
+
+    .section-header p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+    }
+
+    /* Grid of 6 Features */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+    }
+
+    .feature-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2.25rem 2rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feature-card:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.08);
+    }
+
+    .feature-icon-wrapper {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 9999px;
-      flex-shrink: 0;
-      margin-top: 2px;
+      font-size: 1.6rem;
+      margin-bottom: 1.25rem;
     }
 
-    .step-content strong {
-      color: var(--primary-dark);
-      font-size: 1.05rem;
+    .icon-purple { background: #ede9fe; color: #6d28d9; }
+    .icon-amber { background: #fef3c7; color: #d97706; }
+    .icon-red { background: #fee2e2; color: #dc2626; }
+    .icon-green { background: #dcfce7; color: #16a34a; }
+    .icon-blue { background: #e0f2fe; color: #0284c7; }
+    .icon-pink { background: #fce7f3; color: #db2777; }
+
+    .feature-card h3 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 0.6rem;
     }
 
-    .step-content p {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      margin-top: 0.25rem;
+    .feature-card p {
+      color: #64748b;
+      font-size: 0.98rem;
+      line-height: 1.6;
     }
 
-    /* Downloads Grid */
-    .downloads-grid {
+    /* Comparison / Philosophy Section */
+    .contrast-section {
+      background: #0f172a;
+      color: white;
+      border-radius: 20px;
+      padding: 4rem 3rem;
+      margin: 2rem auto;
+      max-width: 1160px;
+    }
+
+    .contrast-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.25rem;
-      margin: 1.5rem 0;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      margin-top: 2.5rem;
     }
 
-    .download-btn {
+    .contrast-col {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 2rem;
+    }
+
+    .contrast-col.bad {
+      border-left: 4px solid #ef4444;
+    }
+
+    .contrast-col.good {
+      border-left: 4px solid #22c55e;
+      background: rgba(34, 197, 94, 0.04);
+    }
+
+    .contrast-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .contrast-list {
+      list-style: none;
       display: flex;
       flex-direction: column;
-      padding: 1.25rem;
-      background: #ffffff;
-      border: 2px solid #e2e8f0;
+      gap: 0.85rem;
+      font-size: 0.95rem;
+      color: #cbd5e1;
+    }
+
+    .contrast-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+    }
+
+    /* Emoticons Showcase */
+    .emoticon-strip {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      margin: 3rem 0;
+    }
+
+    .emoticon-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+
+    .emoticon-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.75rem 1rem;
       border-radius: 10px;
-      text-decoration: none;
-      color: var(--text);
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-width: 80px;
+    }
+
+    .emoticon-item:hover {
+      background: #ede9fe;
+      border-color: #c4b5fd;
+      transform: scale(1.08);
+    }
+
+    .emoticon-item span.emoji-icon {
+      font-size: 1.8rem;
+    }
+
+    .emoticon-item span.code {
+      font-family: ui-monospace, monospace;
+      font-size: 0.78rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    /* Download Cards */
+    .download-section {
+      background: #f8fafc;
+      border-top: 1px solid var(--border);
+    }
+
+    .download-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .download-card {
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 2rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
       transition: all 0.2s ease;
       position: relative;
     }
 
-    .download-btn:hover {
+    .download-card:hover {
       border-color: var(--primary);
+      box-shadow: 0 12px 24px -4px rgba(91, 33, 182, 0.12);
       transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(109, 40, 217, 0.12);
     }
 
-    .download-btn.featured {
+    .download-card.highlight {
       border-color: var(--primary);
-      background: #faf5ff;
+      background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
     }
 
-    .download-title {
-      font-weight: 700;
-      font-size: 1.15rem;
-      color: var(--primary);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.35rem;
+    .card-top {
+      margin-bottom: 1.5rem;
     }
 
-    .download-meta {
+    .os-badge {
+      font-size: 2.4rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .os-name {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 0.25rem;
+    }
+
+    .os-meta {
       font-size: 0.88rem;
       color: var(--text-muted);
     }
 
-    .download-file {
-      font-family: ui-monospace, monospace;
-      font-size: 0.8rem;
-      color: #64748b;
-      margin-top: 0.5rem;
-      background: #f1f5f9;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      display: inline-block;
-      width: fit-content;
-    }
-
-    /* Features Grid */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.25rem;
-      margin-top: 1.25rem;
-    }
-
-    .feature-item {
-      padding: 1.25rem;
-      border-radius: 10px;
-      background: #f8fafc;
-      border: 1px solid #f1f5f9;
-    }
-
-    .feature-title {
+    .btn-download-os {
+      display: block;
+      text-align: center;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
       font-weight: 700;
-      font-size: 1.05rem;
-      margin-bottom: 0.4rem;
-      color: var(--primary-dark);
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .feature-desc {
-      font-size: 0.92rem;
-      color: var(--text-muted);
-    }
-
-    /* Code & Warnings */
-    pre {
-      background: var(--code-bg);
-      color: var(--code-text);
-      padding: 1rem;
+      padding: 0.75rem 1rem;
       border-radius: 8px;
-      overflow-x: auto;
-      font-size: 0.88rem;
-      margin: 0.75rem 0;
-    }
-
-    code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-
-    .notice-box {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      margin: 1.25rem 0;
-      font-size: 0.95rem;
-      color: #92400e;
-    }
-
-    .step-list {
-      padding-left: 1.5rem;
-      margin: 0.75rem 0;
-    }
-
-    .step-list li {
+      transition: all 0.2s ease;
       margin-bottom: 0.6rem;
+    }
+
+    .btn-download-os:hover {
+      background: var(--primary-light);
+    }
+
+    .filename-hint {
+      font-family: ui-monospace, monospace;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      text-align: center;
+    }
+
+    /* FAQ */
+    .faq-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .faq-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+    }
+
+    .faq-card h4 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 0.5rem;
+    }
+
+    .faq-card p {
       font-size: 0.95rem;
+      color: #475569;
     }
 
     /* Footer */
     footer {
-      text-align: center;
-      padding: 3rem 1.5rem;
-      color: var(--text-muted);
+      background: #0f172a;
+      color: #94a3b8;
+      padding: 4rem 1.5rem 3rem 1.5rem;
+      border-top: 1px solid #1e293b;
+    }
+
+    .footer-container {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 2rem;
+      padding-bottom: 3rem;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .footer-brand {
+      max-width: 380px;
+    }
+
+    .footer-brand .footer-logo {
+      color: white;
+      font-size: 1.6rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 3rem;
+    }
+
+    .footer-col h5 {
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .footer-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
       font-size: 0.9rem;
-      border-top: 1px solid var(--border);
-      background: #ffffff;
     }
 
-    footer a {
-      color: var(--primary);
+    .footer-col a {
+      color: #94a3b8;
       text-decoration: none;
-      font-weight: 600;
+      transition: color 0.15s ease;
     }
 
-    footer a:hover {
-      text-decoration: underline;
+    .footer-col a:hover {
+      color: white;
+    }
+
+    .footer-bottom {
+      max-width: 1160px;
+      margin: 2rem auto 0 auto;
+      text-align: center;
+      font-size: 0.82rem;
+      color: #64748b;
+    }
+
+    @media (max-width: 900px) {
+      .hero-container {
+        grid-template-columns: 1fr;
+      }
+      .contrast-grid {
+        grid-template-columns: 1fr;
+      }
+      .faq-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero h1 {
+        font-size: 2.6rem;
+      }
+      .contrast-section {
+        padding: 2.5rem 1.5rem;
+      }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="badge-jury">🎃 Kiroween 2026 Submission &bull; Category: Resurrection</div>
-    <div class="logo-container">
-      <span class="logo-badge">B!</span>
-      <h1>Buzz</h1>
-    </div>
-    <p class="subtitle">A Yahoo Messenger revival for Windows, macOS, and Linux built around people being present &mdash; not around infinite scroll.</p>
 
-    <div class="header-cta">
-      <a class="btn-header btn-download-primary" href="#download">⬇️ Download Beta App</a>
-      <a class="btn-header btn-jury-secondary" href="#jury">👥 Jury Testing Guide</a>
-      <a class="btn-header btn-jury-secondary" href="https://github.com/titodoni/buzz" target="_blank" rel="noopener">💻 View GitHub Repo</a>
+  <!-- Top Announcement Bar -->
+  <div class="top-pill">
+    🎉 <strong>Buzz v0.1.0 is here!</strong> The classic Yahoo Messenger revival for Windows, macOS, and Linux.
+    <a href="#downloads">Get the Beta &rarr;</a>
+  </div>
+
+  <!-- Navigation -->
+  <nav>
+    <a class="brand-logo" href="#">
+      <span class="brand-badge">B!</span>
+      Buzz!
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#emoticons">Emoticons</a>
+      <a href="#why-buzz">Philosophy</a>
+      <a href="#faq">FAQ</a>
+      <a class="nav-btn" href="#downloads">Download App</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="hero-container">
+      <div class="hero-text">
+        <div class="hero-tag">
+          ✨ Built with Rust &bull; Native Desktop &bull; No Infinite Feeds
+        </div>
+        <h1>
+          Remember when chat was about <span class="gradient-text">being present?</span>
+        </h1>
+        <p class="hero-desc">
+          Buzz! revives the golden age of messaging. A clean Buddy List, live presence, one independent window per friend, nostalgic emoticons, and the iconic Nudge that shakes your friend's screen.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn-main-download" href="#downloads">
+            <span>⬇️</span> Download Buzz Beta
+          </a>
+          <a class="btn-secondary" href="https://github.com/titodoni/buzz" target="_blank" rel="noopener">
+            View on GitHub
+          </a>
+        </div>
+
+        <div class="hero-specs">
+          <span>✓ Free &amp; Open Source</span>
+          <span>✓ Windows &bull; macOS &bull; Linux</span>
+          <span>✓ Super lightweight (~15MB RAM)</span>
+        </div>
+      </div>
+
+      <!-- Interactive Mockup Window -->
+      <div class="hero-mockup-wrapper">
+        <div class="interactive-label">👆 Try clicking BUZZ! below</div>
+        <div class="chat-mockup-window" id="demoChatWindow">
+          
+          <!-- Title bar -->
+          <div class="mockup-titlebar">
+            <div class="window-title">
+              <span>B!</span> Conversation with <strong>sarah_99</strong>
+            </div>
+            <div class="window-controls">
+              <span class="window-btn"></span>
+              <span class="window-btn"></span>
+              <span class="window-btn"></span>
+            </div>
+          </div>
+
+          <!-- Contact Info -->
+          <div class="mockup-contact-bar">
+            <div class="avatar">
+              S
+              <span class="online-badge"></span>
+            </div>
+            <div class="contact-info">
+              <div class="contact-name">Sarah Jenkins (sarah_99)</div>
+              <div class="contact-status">
+                <span class="now-playing-icon">🎵</span>
+                <span>The Postal Service — Such Great Heights</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat messages stream -->
+          <div class="mockup-messages" id="mockupMessages">
+            <div class="msg-row">
+              <div class="msg-header"><span class="user-friend">sarah_99</span> (4:38 PM):</div>
+              <div class="msg-bubble">hey! did you install Buzz yet? 😄</div>
+            </div>
+            <div class="msg-row">
+              <div class="msg-header"><span class="user-me">You</span> (4:39 PM):</div>
+              <div class="msg-bubble">just did! this feels so nostalgic. the windowing is so fast.</div>
+            </div>
+            <div class="msg-row">
+              <div class="msg-header"><span class="user-friend">sarah_99</span> (4:40 PM):</div>
+              <div class="msg-bubble">hit that red BUZZ button right now!! 😜</div>
+            </div>
+          </div>
+
+          <!-- Toolbar with Nudge Button -->
+          <div class="mockup-toolbar">
+            <button class="toolbar-btn btn-nudge-shake" id="btnNudgeDemo" title="Send a Nudge! (Ctrl+G)">
+              💥 BUZZ!
+            </button>
+            <button class="toolbar-btn" id="btnHangoutDemo">
+              ☕ Hangout
+            </button>
+            <button class="toolbar-btn" id="btnSmileyDemo">
+              😊 Smiley
+            </button>
+          </div>
+
+          <!-- Input Bar -->
+          <div class="mockup-input-bar">
+            <input type="text" class="mockup-text-input" id="mockupInput" placeholder="Type a message or press Buzz!..." value="">
+            <button class="mockup-send-btn" id="mockupSend">Send</button>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
-  <main class="container">
-    <!-- JURY EVALUATION GUIDE -->
-    <section class="card card-highlight" id="jury">
-      <h2>👥 Instructions for Hackathon Judges</h2>
-      <div class="jury-header-box">
-        <strong>⚡ Important: Buzz requires two accounts to experience!</strong>
-        Buzz is built around presence and real-time interaction between friends. You cannot test the signature Nudge ("Buzz!"), typing indicators, or live presence with only one account. We recommend using two computers (or two accounts on separate windows).
+  <!-- FEATURES GRID -->
+  <section id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Designed Around People</div>
+        <h2>Chat Built for Connection, Not Retention</h2>
+        <p>Modern chat became an endless stream of notifications, feeds, and algorithmic retention loops. Buzz strips away the bloat and brings back pure human presence.</p>
       </div>
 
-      <p>Test credentials are provided in the private testing notes on Devpost, or you can register two new accounts with any email address.</p>
-
-      <div class="demo-steps">
-        <div class="demo-step">
-          <div class="step-num">1</div>
-          <div class="step-content">
-            <strong>Install and Sign In on Two Clients</strong>
-            <p>Download the installer below for your operating system. Launch Buzz on both computers and sign in as Friend A and Friend B.</p>
-          </div>
-        </div>
-
-        <div class="demo-step">
-          <div class="step-num">2</div>
-          <div class="step-content">
-            <strong>Check the Buddy List &amp; Live Presence</strong>
-            <p>Switch your presence status between <em>Available</em>, <em>Busy</em>, <em>Away</em>, or set a custom status message. Watch the status dot and line update live on your friend's Buddy List!</p>
-          </div>
-        </div>
-
-        <div class="demo-step">
-          <div class="step-num">3</div>
-          <div class="step-content">
-            <strong>Open a Chat &amp; Send Emoticons</strong>
-            <p>Double-click a buddy in the Buddy List to open a dedicated 1:1 chat window. Type messages, observe real-time typing indicators, and try the 24 classic Yahoo Messenger emoticons (e.g. <code>:)</code>, <code>:D</code>, <code>;)</code>, <code>:P</code>).</p>
-          </div>
-        </div>
-
-        <div class="demo-step">
-          <div class="step-num">4</div>
-          <div class="step-content">
-            <strong>Send a Nudge ("BUZZ!")</strong>
-            <p>In the chat window, click the red <strong>BUZZ!</strong> button (or press <code>Ctrl+G</code>). Notice how it shakes your friend's chat window with the authentic alert sound! (Has a 10-second cooldown limiter to prevent spam).</p>
-          </div>
-        </div>
-
-        <div class="demo-step">
-          <div class="step-num">5</div>
-          <div class="step-content">
-            <strong>Try Hangouts &amp; Share What I'm Playing</strong>
-            <p>Send a quick 15-minute Hangout invite ("Coffee break?", "Got a minute?"). Optionally enable <em>Messenger &gt; Share What I'm Playing</em> to broadcast what song is currently playing in your media player.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- DOWNLOAD SECTION -->
-    <section class="card" id="download">
-      <h2>⬇️ Download Buzz Beta (v0.1.0)</h2>
-      <p>Buzz is a native desktop application built with <strong>Tauri v2 (Rust)</strong> and <strong>Next.js App Router</strong> with Supabase as the backend. Select your OS below:</p>
-
-      <div class="downloads-grid">
-        <a class="download-btn featured" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_x64-setup.exe" target="_blank" rel="noopener">
-          <div class="download-title">🪟 Windows</div>
-          <div class="download-meta">Windows 10 / 11 (64-bit installer)</div>
-          <div class="download-file">Buzz_0.1.0_x64-setup.exe</div>
-        </a>
-
-        <a class="download-btn featured" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_aarch64.dmg" target="_blank" rel="noopener">
-          <div class="download-title">🍎 macOS (Apple Silicon)</div>
-          <div class="download-meta">M1, M2, M3, M4 (ARM64 DMG)</div>
-          <div class="download-file">Buzz_0.1.0_aarch64.dmg</div>
-        </a>
-
-        <a class="download-btn" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_x64.dmg" target="_blank" rel="noopener">
-          <div class="download-title">🍏 macOS (Intel)</div>
-          <div class="download-meta">x86_64 Intel Mac (DMG)</div>
-          <div class="download-file">Buzz_0.1.0_x64.dmg</div>
-        </a>
-
-        <a class="download-btn" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_amd64.deb" target="_blank" rel="noopener">
-          <div class="download-title">🐧 Linux (.deb)</div>
-          <div class="download-meta">Ubuntu, Debian, Pop!_OS, Mint</div>
-          <div class="download-file">Buzz_0.1.0_amd64.deb</div>
-        </a>
-
-        <a class="download-btn" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_amd64.AppImage" target="_blank" rel="noopener">
-          <div class="download-title">🐧 Linux (AppImage)</div>
-          <div class="download-meta">Universal Linux standalone binary</div>
-          <div class="download-file">Buzz_0.1.0_amd64.AppImage</div>
-        </a>
-      </div>
-
-      <div class="notice-box">
-        <strong>⚠️ Unsigned Beta Warning:</strong> Because these hackathon build binaries are not yet code-signed with costly commercial certificates, Windows SmartScreen and macOS Gatekeeper will show first-run security warnings. Follow the bypass steps below.
-      </div>
-    </section>
-
-    <!-- INSTALLATION & SECURITY BYPASS -->
-    <section class="card" id="installation">
-      <h2>🛠️ Installation &amp; First Run Steps</h2>
-
-      <h3>Windows 10 &amp; 11</h3>
-      <ol class="step-list">
-        <li>Download and run <code>Buzz_0.1.0_x64-setup.exe</code>.</li>
-        <li>When Windows SmartScreen shows <strong>"Windows protected your PC"</strong>, click <strong>More info</strong> &rarr; then click <strong>Run anyway</strong>.</li>
-        <li>Follow the installer. Buzz will automatically launch and place a shortcut in your Start menu.</li>
-      </ol>
-
-      <h3>macOS</h3>
-      <ol class="step-list">
-        <li>Download the appropriate <code>.dmg</code> (Apple Silicon or Intel) and drag <strong>Buzz</strong> into your <strong>Applications</strong> folder.</li>
-        <li>Open Buzz. If macOS prevents opening:
-          <ul>
-            <li>Open <strong>System Settings &gt; Privacy &amp; Security</strong>, scroll down to the security prompt about Buzz, and click <strong>Open Anyway</strong>.</li>
-            <li>Alternatively, if macOS reports <em>"Buzz is damaged and can't be opened"</em>, run this one command in Terminal to clear the quarantine flag:
-              <pre><code>xattr -dr com.apple.quarantine /Applications/Buzz.app</code></pre>
-            </li>
-          </ul>
-        </li>
-      </ol>
-
-      <h3>Linux</h3>
-      <ul class="step-list">
-        <li><strong>Ubuntu / Debian:</strong>
-          <pre><code>sudo apt install ./Buzz_0.1.0_amd64.deb</code></pre>
-        </li>
-        <li><strong>AppImage:</strong>
-          <pre><code>chmod +x Buzz_0.1.0_amd64.AppImage && ./Buzz_0.1.0_amd64.AppImage</code></pre>
-          <em>(If FUSE is missing on modern Ubuntu 24.04+: <code>sudo apt install libfuse2t64</code>)</em>
-        </li>
-      </ul>
-    </section>
-
-    <!-- PRODUCT & ARCHITECTURE HIGHLIGHTS -->
-    <section class="card" id="features">
-      <h2>✨ Why Buzz? (Yahoo Messenger Resurrection)</h2>
-      <p>Yahoo Messenger died not because it was bad, but because the feed won: modern chat apps turned into infinite feeds and engagement traps. Presence &mdash; the warm feeling of knowing someone is here right now &mdash; vanished.</p>
-      
       <div class="features-grid">
-        <div class="feature-item">
-          <div class="feature-title">👀 Presence First</div>
-          <div class="feature-desc">The Buddy List is the home screen. See who is Available, Busy, Away, or Offline with zero feed clutter.</div>
+        <!-- 1 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-purple">👀</div>
+          <h3>Presence First</h3>
+          <p>The Buddy List is your home screen. Instantly see who is Available, Busy, Away, or Offline. No guesswork, no ghosting, just real-time status.</p>
         </div>
-        <div class="feature-item">
-          <div class="feature-title">💥 The Iconic Nudge ("Buzz!")</div>
-          <div class="feature-desc">Window-shaking, sound-playing wake up call with a 10-second spam limiter and row animation.</div>
+
+        <!-- 2 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-red">💥</div>
+          <h3>The Signature Nudge ("Buzz!")</h3>
+          <p>When someone is away or daydreaming, one tap shakes their chat window and sounds an authentic chime. Equipped with a 10s cooldown to keep it friendly.</p>
         </div>
-        <div class="feature-item">
-          <div class="feature-title">😄 24 Classic Emoticons</div>
-          <div class="feature-desc">Pixel-perfect nostalgic Yahoo Messenger emoticons rendered smoothly in every chat window.</div>
+
+        <!-- 3 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-amber">🪟</div>
+          <h3>One Window Per Friend</h3>
+          <p>Freedom from the single-pane prison. Open multiple chats, arrange them across your multi-monitor desktop, and multitask like a power user.</p>
         </div>
-        <div class="feature-item">
-          <div class="feature-title">🎵 "Now Playing" Broadcast</div>
-          <div class="feature-desc">Broadcast the song currently playing in your media player (Spotify, Apple Music, etc.) to your friends.</div>
+
+        <!-- 4 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-green">🎵</div>
+          <h3>"Share What I'm Playing"</h3>
+          <p>Bring back status personality. Buzz automatically detects what track you're playing in Spotify or your media player and broadcasts it on your buddy row.</p>
         </div>
-        <div class="feature-item">
-          <div class="feature-title">☕ Hangouts</div>
-          <div class="feature-desc">Low-pressure 15-minute expiring invitations ("Coffee?", "Quick call?") with one-click responses.</div>
+
+        <!-- 5 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-blue">☕</div>
+          <h3>15-Minute Hangouts</h3>
+          <p>No calendar invites, no awkward planning. Send quick invitations like "Coffee break?" or "Gaming now?". If unanswered, they gracefully expire in 15 minutes.</p>
         </div>
-        <div class="feature-item">
-          <div class="feature-title">🔒 True Privacy by Design</div>
-          <div class="feature-desc">Only mutual confirmed friends can see each other. No stranger directory, no tracking, no algorithmic feed.</div>
+
+        <!-- 6 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper icon-pink">🔒</div>
+          <h3>Mutual Privacy</h3>
+          <p>Only confirmed mutual friends can ever see you or talk to you. No public directories, no stranger requests, no algorithms, and zero tracking.</p>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- KIRO SPEC-DRIVEN DEVELOPMENT -->
-    <section class="card" id="kiro">
-      <h2>🤖 Built with Kiro (Spec-Driven Development)</h2>
-      <p>Buzz was built from scratch following Kiro's Spec-Driven Development methodology:</p>
-      <ul class="step-list">
-        <li><strong>Requirements in WHEN/THEN Form:</strong> Auth, presence transitions, chat delivery, and nudge cooldowns were formally specified before code generation.</li>
-        <li><strong>Strict Technical Steering:</strong> Rust toolchain for Tauri v2, Next.js static client export, strict TypeScript (zero untyped <code>any</code>), and full Supabase Row-Level Security (RLS) policies.</li>
-        <li><strong>Automated Agent Hooks:</strong> Custom Kiro hooks enforcing pre-commit security verification and testing reminders.</li>
-      </ul>
-    </section>
-  </main>
+  <!-- PHILOSOPHY / CONTRAST -->
+  <section id="why-buzz" style="padding-top: 0;">
+    <div class="contrast-section">
+      <div style="text-align: center; max-width: 650px; margin: 0 auto;">
+        <span style="color: #fbbf24; font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">Why Buzz Exists</span>
+        <h2 style="font-size: 2.3rem; margin-top: 0.5rem; color: white;">The World Forgot How Good Chat Used To Be</h2>
+      </div>
 
+      <div class="contrast-grid">
+        <div class="contrast-col bad">
+          <div class="contrast-title">❌ Modern Chat Apps</div>
+          <ul class="contrast-list">
+            <li>⛔ Infinite scroll feeds that turn friends into content creators</li>
+            <li>⛔ Trapped inside bloated Electron shells that eat 1.5GB of RAM</li>
+            <li>⛔ Algorithmic engagement hacks designed to steal your attention</li>
+            <li>⛔ Single-pane UI where one chat always hides every other chat</li>
+            <li>⛔ Strangers slide into your DMs from public profile search</li>
+          </ul>
+        </div>
+
+        <div class="contrast-col good">
+          <div class="contrast-title">✨ The Buzz! Way</div>
+          <ul class="contrast-list">
+            <li>✅ Presence-first Buddy List: know who is online right now</li>
+            <li>✅ Blazing fast native Rust shell (Tauri v2) using ~15MB of RAM</li>
+            <li>✅ Zero feeds, zero algorithms, zero advertisements</li>
+            <li>✅ Multi-window desktop layout: drag chats anywhere on your screens</li>
+            <li>✅ Only mutual friends can talk to you. True personal space.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EMOTICONS PACK -->
+  <section id="emoticons" style="background: white; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Authentic Nostalgia</div>
+        <h2>The Classic Emoticon Pack</h2>
+        <p>Every legendary Yahoo Messenger shortcut renders inline in chats. Type the code or pick from the smile menu!</p>
+      </div>
+
+      <div class="emoticon-strip">
+        <div class="emoticon-grid">
+          <div class="emoticon-item">
+            <span class="emoji-icon">😊</span>
+            <span class="code">:)</span>
+          </div>
+          <div class="emoticon-item">
+            <span class="emoji-icon">😃</span>
+            <span class="code">:D</span>
+          </div>
+          <div class="emoticon-item">
+            <span class="emoji-icon">😉</span>
+            <span class="code">;)</span>
+          </div>
+          <div class="emoticon-item">
+            <span class="emoji-icon">😜</span>
+            <span class="code">:P</span>
+          </div>
+          <div class="emoticon-item">
+            <span class="emoji-icon">😎</span>
+            <span class="code">B-)</span>
+          </div>
+          <div class="emoticon-item">
+            <span class="emoji-icon">😡</span>
+            <span class="code">X-(</span>
+          </div>
+          <div class="emoticon-item">
+            <span class="emoji-icon">😢</span>
+            <span class="code">:((</span>
+          </div>
+          <div class="emoticon-item">
+            <span class="emoji-icon">😇</span>
+            <span class="code">O:-)</span>
+          </div>
+          <div class="emoticon-item">
+            <span class="emoji-icon">😘</span>
+            <span class="code">:-*</span>
+          </div>
+          <div class="emoticon-item">
+            <span class="emoji-icon">🤣</span>
+            <span class="code">=))</span>
+          </div>
+          <div class="emoticon-item">
+            <span class="emoji-icon">🤔</span>
+            <span class="code">:-?</span>
+          </div>
+          <div class="emoticon-item">
+            <span class="emoji-icon">😴</span>
+            <span class="code">I-)</span>
+          </div>
+        </div>
+        <p style="margin-top: 1.5rem; font-size: 0.9rem; color: #94a3b8;">Over 60 animated and classic SVG shortcodes supported natively in the app.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DOWNLOADS SECTION -->
+  <section class="download-section" id="downloads">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Install Buzz</div>
+        <h2>Download for Your Desktop</h2>
+        <p>Buzz is 100% free, open-source, and runs natively on your favorite desktop OS.</p>
+      </div>
+
+      <div class="download-cards-grid">
+        <!-- Windows -->
+        <div class="download-card highlight">
+          <div class="card-top">
+            <div class="os-badge">🪟</div>
+            <div class="os-name">Windows</div>
+            <div class="os-meta">Windows 10 &amp; 11 (64-bit)</div>
+          </div>
+          <div>
+            <a class="btn-download-os" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_x64-setup.exe" target="_blank" rel="noopener">
+              Download Installer (.exe)
+            </a>
+            <div class="filename-hint">Buzz_0.1.0_x64-setup.exe</div>
+          </div>
+        </div>
+
+        <!-- macOS Apple Silicon -->
+        <div class="download-card highlight">
+          <div class="card-top">
+            <div class="os-badge">🍏</div>
+            <div class="os-name">macOS (Apple Silicon)</div>
+            <div class="os-meta">M1, M2, M3, M4 Macs</div>
+          </div>
+          <div>
+            <a class="btn-download-os" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_aarch64.dmg" target="_blank" rel="noopener">
+              Download DMG (ARM64)
+            </a>
+            <div class="filename-hint">Buzz_0.1.0_aarch64.dmg</div>
+          </div>
+        </div>
+
+        <!-- macOS Intel -->
+        <div class="download-card">
+          <div class="card-top">
+            <div class="os-badge">🍎</div>
+            <div class="os-name">macOS (Intel)</div>
+            <div class="os-meta">x86_64 Intel Macs</div>
+          </div>
+          <div>
+            <a class="btn-download-os" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_x64.dmg" target="_blank" rel="noopener">
+              Download DMG (Intel)
+            </a>
+            <div class="filename-hint">Buzz_0.1.0_x64.dmg</div>
+          </div>
+        </div>
+
+        <!-- Linux DEB -->
+        <div class="download-card">
+          <div class="card-top">
+            <div class="os-badge">🐧</div>
+            <div class="os-name">Linux (.deb)</div>
+            <div class="os-meta">Ubuntu, Debian, Pop!_OS, Mint</div>
+          </div>
+          <div>
+            <a class="btn-download-os" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_amd64.deb" target="_blank" rel="noopener">
+              Download .deb Package
+            </a>
+            <div class="filename-hint">Buzz_0.1.0_amd64.deb</div>
+          </div>
+        </div>
+
+        <!-- Linux AppImage -->
+        <div class="download-card">
+          <div class="card-top">
+            <div class="os-badge">📦</div>
+            <div class="os-name">Linux (AppImage)</div>
+            <div class="os-meta">Universal Standalone Binary</div>
+          </div>
+          <div>
+            <a class="btn-download-os" href="https://github.com/titodoni/buzz/releases/download/v0.1.0/Buzz_0.1.0_amd64.AppImage" target="_blank" rel="noopener">
+              Download AppImage
+            </a>
+            <div class="filename-hint">Buzz_0.1.0_amd64.AppImage</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Installation hints -->
+      <div style="margin-top: 2.5rem; background: #ffffff; border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 2rem;">
+        <h4 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: #1e293b;">💡 Beta Installation Note</h4>
+        <p style="font-size: 0.9rem; color: #64748b; line-height: 1.6;">
+          Because this beta release is unsigned, Windows SmartScreen will show <em>"Windows protected your PC"</em> (click <strong>More info</strong> &rarr; <strong>Run anyway</strong>). On macOS, go to <strong>System Settings &gt; Privacy &amp; Security</strong> and click <strong>Open Anyway</strong>, or run <code>xattr -dr com.apple.quarantine /Applications/Buzz.app</code> in Terminal.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ SECTION -->
+  <section id="faq">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-tag">Questions &amp; Answers</div>
+        <h2>Frequently Asked Questions</h2>
+      </div>
+
+      <div class="faq-grid">
+        <div class="faq-card">
+          <h4>Is Buzz free to use?</h4>
+          <p>Yes, completely free. Buzz is open source software released under the MIT License. There are no subscriptions, ads, or paywalled features.</p>
+        </div>
+
+        <div class="faq-card">
+          <h4>Why is Buzz a desktop app rather than a website?</h4>
+          <p>Multi-window presence and native system tray integration require real desktop capabilities. With Tauri v2 and Rust, Buzz runs with tiny memory usage and true native windowing.</p>
+        </div>
+
+        <div class="faq-card">
+          <h4>How does "Share What I'm Playing" work?</h4>
+          <p>Buzz reads your local OS media playback (MPRIS on Linux, SMTC on Windows, and AppleScript on macOS) and shares only the title and artist with your confirmed friends.</p>
+        </div>
+
+        <div class="faq-card">
+          <h4>Who can contact me on Buzz?</h4>
+          <p>Only people you explicitly add by email and accept as friends. You cannot be found via public directories, search feeds, or recommendation engines.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
   <footer>
-    <p><strong>Buzz</strong> &bull; Kiroween 2026 Hackathon (Resurrection Category)</p>
-    <p style="margin-top: 0.5rem;">
-      <a href="https://github.com/titodoni/buzz" target="_blank" rel="noopener">GitHub Repository</a> &bull; 
-      <a href="https://buzz.asmorodonitito.my.id" target="_blank" rel="noopener">Live App URL</a>
-    </p>
-    <p style="margin-top: 0.5rem; font-size: 0.82rem; color: #94a3b8;">
-      Buzz is an open source community tribute inspired by the classic Yahoo! Messenger.
-    </p>
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <span style="background: #fbbf24; color: #3b0764; font-size: 1.3rem; padding: 0.1rem 0.5rem; border-radius: 6px; font-weight: 900;">B!</span>
+          Buzz!
+        </div>
+        <p style="font-size: 0.92rem; line-height: 1.6; color: #94a3b8;">
+          A Yahoo Messenger resurrection project built for the Kiroween 2026 hackathon. Bringing presence, fun, and authentic human connection back to personal messaging.
+        </p>
+      </div>
+
+      <div class="footer-links">
+        <div class="footer-col">
+          <h5>App</h5>
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#downloads">Download Beta</a></li>
+            <li><a href="#emoticons">Emoticon Pack</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Developer</h5>
+          <ul>
+            <li><a href="https://github.com/titodoni/buzz" target="_blank" rel="noopener">GitHub Repository</a></li>
+            <li><a href="https://github.com/titodoni/buzz/releases" target="_blank" rel="noopener">All Releases</a></li>
+            <li><a href="https://github.com/titodoni/buzz/issues" target="_blank" rel="noopener">Issue Tracker</a></li>
+            <li><a href="https://github.com/titodoni/buzz/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2026 Buzz Project. Open source tribute. Yahoo! and Yahoo! Messenger are trademarks of Yahoo Inc. Buzz is an independent community project.</p>
+    </div>
   </footer>
+
+  <!-- Interactive JavaScript: Web Audio Chime + Screen Shake -->
+  <script>
+    (function() {
+      let audioCtx = null;
+
+      function getAudioContext() {
+        if (!audioCtx) {
+          const Ctor = window.AudioContext || window.webkitAudioContext;
+          if (Ctor) audioCtx = new Ctor();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        return audioCtx;
+      }
+
+      // Recreate Buzz! Nudge Sound via Web Audio API
+      function playBuzzSound() {
+        try {
+          const ctx = getAudioContext();
+          if (!ctx) return;
+          const t0 = ctx.currentTime;
+          const dur = 0.45;
+
+          const osc = ctx.createOscillator();
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(170, t0);
+          osc.frequency.linearRampToValueAtTime(150, t0 + dur);
+
+          const env = ctx.createGain();
+          env.gain.setValueAtTime(0.0001, t0);
+          env.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
+          env.gain.setValueAtTime(0.35, t0 + dur - 0.12);
+          env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+          const trem = ctx.createGain();
+          trem.gain.value = 0.5;
+          const lfo = ctx.createOscillator();
+          lfo.type = "square";
+          lfo.frequency.value = 28;
+          const lfoDepth = ctx.createGain();
+          lfoDepth.gain.value = 0.5;
+          lfo.connect(lfoDepth).connect(trem.gain);
+
+          osc.connect(trem).connect(env).connect(ctx.destination);
+          osc.start(t0);
+          lfo.start(t0);
+          osc.stop(t0 + dur + 0.05);
+          lfo.stop(t0 + dur + 0.05);
+        } catch(e) {}
+      }
+
+      const windowEl = document.getElementById('demoChatWindow');
+      const btnNudge = document.getElementById('btnNudgeDemo');
+      const messagesEl = document.getElementById('mockupMessages');
+      const inputEl = document.getElementById('mockupInput');
+      const btnSend = document.getElementById('mockupSend');
+
+      // Trigger Nudge Action
+      function triggerNudge() {
+        playBuzzSound();
+        windowEl.classList.remove('shake-active');
+        // trigger reflow
+        void windowEl.offsetWidth;
+        windowEl.classList.add('shake-active');
+
+        // Append nudge event to chat stream
+        const nudgeNotice = document.createElement('div');
+        nudgeNotice.className = 'msg-nudge-event';
+        nudgeNotice.innerHTML = '💥 <strong>BUZZ!</strong> You sent a buzz.';
+        messagesEl.appendChild(nudgeNotice);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      btnNudge.addEventListener('click', triggerNudge);
+
+      // Simple send action
+      function sendMessage() {
+        const text = inputEl.value.trim();
+        if (!text) return;
+        const msgRow = document.createElement('div');
+        msgRow.className = 'msg-row';
+        msgRow.innerHTML = `
+          <div class="msg-header"><span class="user-me">You</span> (Just now):</div>
+          <div class="msg-bubble">${text}</div>
+        `;
+        messagesEl.appendChild(msgRow);
+        inputEl.value = '';
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      btnSend.addEventListener('click', sendMessage);
+      inputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendMessage();
+      });
+
+      // Quick toolbar triggers
+      document.getElementById('btnHangoutDemo').addEventListener('click', () => {
+        const notice = document.createElement('div');
+        notice.style.background = '#ede9fe';
+        notice.style.color = '#5b21b6';
+        notice.style.padding = '0.5rem 0.75rem';
+        notice.style.borderRadius = '6px';
+        notice.style.fontSize = '0.85rem';
+        notice.style.fontWeight = '600';
+        notice.innerHTML = '☕ <em>Hangout invitation sent: "Coffee break?" (expires in 15m)</em>';
+        messagesEl.appendChild(notice);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      });
+
+      document.getElementById('btnSmileyDemo').addEventListener('click', () => {
+        inputEl.value += ' =)) ';
+        inputEl.focus();
+      });
+    })();
+  </script>
 </body>
 </html>
