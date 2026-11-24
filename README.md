@@ -31,6 +31,7 @@ messages as readable by anyone with access to the project's database.
 | Chat menus (Conversation, Edit, View, Actions, Help), fonts and colors, F3 earlier messages, Clear Window | Built; checked with two users in the Linux desktop app |
 | Incoming-message alerts, "is now online" toast, tray icon, sounds | Built; checked in the Linux desktop app except the tray itself (see design.md, Requirement 16) |
 | Responsive windows (220x400 up to maximized) | Built; see [docs/responsive-checks.md](docs/responsive-checks.md) |
+| "B!" logo with sparks background, four themes, in the title bar, sign-in, About, and app icon | Built; the theme is set in code only |
 | Installer config (task 17.1) and two-user integration tests | Not yet |
 | Nudge extended: row shake and red count, Recent Buzzes with Nudge back, 5 Buzzes per 10 minutes | Built and unit-tested; not yet checked between two running apps. The log and the limit live on the sender's computer only |
 | Share What I'm Playing (automatic Now Playing, off by default) | Linux: checked with Spotify and a test player. Windows (system media controls) and macOS (Spotify and Apple Music only) readers are written and compile, but have not been run on those systems |
@@ -188,9 +189,17 @@ from the Actions tab or by pushing a tag like `v0.1.0-beta.1`. It needs the
 two `NEXT_PUBLIC_SUPABASE_*` values as repository secrets. The builds are not
 code signed; testers follow [docs/beta-install.md](docs/beta-install.md).
 
-App icons: `python3 scripts/gen-app-icon.py` draws `src-tauri/icons/app-icon.png`
-(original art), and `npx tauri icon src-tauri/icons/app-icon.png` makes
-every size.
+Logo and app icon: the "B!" logo (original art, ADR 0006) is drawn once in
+`lib/brand/logo.ts`. `components/BuzzLogo.tsx` shows it in every title bar, and
+`components/BuzzHero.tsx` shows the full-width burst banner on the sign-in,
+sign-up, and About windows. There are four themes: `classic` (the default),
+`sakura`, `ember`, and `midnight`; pass `theme="sakura"` to either component.
+There is no theme setting for users yet.
+
+`node scripts/gen-app-icon.mjs [theme] [--sheet]` renders
+`src-tauri/icons/app-icon.png` (`--sheet` also writes a preview of every theme
+to `/tmp`), and `npx tauri icon src-tauri/icons/app-icon.png` makes every size.
+It needs no extra tools beyond `sharp`, which Next.js already installs.
 
 ## Project layout
 

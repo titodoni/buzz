@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { WindowFrame } from "@/components/WindowFrame"
 import { signIn, signUp, MSG_CONFIRM_EMAIL } from "@/lib/auth/session"
 import { isValidEmail, isValidPassword, PASSWORD_MAX, PASSWORD_MIN } from "@/lib/validation/profile"
+import { BuzzHero } from "@/components/BuzzHero"
 import { AboutDialog } from "@/components/AboutDialog"
 import { MenuBar, type MenuDef } from "@/components/friends/MenuBar"
 import {
@@ -139,7 +140,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     <WindowFrame title={copy.title} menuBar={<MenuBar menus={menus} />}>
       {about ? <AboutDialog onClose={() => setAbout(false)} /> : null}
       {/* The window frame spans the whole window at any size; the form stays a centered column. */}
-      <div className="flex min-h-full items-center justify-center p-4">
+      <div className="flex min-h-full flex-col">
+        <BuzzHero height={200} />
+        <div className="flex flex-1 items-center justify-center p-4">
         <form onSubmit={onSubmit} noValidate className="flex w-full max-w-sm flex-col gap-3">
           <div className="flex flex-col gap-1">
             <label htmlFor={emailId} className="text-sm font-bold">
@@ -219,6 +222,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             </p>
           )}
         </form>
+        </div>
       </div>
     </WindowFrame>
   )

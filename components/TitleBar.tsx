@@ -1,6 +1,7 @@
 "use client";
 
 import type { MouseEvent, ReactNode } from "react";
+import { BuzzLogo } from "./BuzzLogo";
 import {
   closeWindow,
   minimizeWindow,
@@ -46,6 +47,7 @@ export function TitleBar({ title, icon, showMaximize = true }: TitleBarProps) {
       }}
       style={{ gap: 6, userSelect: "none", fontSize: 12, flexShrink: 0 }}
     >
+      <BuzzLogo size={16} />
       {icon ? <span style={{ display: "inline-flex" }}>{icon}</span> : null}
       <span
         style={{

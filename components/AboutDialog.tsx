@@ -1,5 +1,6 @@
 "use client"
 import { APP_VERSION } from "@/lib/app/version"
+import { BuzzHero } from "./BuzzHero"
 import { Dialog } from "./Dialog"
 
 /** About Buzz (Req 13.8): version, copyright, and that Buzz is not Yahoo's. */
@@ -7,6 +8,7 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
   return (
     <Dialog title="About Buzz" onClose={onClose}>
       <div className="flex flex-col items-center gap-2 p-1 text-center">
+        <BuzzHero height={150} />
         <p className="m-0 text-lg font-bold" style={{ color: "var(--ym-purple)" }}>
           Buzz
         </p>
