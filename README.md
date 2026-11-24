@@ -39,13 +39,16 @@ mobile app are out of scope on purpose.
 1. Open the [Releases page](https://github.com/titodoni/buzz/releases) and
    download the file for your system:
 
-   | System | File |
-   | --- | --- |
-   | Windows 10 / 11 | `Buzz_<version>_x64-setup.exe` |
-   | macOS, Apple Silicon | `Buzz_<version>_aarch64.dmg` |
-   | macOS, Intel | `Buzz_<version>_x64.dmg` |
-   | Linux (Debian, Ubuntu) | `Buzz_<version>_amd64.deb` |
-   | Linux (any) | `Buzz_<version>_amd64.AppImage` |
+   | System | File | Status |
+   | --- | --- | --- |
+   | Windows 10 / 11 | `Buzz_<version>_x64-setup.exe` | Beta, untested |
+   | macOS, Apple Silicon | `Buzz_<version>_aarch64.dmg` | Beta, untested |
+   | macOS, Intel | `Buzz_<version>_x64.dmg` | Beta, untested |
+   | Linux (Debian, Ubuntu) | `Buzz_<version>_amd64.deb` | Tested |
+   | Linux (any) | `Buzz_<version>_amd64.AppImage` | Tested |
+
+   "Beta, untested" means our CI builds it, but nobody has run it on a real
+   Windows PC or Mac yet. Please report how it goes.
 
 2. Run it. The beta builds are **not code signed yet**, so Windows and macOS
    will warn you the first time. Step-by-step help for each system is in
