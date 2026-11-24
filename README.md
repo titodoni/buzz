@@ -232,3 +232,9 @@ tabbed chats, a mobile app, and any encryption claim until it is verified (ADR 0
 chat and Buzz! only.
 
 All art and sound are original; Buzz is not affiliated with Yahoo.
+
+## License
+
+MIT, see [LICENSE](LICENSE). The art and sounds are original and covered by the
+same license (ADR 0006).
+

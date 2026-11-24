@@ -9,3 +9,7 @@ next-env.d.ts
 
 # Third-party reference screenshots (not ours to redistribute, see docs/adr/0006)
 /screenshoot/
+
+# Supabase CLI scratch files and the early spec archive (the specs live in .kiro/)
+/supabase/.temp/
+/kiroween-buzz-kiro-spec.zip

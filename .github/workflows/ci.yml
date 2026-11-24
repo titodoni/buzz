@@ -1,0 +1,72 @@
+# Checks every push to main and every pull request. It runs the same gates the
+# workflow in AGENTS.md and the tech steering ask for after each task:
+# typecheck, lint, unit tests, and the Rust shell's format, clippy and tests.
+# It needs no secrets. The database rules (`npm run test:rls`) need a real
+# Supabase database, so they are still run by hand (see supabase/README.md).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+
+  # Windows and macOS run too, so the Now Playing readers for those systems
+  # (src-tauri/src/now_playing.rs) are compiled and linted on their own OS.
+  shell:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-22.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.platform }}
+    defaults:
+      run:
+        working-directory: src-tauri
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Linux packages for Tauri
+        if: matrix.platform == 'ubuntu-22.04'
+        working-directory: .
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xdg-utils
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      # Tauri's build script needs the frontend folder to exist; the web job
+      # builds the real one, and the Rust checks do not look inside it.
+      - name: Placeholder frontend folder
+        working-directory: .
+        shell: bash
+        run: mkdir -p out
+
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
