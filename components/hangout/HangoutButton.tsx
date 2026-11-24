@@ -57,7 +57,8 @@ export function HangoutButton({
     <>
       <button
         type="button"
-        className="ym-button"
+        className="ym-chip"
+        title="Ask to hang out"
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-describedby={reasonText ? "hangout-reason" : undefined}

@@ -88,40 +88,42 @@ export const MessageInput = forwardRef<MessageInputHandle, MessageInputProps>(fu
   }
 
   return (
-    <div style={{ padding: 6 }}>
-      <textarea
-        className="ym-message-box"
-        ref={areaRef}
-        value={text}
-        aria-label="Type a message"
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? "message-error" : undefined}
-        onChange={(e) => change(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-            e.preventDefault();
-            submit();
-          }
-        }}
-        style={{ width: "100%", boxSizing: "border-box", resize: "none", padding: 4, ...formatToStyle(format) }}
-      />
+    <div style={{ padding: "4px 6px 4px" }}>
+      <div style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
+        <textarea
+          className="ym-message-box"
+          ref={areaRef}
+          value={text}
+          aria-label="Type a message"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "message-error" : undefined}
+          onChange={(e) => change(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault();
+              submit();
+            }
+          }}
+          style={{ flex: 1, minWidth: 0, boxSizing: "border-box", resize: "none", padding: 4, border: "1px solid var(--border)", ...formatToStyle(format) }}
+        />
+        <button type="button" className="ym-send" onClick={submit}>
+          Send
+        </button>
+      </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
         <span
           id="message-error"
           role="alert"
-          style={{ color: "var(--buzz-red)", fontSize: 12, minHeight: 16 }}
+          style={{ color: "var(--buzz-red)", fontSize: 12, minHeight: 14 }}
         >
           {error ?? ""}
         </span>
         <span
-          style={{ fontSize: 11, color: text.length > MESSAGE_BODY_MAX ? "var(--buzz-red)" : "var(--text-muted)" }}
+          style={{ fontSize: 10, color: text.length > MESSAGE_BODY_MAX ? "var(--buzz-red)" : "var(--text-muted)" }}
           aria-label="Characters used"
         >
           {text.length}/{MESSAGE_BODY_MAX}
         </span>
-        <button type="button" className="ym-button" onClick={submit}>
-          Send
-        </button>
       </div>
     </div>
   );

@@ -483,12 +483,15 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
           <>
             <button
               type="button"
-              className="ym-button"
+              className="ym-chip"
+              title="Emoticons"
               aria-haspopup="dialog"
               aria-expanded={pickerOpen}
               onClick={() => (pickerOpen ? closePicker() : setPickerOpen(true))}
             >
-              Emoticons
+              {/* eslint-disable-next-line @next/next/no-img-element -- static export, tiny local SVG */}
+              <img src="/emoticons/smile.svg" alt="" width={18} height={18} />
+              <span className="sr-only">Emoticons</span>
             </button>
             <NudgeButton ref={nudgeRef} friendId={friendId} friendPresence={presence} onNudge={handleNudge} blockReason={nudgeBlockReason} />
             <HangoutButton

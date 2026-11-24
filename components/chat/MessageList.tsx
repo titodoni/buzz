@@ -103,7 +103,7 @@ export function MessageList({
         const failed = item.status === "failed";
         const style = item.mine || showFriendsFonts ? formatToStyle(item.format) : DEFAULT_STYLE;
         return (
-          <div key={item.id} style={{ margin: "4px 0", opacity: item.status === "sending" ? 0.6 : 1 }}>
+          <div key={item.id} style={{ margin: "2px 0", opacity: item.status === "sending" ? 0.6 : 1 }}>
             <span
               style={{
                 fontWeight: 700,
@@ -113,18 +113,16 @@ export function MessageList({
               {item.mine ? myName : friendName}
             </span>
             {showTimestamps ? (
-              <>
-                {" "}
-                <span style={{ color: "#888", fontSize: 11 }}>{hhmm(item.createdAt)}</span>
-              </>
+              <span style={{ color: item.mine ? "var(--msg-self)" : "var(--msg-friend)", fontWeight: 700 }}>
+                {" "}({hhmm(item.createdAt)})
+              </span>
             ) : null}
-            <div>
-              {item.unreadable ? (
-                <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>{item.body}</span>
-              ) : (
-                <MessageBubble body={item.body} style={style} />
-              )}
-            </div>
+            <span style={{ fontWeight: 700, color: item.mine ? "var(--msg-self)" : "var(--msg-friend)" }}>: </span>
+            {item.unreadable ? (
+              <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>{item.body}</span>
+            ) : (
+              <MessageBubble body={item.body} style={style} />
+            )}
             {failed ? (
               <div role="alert" style={{ color: "var(--buzz-red)", fontSize: 12 }}>
                 {MSG_NOT_SENT_LINE}

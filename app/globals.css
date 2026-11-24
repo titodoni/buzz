@@ -275,8 +275,10 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  padding: 2px 6px;
+  gap: 4px;
+  padding: 3px 6px;
+  background: linear-gradient(to bottom, #ffffff, #e4def2);
+  border-top: 1px solid var(--border);
 }
 
 .ym-chat-pictures {
@@ -307,6 +309,9 @@ body {
   gap: 4px;
   padding: 2px 6px;
   font-size: 12px;
+  background: linear-gradient(to bottom, #ffffff, #e4def2);
+  border-top: 1px solid #ffffff;
+  border-bottom: 1px solid var(--border);
 }
 
 .ym-format-bar select {
@@ -490,4 +495,60 @@ body {
 .ym-now-playing {
   color: var(--ym-blue);
   text-decoration: underline;
+}
+
+/* ---- Classic IM window (YM-style) ---- */
+
+/* Small toolbar buttons under the conversation: emoticons, BUZZ!, Hangout. */
+.ym-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-body);
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+}
+.ym-chip:hover:not(:disabled) {
+  border-color: var(--border);
+  background: linear-gradient(to bottom, #ffffff, #e9e9e9);
+}
+.ym-chip[aria-expanded="true"] {
+  border-color: var(--ym-purple);
+  background: linear-gradient(to bottom, #f3ecff, #ddd0f5);
+}
+.ym-chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+/* BUZZ! in bold red capitals, the signature button. */
+.ym-chip-buzz {
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--buzz-red);
+}
+
+/* Send sits to the right of the text box at its full height. */
+.ym-send {
+  flex: none;
+  width: 64px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text-body);
+  cursor: pointer;
+  border: 1px solid #8f8f8f;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, #ffffff, #d6d6d6);
+  box-shadow: inset 0 1px 0 #ffffff;
+}
+.ym-send:hover {
+  background: linear-gradient(to bottom, #ffffff, #e6e6e6);
+}
+.ym-send:active {
+  background: linear-gradient(to bottom, #d6d6d6, #ffffff);
 }

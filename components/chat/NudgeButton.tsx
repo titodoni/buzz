@@ -127,16 +127,15 @@ export const NudgeButton = forwardRef<
     <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
       <button
         type="button"
-        className="ym-button"
-        style={{ minHeight: 28 }}
+        className="ym-chip ym-chip-buzz"
         title="Buzz! (Ctrl+G)"
         disabled={!enabled}
         aria-describedby="nudge-status"
         onClick={() => void sendNudge()}
       >
-        Buzz!
+        BUZZ!
       </button>
-      <span id="nudge-status" role="status" aria-live="polite">
+      <span id="nudge-status" role="status" aria-live="polite" className="text-xs">
         {status}
       </span>
     </span>
