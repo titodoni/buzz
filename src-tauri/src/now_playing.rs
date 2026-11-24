@@ -93,6 +93,10 @@ mod os {
     }
 
     pub type State = Option<PlayerFinder>;
+
+    pub fn new_state() -> State {
+        None
+    }
 }
 
 /// macOS: Spotify and Apple Music only, through AppleScript (buzz-trigger R7.7).
@@ -108,7 +112,12 @@ mod os {
     use std::time::{Duration, Instant};
 
     pub const SUPPORTED: bool = true;
-    pub type State = ();
+    /// The macOS reader keeps nothing between reads.
+    pub struct State;
+
+    pub fn new_state() -> State {
+        State
+    }
 
     /// Prints `artist<U+001F>title` for the first app that is playing, else nothing.
     const SCRIPT: &str = r#"
@@ -132,7 +141,7 @@ return ""
     /// A stuck script (an app that hangs, an unanswered permission prompt) must not block the reader for long.
     const SCRIPT_TIMEOUT: Duration = Duration::from_secs(2);
 
-    pub fn current(_: &mut ()) -> Option<Track> {
+    pub fn current(_: &mut State) -> Option<Track> {
         let mut child = Command::new("osascript")
             .arg("-e")
             .arg(SCRIPT)
@@ -178,6 +187,10 @@ mod os {
         ready: bool,
     }
 
+    pub fn new_state() -> State {
+        State::default()
+    }
+
     fn read() -> windows::core::Result<Option<Track>> {
         let manager = Manager::RequestAsync()?.join()?;
         for session in manager.GetSessions()? {
@@ -212,10 +225,14 @@ mod os {
     use super::Track;
 
     pub const SUPPORTED: bool = false;
-    pub fn current(_: &mut ()) -> Option<Track> {
+    pub fn current(_: &mut State) -> Option<Track> {
         None
     }
-    pub type State = ();
+    pub struct State;
+
+    pub fn new_state() -> State {
+        State
+    }
 }
 
 /// Which system this build reads from: "linux", "windows", "macos", or "other".
@@ -246,7 +263,7 @@ pub fn set_now_playing_enabled(app: AppHandle, enabled: bool) {
     }
     STARTED.call_once(move || {
         std::thread::spawn(move || {
-            let mut state = os::State::default();
+            let mut state = os::new_state();
             let mut last: Option<Option<Track>> = None;
             loop {
                 if ENABLED.load(Ordering::SeqCst) {
