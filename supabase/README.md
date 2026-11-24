@@ -56,12 +56,18 @@ supabase gen types typescript --linked > lib/supabase/database.types.ts
 
 ## Realtime Authorization
 
-Chat (`chat:<pair>`) and inbox (`inbox:<userId>`) channels are joined as
-**private** channels. Migration `20250101000600_realtime_private_channels.sql`
-adds the RLS policies on `realtime.messages` that decide who may join and
-broadcast. Private channels need no extra dashboard setting; leaving
-"Allow public access" on keeps `presence:global` working (see
-`docs/adr/0003` for its known gap).
+Chat (`chat:<pair>`), inbox (`inbox:<userId>`) and presence
+(`presence:<userId>`) channels are all joined as **private** channels.
+Migrations `20250101000600_realtime_private_channels.sql` and
+`20261124124401_private_presence_and_sender_key.sql` add the RLS policies on
+`realtime.messages` that decide who may join, broadcast and track (only the
+owner tracks on their presence topic; only accepted friends who are not
+ignored may listen).
+
+Builds before the private presence change still use the public
+`presence:global` channel. Once every tester runs a build with private
+presence, turn **off** "Allow public access" in Project Settings → Realtime,
+so no channel works without these policies (docs/adr/0003).
 
 ## Local stack (Docker)
 

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest"
 import { generateKeyPair } from "../../crypto/box"
 import { decryptMessage } from "../../crypto/message"
 import { DEFAULT_FORMAT } from "../format"
-import { MSG_NOT_SENT, MSG_NO_KEYCHAIN, MSG_NO_KEY_HERE, sendEncrypted, type SendDeps } from "../send"
+import { MSG_NOT_SENT, MSG_NO_KEYCHAIN, MSG_NO_KEY_HERE, MSG_SLOW_DOWN, sendEncrypted, type SendDeps } from "../send"
 
 // Feature: buzz-encryption, the send rules (E2.1, E2.5, E3.1)
 type Inserted = Parameters<SendDeps["insert"]>[0]
@@ -96,5 +96,13 @@ describe("sendEncrypted", () => {
     expect(await sendEncrypted({ ...t.input, body: "  " }, t.deps)).toEqual({ ok: false, message: MSG_NOT_SENT })
     expect(await sendEncrypted({ ...t.input, body: "a".repeat(1001) }, t.deps)).toEqual({ ok: false, message: MSG_NOT_SENT })
     expect(t.inserted).toEqual([])
+  })
+})
+
+describe("sendEncrypted and the rate limit", () => {
+  it("says to slow down when the database refuses for speed", async () => {
+    const { deps, input } = await setup()
+    deps.insert = async () => "rate-limited"
+    expect(await sendEncrypted(input, deps)).toEqual({ ok: false, message: MSG_SLOW_DOWN })
   })
 })

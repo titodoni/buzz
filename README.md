@@ -67,10 +67,6 @@ service with the release installers. Until it is, assume messages can be read
 by whoever runs the service's database. Presence and status are not hidden
 from the service either.
 
-Known gap: the presence channel is public. Someone holding the app's public
-key can see which anonymous user ids are online, but no names, pictures or
-messages ([ADR 0003](docs/adr/0003-chat-windows-read-presence-without-tracking.md)).
-
 ## Project state
 
 Buzz is a **beta (v0.1.0)** made for Kiroween 2026, in the Resurrection

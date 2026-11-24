@@ -30,6 +30,9 @@ await c.query("begin");
 // checks insert the encrypted shape: no body, two ciphers, a sender key.
 const ENC_COLS = "encrypted, cipher_receiver, cipher_sender, sender_public_key";
 const ENC_VALS = "true, 'x', 'y', '" + "A".repeat(43) + "'";
+// Since migration 20261124124401 a message's sender key must be the sender's
+// published key, so the test sender publishes the key the rows carry.
+const publishTestKey = async (uid) => { await asAdmin(); await c.query(`insert into user_keys (user_id, public_key) values ($1,$2) on conflict (user_id) do update set public_key = excluded.public_key`, [uid, "A".repeat(43)]); };
 for (const [id, email] of [[A, "ann@buzz.test"], [B, "bob@buzz.test"], [C, "cat@buzz.test"]])
   await c.query(`insert into auth.users (id, email, aud, role, instance_id) values ($1, $2, 'authenticated', 'authenticated', '00000000-0000-0000-0000-000000000000')`, [id, email]);
 await check("signup trigger creates profile from email prefix", async () => (await c.query(`select display_name from profiles where id=$1`, [A])).rows[0]?.display_name, "ann");
@@ -64,8 +67,8 @@ await check("A cannot file stranger C into a group (only friends)", async () => 
 // ---- Ignore list enforcement (Req 15.2, 15.4, 15.6). A ignores friend B.
 const ignoreB = async () => { await as(A); await c.query(`insert into ignored_users (owner_id, ignored_id) values ($1,$2)`, [A, B]); };
 await check("ignored B cannot message A (Req 15.2)", async () => { await ignoreB(); await as(B); await c.query(`insert into messages (sender_id, receiver_id, body) values ($1,$2,'hello?')`, [B, A]); return "inserted"; }, (g) => /row-level security/.test(g));
-await check("A can still message B, who A ignored", async () => { await ignoreB(); await as(A); return (await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}) values ($1,$2,${ENC_VALS})`, [A, B])).rowCount; }, 1);
-await check("B messages A again after A un-ignores B (Req 15.6)", async () => { await ignoreB(); await as(A); await c.query(`delete from ignored_users where owner_id=$1 and ignored_id=$2`, [A, B]); await as(B); return (await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}) values ($1,$2,${ENC_VALS})`, [B, A])).rowCount; }, 1);
+await check("A can still message B, who A ignored", async () => { await publishTestKey(A); await ignoreB(); await as(A); return (await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}) values ($1,$2,${ENC_VALS})`, [A, B])).rowCount; }, 1);
+await check("B messages A again after A un-ignores B (Req 15.6)", async () => { await publishTestKey(A); await publishTestKey(B); await ignoreB(); await as(A); await c.query(`delete from ignored_users where owner_id=$1 and ignored_id=$2`, [A, B]); await as(B); return (await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}) values ($1,$2,${ENC_VALS})`, [B, A])).rowCount; }, 1);
 await check("ignored C cannot send A a friend request (Req 15.4)", async () => { await as(A); await c.query(`insert into ignored_users (owner_id, ignored_id) values ($1,$2)`, [A, C]); await as(C); await c.query(`insert into friendships (requester_id, addressee_id, status) values ($1,$2,'pending')`, [C, A]); return "inserted"; }, (g) => /row-level security/.test(g));
 await check("ignored B cannot re-request A after removal", async () => { await ignoreB(); await asAdmin(); await c.query(`update friendships set status='removed' where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]); await as(B); await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2 where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [B, A]); return "updated"; }, (g) => /request not allowed/.test(g));
 await check("is_ignored_by tells B that A ignores B", async () => { await ignoreB(); await as(B); return (await c.query(`select public.is_ignored_by($1) x`, [A])).rows[0].x; }, true);
@@ -115,6 +118,7 @@ await check("a removed friend no longer reads the key", async () => { await asAd
 // ---- Encrypted Messages (migrations 20250101001600 to 20250101001602): shape rules and receipts.
 const K = "A".repeat(43);
 await asAdmin(); await c.query(`update friendships set status='accepted'`);
+await publishTestKey(A);
 const sendEnc = async (cols) => { await as(A); const keys = Object.keys(cols); return (await c.query(`insert into messages (sender_id, receiver_id, ${keys.join(",")}) values ($1,$2,${keys.map((_, i) => "$" + (i + 3)).join(",")})`, [A, B, ...keys.map(k => cols[k])])).rowCount; };
 await check("an encrypted message with two copies and a sender key is accepted", async () => sendEnc({ encrypted: true, cipher_receiver: "x", cipher_sender: "y", sender_public_key: K }), 1);
 await check("an encrypted message with a readable body is refused", async () => sendEnc({ encrypted: true, cipher_receiver: "x", cipher_sender: "y", sender_public_key: K, body: "leak" }), (g) => /check constraint/.test(g));
@@ -151,13 +155,13 @@ await check("sender A can expire a Hangout older than 15 minutes", async () => s
 await check("an answered Hangout is final", async () => { const id = await seedHangout(A, B); await setStatus(B, id, "accepted"); return setStatus(B, id, "declined"); }, (g) => /cannot change/.test(g));
 await check("receiver B cannot edit the text", async () => { const id = await seedHangout(A, B); await as(B); await c.query(`update hangouts set text='mine' where id=$1`, [id]); return "updated"; }, (g) => /only status/.test(g));
 await check("nobody can delete a Hangout", async () => { const id = await seedHangout(A, B); await as(A); const a = (await c.query(`delete from hangouts where id=$1`, [id])).rowCount; await as(B); return a + (await c.query(`delete from hangouts where id=$1`, [id])).rowCount; }, 0);
-// ---- Security hardening (migration 20261124120000).
-await check("the server sets created_at and delivered_at on a new message", async () => {
+// ---- Security hardening (migration 20261124124350).
+await check("the server sets created_at and moves a delivered stamp to now", async () => {
   await asAdmin(); await c.query(`update friendships set status='accepted'`);
   await as(A);
   await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}, created_at, delivered_at) values ($1,$2,true,'srv','y',$3, now() + interval '1 day', now())`, [A, B, K]);
   await asAdmin();
-  return (await c.query(`select (created_at <= now() and delivered_at is null) ok from messages where cipher_receiver='srv'`)).rows[0].ok;
+  return (await c.query(`select (created_at <= now() and delivered_at <= now()) ok from messages where cipher_receiver='srv'`)).rows[0].ok;
 }, true);
 await check("receiver B cannot accept a Hangout after its 15 minutes", async () => setStatus(B, await seedHangout(A, B, 20), "accepted"), (g) => /not allowed/.test(g));
 await check("nobody can edit responded_at without answering", async () => { const id = await seedHangout(A, B); await as(B); await c.query(`update hangouts set responded_at=now() where id=$1`, [id]); return "updated"; }, (g) => /only status/.test(g));
@@ -166,6 +170,38 @@ await check("a three-letter name search still finds the person", async () => { a
 await check("anon holds no privilege on messages", async () => { await asAdmin(); return (await c.query(`select has_table_privilege('anon','public.messages','select') or has_table_privilege('anon','public.messages','insert') as p`)).rows[0].p; }, false);
 await check("signed-in users cannot TRUNCATE a table", async () => { await asAdmin(); return (await c.query(`select has_table_privilege('authenticated','public.messages','truncate') as p`)).rows[0].p; }, false);
 await check("an avatar_url over 512 characters is refused", async () => { await as(A); await c.query(`update profiles set avatar_url = '/avatars/' || repeat('a', 600) where id=$1`, [A]); return "updated"; }, (g) => /profiles_avatar_url_len|check constraint/.test(g));
+// ---- Rate limits (migration 20261124124357).
+await check("the 61st message within a minute is refused", async () => {
+  await asAdmin(); await c.query(`update friendships set status='accepted'`);
+  const already = (await c.query(`select count(*)::int n from messages where sender_id=$1 and created_at > now() - interval '1 minute'`, [A])).rows[0].n;
+  await as(A);
+  for (let i = already; i < 60; i++) await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}) values ($1,$2,${ENC_VALS})`, [A, B]);
+  try { await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}) values ($1,$2,${ENC_VALS})`, [A, B]); } catch (e) { return `refused after ${60 - already} more: ${e.message}`; }
+  return "inserted";
+}, (g) => /^refused after \d+ more: messages: slow down/.test(g));
+await check("the 11th hangout within ten minutes is refused", async () => {
+  for (let i = 0; i < 10; i++) { await asAdmin(); await c.query(`insert into hangouts (sender_id, receiver_id, text, status) values ($1,$2,'Study together?','expired')`, [A, B]); }
+  return sendHangout(A, B);
+}, (g) => /slow down/.test(g));
+await check("a declined request cannot be re-opened within an hour", async () => {
+  await asAdmin(); await c.query(`update friendships set status='declined' where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]);
+  await as(A); await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2 where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]); return "updated";
+}, (g) => /wait before asking again/.test(g));
+// ---- Sender key and private presence (migration 20261124124401).
+await check("a message carrying a key the sender has not published is refused", async () => {
+  await publishTestKey(A); await as(A);
+  await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}) values ($1,$2,true,'x','y',$3)`, [A, B, "B".repeat(43)]);
+  return "inserted";
+}, (g) => /sender key/.test(g));
+const topicAllowed = async (uid, topic, extension) => {
+  await as(uid);
+  await c.query(`select set_config('realtime.topic', $1, true)`, [topic]);
+  await c.query(`insert into realtime.messages (topic, extension, payload, event, private) values ($1, $2, '{}'::jsonb, 'presence', true)`, [topic, extension]);
+  return "inserted";
+};
+await check("A may track presence on A's own topic", async () => topicAllowed(A, `presence:${A}`, "presence"), "inserted");
+await check("B cannot track presence on A's topic", async () => topicAllowed(B, `presence:${A}`, "presence"), (g) => /row-level security/.test(g));
+await check("stranger C cannot track presence on A's topic", async () => topicAllowed(C, `presence:${A}`, "presence"), (g) => /row-level security/.test(g));
 await c.query("rollback");
 await c.end();
 console.table(results);

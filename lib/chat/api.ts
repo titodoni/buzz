@@ -41,6 +41,11 @@ export function loadEarlier(me: string, friendId: string, before: string | null)
   return loadPage(me, friendId, before)
 }
 
+/** The database's rate-limit triggers raise "... slow down" (migration 20261124124357). */
+function isRateLimited(error: { message?: string }): boolean {
+  return /slow down/.test(error.message ?? "")
+}
+
 /** Real versions of what `sendEncrypted` needs from the outside. */
 const sendDeps: SendDeps = {
   fetchFriendKey: fetchPublicKey,
@@ -64,6 +69,7 @@ const sendDeps: SendDeps = {
           sender_public_key: row.sender_public_key,
           ...(row.delivered ? { delivered_at: new Date().toISOString() } : {}),
         })
+      if (error && isRateLimited(error)) return "rate-limited"
       return !error
     } catch {
       return false

@@ -12,6 +12,8 @@ export interface MessageRow {
   format?: unknown;
   /** An Encrypted Message this device could not read; `body` holds the notice text. */
   unreadable?: boolean;
+  /** It came with a sender key the user has not checked (shown as unreadable too). */
+  unverified?: boolean;
 }
 
 /**

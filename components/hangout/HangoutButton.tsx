@@ -46,6 +46,8 @@ export function HangoutButton({
       onNote(hint ? `Hangout sent: ${text}. ${hint}.` : `Hangout sent: ${text}`)
     } else if (res.reason === "pending") {
       onNote("A Hangout is already waiting for an answer.")
+    } else if (res.reason === "rate-limited") {
+      onNote("That's a lot of Hangouts! Wait a few minutes before sending another.")
     } else if (res.reason === "invalid") {
       onNote("Write 1 to 60 characters for the Hangout.")
     } else {

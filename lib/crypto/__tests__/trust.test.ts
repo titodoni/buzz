@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { generateKeyPair } from "../box"
 import { safetyNumber } from "../safetyNumber"
-import { checkFriendKey, keyToPin, loadPins, parsePins, pinFriendKey, sendGate } from "../trust"
+import { acceptedKeys, checkFriendKey, keyToPin, loadPins, parsePins, pinFriendKey, sendGate, trustReceivedKey } from "../trust"
 
 // Feature: buzz-encryption, Safety Number and key trust (E3)
 describe("safetyNumber", () => {
@@ -103,5 +103,47 @@ describe("keyToPin", () => {
   it("pins nothing without a compared key or a published key", () => {
     expect(keyToPin(null, "K1")).toBeNull()
     expect(keyToPin("K1", null)).toBeNull()
+  })
+})
+
+function memoryStore(): Pick<Storage, "getItem" | "setItem"> {
+  const m = new Map<string, string>()
+  return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) }
+}
+
+describe("trustReceivedKey (audit S11)", () => {
+  it("accepts and remembers the first key seen for a friend", () => {
+    const s = memoryStore()
+    expect(trustReceivedKey(s, "me", "ann", "K1")).toBe(true)
+    expect(acceptedKeys(s, "me", "ann")).toEqual(["K1"])
+  })
+
+  it("refuses a different key once one is accepted", () => {
+    const s = memoryStore()
+    trustReceivedKey(s, "me", "ann", "K1")
+    expect(trustReceivedKey(s, "me", "ann", "EVIL")).toBe(false)
+    expect(acceptedKeys(s, "me", "ann")).toEqual(["K1"])
+  })
+
+  it("after the user accepts a new key, old and new messages both open", () => {
+    const s = memoryStore()
+    trustReceivedKey(s, "me", "ann", "K1")
+    pinFriendKey(s, "me", "ann", "K2")
+    expect(trustReceivedKey(s, "me", "ann", "K1")).toBe(true)
+    expect(trustReceivedKey(s, "me", "ann", "K2")).toBe(true)
+    expect(trustReceivedKey(s, "me", "ann", "K3")).toBe(false)
+  })
+
+  it("a key pinned before the history existed still counts", () => {
+    const s = memoryStore()
+    s.setItem("buzz:friend-keys:me", JSON.stringify({ ann: "OLD" }))
+    expect(trustReceivedKey(s, "me", "ann", "OLD")).toBe(true)
+    expect(trustReceivedKey(s, "me", "ann", "NEW")).toBe(false)
+  })
+
+  it("keeps friends separate", () => {
+    const s = memoryStore()
+    trustReceivedKey(s, "me", "ann", "K1")
+    expect(trustReceivedKey(s, "me", "bob", "K2")).toBe(true)
   })
 })

@@ -1,25 +1,39 @@
 import { describe, it, expect } from "vitest";
-import { mergePresence } from "../presenceMerge";
+import { mergeFriendTopics, stateOfTopic } from "../presenceMerge";
 
-describe("mergePresence", () => {
-  it("reports a friend with no presence entry as offline", () => {
-    expect(mergePresence({}, ["ann"])).toEqual({ ann: "offline" });
+describe("stateOfTopic", () => {
+  it("reads an empty or missing topic as offline", () => {
+    expect(stateOfTopic(undefined)).toBe("offline");
+    expect(stateOfTopic({})).toBe("offline");
   });
 
-  it("reports the state a friend is tracking", () => {
-    const payload = { ann: [{ presence_state: "busy" }] };
-    expect(mergePresence(payload, ["ann"])).toEqual({ ann: "busy" });
+  it("reports the state tracked on the topic", () => {
+    expect(stateOfTopic({ ann: [{ presence_state: "busy" }] })).toBe("busy");
   });
 
-  it("with several entries, an explicit busy wins, then online, then away", () => {
-    const merged = mergePresence(
-      {
-        ann: [{ presence_state: "away" }, { presence_state: "online" }],
-        bob: [{ presence_state: "online" }, { presence_state: "busy" }],
-        cat: [{ presence_state: "nonsense" }, { presence_state: "away" }],
-      },
-      ["ann", "bob", "cat"],
-    );
-    expect(merged).toEqual({ ann: "online", bob: "busy", cat: "away" });
+  it("uses every entry on the topic, whatever its presence key", () => {
+    // Only the topic's owner can track there, so the key carries no meaning.
+    expect(stateOfTopic({ "some-other-key": [{ presence_state: "online" }] })).toBe("online");
+  });
+
+  it("with several entries, busy wins, then online, then away; junk is ignored", () => {
+    expect(stateOfTopic({ a: [{ presence_state: "away" }], b: [{ presence_state: "online" }] })).toBe("online");
+    expect(stateOfTopic({ a: [{ presence_state: "online" }, { presence_state: "busy" }] })).toBe("busy");
+    expect(stateOfTopic({ a: [{ presence_state: "nonsense" }, { presence_state: "away" }] })).toBe("away");
+    expect(stateOfTopic({ a: [{ presence_state: "nonsense" }] })).toBe("offline");
+  });
+});
+
+describe("mergeFriendTopics", () => {
+  it("gives each friend the state of their own topic and nobody else's", () => {
+    const topics = {
+      ann: { ann: [{ presence_state: "busy" as const }] },
+      bob: { bob: [{ presence_state: "away" as const }] },
+    };
+    expect(mergeFriendTopics(topics, ["ann", "bob", "cat"])).toEqual({ ann: "busy", bob: "away", cat: "offline" });
+  });
+
+  it("ignores topics of people who are not in the friend list", () => {
+    expect(mergeFriendTopics({ eve: { eve: [{ presence_state: "online" }] } }, ["ann"])).toEqual({ ann: "offline" });
   });
 });

@@ -5,6 +5,8 @@ import type { MessageFormat } from "./format"
 
 export const MSG_NO_KEY_HERE = "Your encryption key isn't ready yet. Try again in a moment."
 export const MSG_NOT_SENT = "This message was not sent."
+/** The database refuses more than 60 messages a minute from one sender. */
+export const MSG_SLOW_DOWN = "Whoa, that's a lot of messages! Wait a moment, then send again."
 export const MSG_NO_KEYCHAIN = "Encryption isn't available on this computer, so Buzz can't send messages."
 
 /** `reason` is set when the friend's key is the problem, so the window can offer the right next step. */
@@ -24,7 +26,7 @@ export interface SendDeps {
     cipher_sender: string
     sender_public_key: string
     delivered: boolean
-  }): Promise<boolean>
+  }): Promise<boolean | "rate-limited">
 }
 
 /**
@@ -69,5 +71,6 @@ export async function sendEncrypted(
     sender_public_key: input.keys.publicKey,
     delivered: input.delivered,
   })
+  if (ok === "rate-limited") return { ok: false, message: MSG_SLOW_DOWN }
   return ok ? { ok: true } : { ok: false, message: MSG_NOT_SENT }
 }

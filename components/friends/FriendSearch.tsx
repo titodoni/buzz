@@ -64,7 +64,7 @@ export function FriendSearch({ me, onSent, initialQuery = "" }: { me: string; on
         <input
           type="search"
           aria-label="Search by display name or email"
-          placeholder="Display name or exact email"
+          placeholder="3+ letters of a name, or exact email"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="min-w-0 flex-1 rounded border px-2 py-1"
@@ -76,7 +76,7 @@ export function FriendSearch({ me, onSent, initialQuery = "" }: { me: string; on
       <p role="status" className="mt-1 min-h-4 text-xs">
         {note}
       </p>
-      {results && results.length === 0 ? <p className="text-xs">No one found. Check the spelling, or use their exact email.</p> : null}
+      {results && results.length === 0 ? <p className="text-xs">No one found. Type at least 3 letters of their name, or their exact email.</p> : null}
       <ul className="m-0 list-none p-0">
         {results?.map((p) => (
           <li key={p.id} className="ym-row flex items-center justify-between gap-2 px-1 py-1">

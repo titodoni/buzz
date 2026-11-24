@@ -1,5 +1,6 @@
 /** Hard cap on search results (Req 3.1). */
-export const MAX_SEARCH_RESULTS = 50;
+/** Matches the limit in search_users (migration 20261124124350). */
+export const MAX_SEARCH_RESULTS = 20;
 
 /**
  * Case-insensitive "contains" search on email or display_name.

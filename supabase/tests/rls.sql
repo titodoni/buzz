@@ -92,10 +92,10 @@
 -- If B ignores A: A's insert                                   -- ERROR (ADR 0009)
 -- Nobody: delete from public.hangouts;                         -- 0 rows
 
--- == 7. Security hardening (migration 20261124120000) ==
+-- == 7. Security hardening (migration 20261124124350) ==
 -- The executable version of these checks is in supabase/tests/rls-check.mjs (npm run test:rls).
 -- As A: insert a message with created_at = now() + 1 day and delivered_at = now()
---   read it back: created_at <= now() and delivered_at is null       -- the server sets both
+--   read it back: created_at <= now() and delivered_at <= now()       -- the server sets both (20261124124656 keeps the stamp, at now)
 -- As B: accept a Hangout older than 15 minutes                       -- ERROR (not allowed)
 -- As B: update hangouts set responded_at = now() (status unchanged)  -- ERROR (only status may change)
 -- As C: select * from public.search_users('an');                     -- 0 rows (name needs 3+ letters)
@@ -103,3 +103,19 @@
 -- select has_table_privilege('anon', 'public.messages', 'select');   -- false
 -- select has_table_privilege('authenticated', 'public.messages', 'truncate'); -- false
 -- As A: update public.profiles set avatar_url = '/avatars/' || repeat('a', 600); -- ERROR (check)
+
+-- == 8. Rate limits (migration 20261124124357) ==
+-- The executable version of these checks is in supabase/tests/rls-check.mjs (npm run test:rls).
+-- As A: 60 inserts into messages within a minute                     -- ok; the 61st: ERROR (slow down)
+-- As A: 10 hangouts within ten minutes                               -- ok; the 11th: ERROR (slow down)
+-- As A: 20 pending friend requests sent within an hour               -- ok; the 21st: ERROR (too many requests)
+-- B declines A's request; as A re-open it within an hour             -- ERROR (wait before asking again)
+
+-- == 9. Private presence and the sender key (migration 20261124124401) ==
+-- The executable version of these checks is in supabase/tests/rls-check.mjs (npm run test:rls).
+-- Realtime runs these as the joining user with realtime.topic() set to the topic.
+-- As A, topic 'presence:<A>': insert into realtime.messages (extension 'presence') -- ok (track own)
+-- As B, topic 'presence:<A>': the same insert                     -- ERROR (only A tracks there)
+-- As C, topic 'presence:<A>': select (join)                        -- no rows allowed (not a friend)
+-- As B, topic 'presence:<A>': select (join)                        -- allowed while friends, unless A ignores B
+-- As A: insert an Encrypted Message whose sender_public_key is not A's row in user_keys -- ERROR (sender key)

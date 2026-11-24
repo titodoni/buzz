@@ -11,12 +11,12 @@ const opts = { numRuns: 200 };
 
 describe("searchUsers", () => {
   // Feature: buzz, Property 7: Friend search filtering
-  it("results match query, exclude self, and are capped at 50", () => {
+  it("results match query, exclude self, and are capped at 20", () => {
     fc.assert(
       fc.property(fc.array(user, { maxLength: 120 }), fc.string({ maxLength: 3 }), fc.string({ maxLength: 6 }), (users, q, self) => {
         const res = searchUsers(users, q, self);
         const needle = q.trim().toLowerCase();
-        expect(res.length).toBeLessThanOrEqual(50);
+        expect(res.length).toBeLessThanOrEqual(20);
         if (needle === "") expect(res).toEqual([]);
         for (const u of res) {
           expect(u.id).not.toBe(self);
@@ -28,16 +28,16 @@ describe("searchUsers", () => {
   });
 
   // Feature: buzz, Property 7: Friend search filtering (cap boundaries, self included in list)
-  it.each([49, 50, 51, 52])("with %i matches returns min(n, 50), never including self", (n) => {
+  it.each([19, 20, 21, 22])("with %i matches returns min(n, 20), never including self", (n) => {
     fc.assert(
       fc.property(fc.constantFrom("a", "A"), fc.nat(5), (ch, limitExtra) => {
         const users = Array.from({ length: n }, (_, i) => ({ id: `u${i}`, email: `${ch}${i}@x.io`, display_name: "zz" }));
         users.push({ id: "me", email: "a@me.io", display_name: "a" });
         const res = searchUsers(users, "a", "me");
-        expect(res.length).toBe(Math.min(n, 50));
+        expect(res.length).toBe(Math.min(n, 20));
         expect(res.some((u) => u.id === "me")).toBe(false);
-        const lim = searchUsers(users, "a", "me", 50 + limitExtra);
-        expect(lim.length).toBeLessThanOrEqual(50);
+        const lim = searchUsers(users, "a", "me", 20 + limitExtra);
+        expect(lim.length).toBeLessThanOrEqual(20);
         expect(searchUsers(users, "a", "me", 3).length).toBe(Math.min(n, 3));
       }),
       { numRuns: 100 },

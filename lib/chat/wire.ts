@@ -16,9 +16,19 @@ export interface WireRow {
 }
 
 export const UNREADABLE_TEXT = "This message can't be read on this device."
+export const UNVERIFIED_TEXT = "This message came with a key you haven't checked. Check the Safety Number to read it."
 
-/** What reading needs: my id and private key, or null when this window has no key. */
-export type ReadKey = { id: string; privateKey: string } | null
+/**
+ * What reading needs: my id and private key, or null when this window has no key.
+ * `trustsSender` says whether a friend's message may be opened with the key
+ * stored on its row. Without it a row could carry any key and pass as the
+ * friend's (audit S11); with it, only keys the user has accepted open.
+ */
+export type ReadKey = {
+  id: string
+  privateKey: string
+  trustsSender?: (senderId: string, senderPublicKey: string) => boolean
+} | null
 
 /**
  * Turns a stored row into what the chat shows. Rows from before encryption
@@ -32,6 +42,9 @@ export async function readWireRow(row: WireRow, me: ReadKey): Promise<MessageRow
   const base = { id: row.id, sender_id: row.sender_id, receiver_id: row.receiver_id, created_at: row.created_at }
   const unreadable: MessageRow = { ...base, body: UNREADABLE_TEXT, unreadable: true }
   if (!me || !row.cipher_receiver || !row.cipher_sender || !row.sender_public_key) return unreadable
+  if (row.sender_id !== me.id && me.trustsSender && !me.trustsSender(row.sender_id, row.sender_public_key)) {
+    return { ...base, body: UNVERIFIED_TEXT, unreadable: true, unverified: true }
+  }
   const payload = await decryptMessage(
     { senderId: row.sender_id, senderPublicKey: row.sender_public_key, cipherReceiver: row.cipher_receiver, cipherSender: row.cipher_sender },
     me,

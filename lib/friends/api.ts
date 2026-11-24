@@ -7,6 +7,7 @@ import { getSupabase } from "@/lib/supabase/browser-client"
 import type { Database } from "@/lib/supabase/database.types"
 import { useProfileUpdates } from "./profileFeed"
 import { mergeProfile } from "./profileMerge"
+import { requestErrorMessage } from "./requestErrors"
 import { canSendRequest, MAX_SEARCH_RESULTS } from "./search"
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"]
@@ -33,6 +34,7 @@ export interface RequestEntry extends PublicProfile {
 }
 
 const GENERIC = "Something went wrong. Please try again."
+
 
 function toProfile(p: ProfileRow): PublicProfile {
   return {
@@ -76,7 +78,7 @@ async function getProfiles(ids: string[]): Promise<Map<string, PublicProfile>> {
 
 /**
  * Finds people by display name (case-insensitive contains) or by exact email,
- * via the `search_users` database function (max 50, never you). Emails stay in
+ * via the `search_users` database function (max 20, never you; names need 3+ letters). Emails stay in
  * auth.users and are never returned; exact-only email matching is a privacy
  * choice so nobody can probe for addresses.
  */
@@ -128,14 +130,14 @@ export async function sendFriendRequest(me: string, them: string): Promise<ApiRe
         .from("friendships")
         .update({ status: "pending", requester_id: me, addressee_id: them })
         .eq("id", existing.id)
-      if (error) return { ok: false, message: GENERIC }
+      if (error) return { ok: false, message: requestErrorMessage(error) }
       return { ok: true, message: "Request sent!" }
     }
 
     const { error } = await supabase
       .from("friendships")
       .insert({ requester_id: me, addressee_id: them, status: "pending" })
-    if (error) return { ok: false, message: GENERIC }
+    if (error) return { ok: false, message: requestErrorMessage(error) }
     return { ok: true, message: "Request sent!" }
   } catch {
     return { ok: false, message: GENERIC }

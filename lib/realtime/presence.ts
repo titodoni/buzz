@@ -5,10 +5,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { nextPresenceState, type Availability, type PresenceEvent, type PresenceState } from "@/lib/presence/state"
 import { onRemoteActivity } from "@/lib/realtime/activity"
 import { planPresenceSend } from "@/lib/realtime/presenceBudget"
-import { mergePresence, type PresencePayload } from "@/lib/realtime/presenceMerge"
+import { mergeFriendTopics, stateOfTopic, type PresencePayload } from "@/lib/realtime/presenceMerge"
 import { closeChannel, openChannel } from "@/lib/realtime/channel"
 
-export const PRESENCE_CHANNEL = "presence:global"
+/**
+ * Each person's presence lives on their own private topic. Only they may track
+ * there and only their accepted friends may listen (Realtime Authorization,
+ * migration 20261124124401), so nobody else can see or fake it (docs/adr/0003).
+ */
+export function presenceTopic(userId: string): string {
+  return `presence:${userId}`
+}
 /** How long a channel must stay joined before the reconnect backoff resets. */
 const STABLE_AFTER_MS = 30_000
 /** Wait before retrying a presence update the server did not accept. */
@@ -37,6 +44,7 @@ interface Connection {
  * listeners pass nothing and never track.
  */
 function openPresence(opts: {
+  topic: string
   key?: string
   onPayload: (payload: PresencePayload) => void
   onSubscribed?: (channel: RealtimeChannel) => void
@@ -52,8 +60,8 @@ function openPresence(opts: {
     if (closed) return
     // Waits for an earlier removal of this topic (dev double-mount, reconnect).
     const ch = await openChannel(
-      PRESENCE_CHANNEL,
-      opts.key ? { config: { presence: { key: opts.key } } } : undefined,
+      opts.topic,
+      { config: opts.key ? { private: true, presence: { key: opts.key } } : { private: true } },
       () => closed,
     )
     if (!ch) return
@@ -79,7 +87,7 @@ function openPresence(opts: {
           channel = null
           joined = false
           if (stableTimer) clearTimeout(stableTimer)
-          void closeChannel(PRESENCE_CHANNEL, ch)
+          void closeChannel(opts.topic, ch)
           const delay = RECONNECT_BACKOFF_MS[Math.min(attempt, RECONNECT_BACKOFF_MS.length - 1)]
           attempt += 1
           timer = setTimeout(() => void connect(), delay)
@@ -99,7 +107,7 @@ function openPresence(opts: {
       if (!ch) return
       const untrack = opts.key && joined ? () => ch.untrack() : undefined
       joined = false
-      await closeChannel(PRESENCE_CHANNEL, ch, untrack)
+      await closeChannel(opts.topic, ch, untrack)
     },
   }
 }
@@ -126,7 +134,6 @@ export function usePresenceTracker(
 ): PresenceTracker {
   const initial: Availability = options.startInvisible ? "invisible" : "online"
   const [myState, setMyState] = useState<Availability>(initial)
-  const [payload, setPayload] = useState<PresencePayload>({})
   const stateRef = useRef<Availability>(initial)
   const lastActivityRef = useRef<number>(0)
   const lastEmitRef = useRef<number>(0)
@@ -198,9 +205,11 @@ export function usePresenceTracker(
     }
     trackRef.current = track
     lastActivityRef.current = Date.now()
+    // My own topic: I track here and nobody else can. My state needs no listener.
     conn = openPresence({
+      topic: presenceTopic(me),
       key: me,
-      onPayload: setPayload,
+      onPayload: () => undefined,
       onSubscribed,
     })
 
@@ -246,29 +255,72 @@ export function usePresenceTracker(
     dispatch({ type: "setOnline" })
   }, [dispatch])
 
-  const idsKey = friendIds.join(",")
-  const friendsPresence = useMemo(
-    () => mergePresence(payload, idsKey ? idsKey.split(",") : []),
-    [payload, idsKey],
-  )
+  const friendsPresence = useFriendsPresence(friendIds)
 
   return { myState, setBusy, setAvailable, setInvisible, friendsPresence, goOffline }
 }
 
 /**
- * For chat windows. Listens to the presence channel but NEVER calls track().
- * A presence entry exists only for clients that track, so a chat window adds
- * none and the user keeps exactly one entry, owned by the Buddy List window.
+ * Listens read-only on each friend's own presence topic. One channel per
+ * friend; a friend who is not on the list any more is dropped.
+ */
+function useFriendsPresence(friendIds: readonly string[]): Record<string, PresenceState> {
+  const [topics, setTopics] = useState<Record<string, PresencePayload>>({})
+  const conns = useRef(new Map<string, Connection>())
+  const idsKey = [...friendIds].sort().join(",")
+
+  // Open a channel for each new friend and close it for each one who left;
+  // friends already on the list keep their channel, so their state never blinks
+  // offline (which would also fire the "is now online" alert again).
+  useEffect(() => {
+    const ids = new Set(idsKey ? idsKey.split(",") : [])
+    const open = conns.current
+    for (const [id, conn] of open) {
+      if (ids.has(id)) continue
+      void conn.close()
+      open.delete(id)
+      setTopics((cur) => {
+        const next = { ...cur }
+        delete next[id]
+        return next
+      })
+    }
+    for (const id of ids) {
+      if (open.has(id)) continue
+      open.set(
+        id,
+        openPresence({
+          topic: presenceTopic(id),
+          onPayload: (payload) => setTopics((cur) => ({ ...cur, [id]: payload })),
+        }),
+      )
+    }
+  }, [idsKey])
+
+  useEffect(() => {
+    const open = conns.current
+    return () => {
+      for (const conn of open.values()) void conn.close()
+      open.clear()
+    }
+  }, [])
+
+  return useMemo(() => mergeFriendTopics(topics, idsKey ? idsKey.split(",") : []), [topics, idsKey])
+}
+
+/**
+ * For chat windows. Listens to the friend's presence topic but NEVER calls
+ * track(), and cannot: only the topic's owner may track there.
  */
 export function useFriendPresence(friendId: string): PresenceState {
   const [payload, setPayload] = useState<PresencePayload>({})
 
   useEffect(() => {
-    const conn = openPresence({ onPayload: setPayload })
+    const conn = openPresence({ topic: presenceTopic(friendId), onPayload: setPayload })
     return () => {
       void conn.close()
     }
-  }, [])
+  }, [friendId])
 
-  return useMemo(() => mergePresence(payload, [friendId])[friendId] ?? "offline", [payload, friendId])
+  return useMemo(() => stateOfTopic(payload), [payload])
 }

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest"
 import { generateKeyPair } from "../../crypto/box"
 import { encryptMessage } from "../../crypto/message"
 import { DEFAULT_FORMAT } from "../format"
-import { UNREADABLE_TEXT, readWireRow, readWireRows, type WireRow } from "../wire"
+import { UNREADABLE_TEXT, UNVERIFIED_TEXT, readWireRow, readWireRows, type WireRow } from "../wire"
 
 // Feature: buzz-encryption, reading stored rows (E2.2, E2.7, E4.1)
 const base = { id: "m1", sender_id: "ann", receiver_id: "bob", created_at: "2026-11-20T10:00:00Z" }
@@ -74,5 +74,40 @@ describe("readWireRow", () => {
     ]
     const out = await readWireRows(rows, { id: "bob", privateKey: bob.privateKey })
     expect(out.map((m) => m.body)).toEqual(["plain first", "second"])
+  })
+})
+
+describe("readWireRow and the sender key (audit S11)", () => {
+  it("does not open a friend's message whose key the user has not accepted", async () => {
+    const ann = await generateKeyPair()
+    const bob = await generateKeyPair()
+    const row = await encryptedRow(ann, bob, "looks like ann")
+    const out = await readWireRow(row, { id: "bob", privateKey: bob.privateKey, trustsSender: () => false })
+    expect(out).toMatchObject({ body: UNVERIFIED_TEXT, unreadable: true, unverified: true })
+  })
+
+  it("opens it once the key is accepted", async () => {
+    const ann = await generateKeyPair()
+    const bob = await generateKeyPair()
+    const row = await encryptedRow(ann, bob, "hi bob")
+    const seen: string[] = []
+    const out = await readWireRow(row, {
+      id: "bob",
+      privateKey: bob.privateKey,
+      trustsSender: (sender, key) => {
+        seen.push(sender)
+        return key === ann.publicKey
+      },
+    })
+    expect(out).toMatchObject({ body: "hi bob" })
+    expect(seen).toEqual(["ann"])
+  })
+
+  it("never asks about my own messages", async () => {
+    const ann = await generateKeyPair()
+    const bob = await generateKeyPair()
+    const row = await encryptedRow(ann, bob, "my own words")
+    const out = await readWireRow(row, { id: "ann", privateKey: ann.privateKey, trustsSender: () => false })
+    expect(out).toMatchObject({ body: "my own words" })
   })
 })

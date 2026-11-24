@@ -18,6 +18,7 @@ import { conversation, earlierCursor, emptyConversation, type MessageRow } from 
 import { EARLIER_PAGE_SIZE, loadEarlier, loadHistory, markConversationRead, sendEncryptedMessage, trustFriendKey } from "@/lib/chat/api";
 import { readWireRow, readWireRows, type ReadKey, type WireRow } from "@/lib/chat/wire";
 import { useMyKeys } from "@/lib/crypto/useMyKeys";
+import { trustReceivedKey } from "@/lib/crypto/trust";
 import { conversationText, copyText } from "@/lib/chat/copy";
 import { useChatView } from "@/lib/chat/useChatView";
 import { useChatChannel } from "@/lib/realtime/chat";
@@ -70,7 +71,15 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   // The Buddy List window makes my encryption key; this window only reads it (ADR 0010).
   const myKeys = useMyKeys(me, "reader");
   const keysLoading = myKeys.status === "loading";
-  const readKey: ReadKey = myKeys.status === "ready" ? { id: me, privateKey: myKeys.keys.privateKey } : null;
+  const readKey: ReadKey =
+    myKeys.status === "ready"
+      ? {
+          id: me,
+          privateKey: myKeys.keys.privateKey,
+          // A friend's message opens only with a key I accepted (audit S11).
+          trustsSender: (senderId, key) => trustReceivedKey(localStorage, me, senderId, key),
+        }
+      : null;
   const readKeyRef = useRef<ReadKey>(readKey);
   // The friend key whose Safety Number is on screen; that is the key "Trust" may pin.
   const shownKeyRef = useRef<string | null>(null);
@@ -150,6 +159,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
       .then((rows) => readWireRows(rows, readKeyRef.current))
       .then((rows) => {
         dispatch({ type: "historyLoaded", messages: rows });
+        if (rows.some((r) => r.unverified)) setKeyChanged(true);
         setLoadError(false);
         markReadIfActive();
       })
@@ -221,7 +231,8 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     (wire: WireRow) => {
       void readWireRow(wire, readKeyRef.current).then((message) => {
         dispatch({ type: "messageArrived", message });
-        if (message.sender_id !== friendId) return; // my own send, seen from another instance
+        if (message.sender_id !== friendId) return;
+        if (message.unverified) setKeyChanged(true); // my own send, seen from another instance
         setFriendTyping((s) => typingOnSend(s));
         markReadIfActive();
       });
@@ -427,6 +438,8 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
                   void trustFriendKey(me, friendId, shownKeyRef.current).then((ok) => {
                     setKeyChanged(!ok);
                     setNote(ok ? `You trust ${friendName}'s new key. Send your message again.` : "Couldn't update the key. Try again.");
+                    // Messages that came with the new key can be read now.
+                    if (ok) void reload();
                   });
                 }}
               />

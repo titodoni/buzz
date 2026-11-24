@@ -21,7 +21,7 @@ const LOOKBACK_MS = HANGOUT_EXPIRY_MS + 5 * 60_000
 
 export type SendHangoutResult =
   | { ok: true }
-  | { ok: false; reason: "invalid" | "pending" | "failed" }
+  | { ok: false; reason: "invalid" | "pending" | "rate-limited" | "failed" }
 
 /**
  * Sends a Hangout to a friend. The database allows one pending Hangout per
@@ -46,7 +46,10 @@ export async function sendHangout(me: string, friendId: string, text: string): P
     .insert({ sender_id: me, receiver_id: friendId, text: checked.text })
   if (!error) return { ok: true }
   // 23505 is Postgres "unique violation": the one-pending-per-pair index.
-  return { ok: false, reason: error.code === "23505" ? "pending" : "failed" }
+  if (error.code === "23505") return { ok: false, reason: "pending" }
+  // The database allows 10 Hangouts per 10 minutes (migration 20261124124357).
+  if (/slow down/.test(error.message)) return { ok: false, reason: "rate-limited" }
+  return { ok: false, reason: "failed" }
 }
 
 /** The receiver answers a pending Hangout. True when the row changed. */
