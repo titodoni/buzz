@@ -22,7 +22,7 @@ messages as readable by anyone with access to the project's database.
 | Chat windows, emoticons, typing indicator, read receipts | Built |
 | Nudge ("Buzz!"): sound, window shake, cooldown | Built |
 | Offline messages and unread badges | Built |
-| Live profile updates in the Buddy List (task 18.1) | Not yet |
+| Live profile updates in the Buddy List and chat header | Built |
 | Supabase schema, RLS, Realtime policies | Applied and checked |
 | Availability: Available, Busy, Invisible, presets, custom status; one icon everywhere | Built; checked with two signed-in users |
 | Buddy List groups, search box, Add a Friend, Show Offline Contacts | Built; checked with three users |
