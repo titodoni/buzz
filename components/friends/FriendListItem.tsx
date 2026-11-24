@@ -43,8 +43,7 @@ export function FriendListItem({ friend, presence, unread, nudgeBadge, shaking, 
   const upForChat = isFriendUpForChat(friend.statusMessage, presence)
   return (
     <li
-      className={`ym-row${upForChat ? " ym-up-for-chat" : ""}${shaking ? " ym-shake" : ""} flex cursor-pointer items-center gap-1.5 px-2 py-0.5`}
-      style={{ opacity: presence === "offline" ? 0.55 : 1 }}
+      className={`ym-row${upForChat ? " ym-up-for-chat" : ""}${shaking ? " ym-shake" : ""}${presence === "offline" ? " ym-offline" : ""} flex cursor-pointer items-center gap-1.5 px-2 py-0.5`}
       tabIndex={0}
       aria-label={`${friend.displayName}, ${presence}${unread ? `, ${unread} waiting` : ""}${nudgeBadge ? `, ${nudgeBadge} missed ${nudgeBadge === 1 ? "Buzz" : "Buzzes"}` : ""}${upForChat ? ", up for chat" : ""}. Press Enter to chat.`}
       onDoubleClick={() => onOpen(friend.id)}

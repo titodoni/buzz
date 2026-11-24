@@ -26,7 +26,7 @@ const check = async (name, fn, expect) => {
   results.push({ check: name, got: String(got).slice(0, 60), ok: ok ? "PASS" : "FAIL" });
 };
 await c.query("begin");
-// Since migration 20250101001610 only encrypted rows are accepted, so message
+// Since migration 20261124082027 only encrypted rows are accepted, so message
 // checks insert the encrypted shape: no body, two ciphers, a sender key.
 const ENC_COLS = "encrypted, cipher_receiver, cipher_sender, sender_public_key";
 const ENC_VALS = "true, 'x', 'y', '" + "A".repeat(43) + "'";

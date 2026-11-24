@@ -145,12 +145,12 @@ Also checked in this run, after the Tauri permission fix (249f260):
 | Buzz shake and sound | NOT RUN | Needs a person to watch and listen. |
 
 Not covered by this run: the hosted database. E1 to E6 passed on the local
-stack with migration 001610 applied there. Per the rule below, apply 001610 to
-the hosted project and run `npm run test:rls` against it before any claim.
+stack with the cutover migration applied there. The hosted project has the same migration
+(applied as version 20261124082027). Run `npm run test:rls` against it before any claim.
 
 ## What the result decides
 
-- **E1 to E6 all PASS:** apply `20250101001610_require_encrypted_messages.sql`
+- **E1 to E6 all PASS:** apply `20261124082027_require_encrypted_messages.sql`
   to the live database, then run the check once more. Only after that may the
   app, README and Devpost use the one sentence in
   `.kiro/steering/product.md`. Say nothing else about encryption.

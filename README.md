@@ -8,9 +8,11 @@ presence, one chat window per friend, classic emoticons, and the Nudge
 
 Buzz does not claim encryption yet. Encrypted Messages are built (new
 messages are encrypted on the sender's device, [ADR 0010](docs/adr/0010-messages-are-encrypted-with-a-static-key-per-user.md))
-but have not been checked between two running app instances, and the
-cutover that refuses plaintext is not applied. Until both are done, treat
-messages as readable by anyone with access to the project's database.
+and the hosted database now refuses plaintext messages. The two-user check
+passed on a local stack, but it has not been repeated on the hosted project
+with the released installers, so Buzz still makes no encryption claim. Until
+it is, treat messages as readable by anyone with access to the project's
+database.
 
 ## Status
 

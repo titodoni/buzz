@@ -18,6 +18,7 @@
   --buzz-red: #cc0000;
   --msg-self: #0067fa;
   --msg-friend: #cc3300;
+  --offline-text: #5f5f5f;
 }
 
 @theme {
@@ -97,6 +98,12 @@ body {
 
 .ym-button:active {
   filter: brightness(0.9);
+}
+
+/* Offline friends are shown in a solid grey, not faded with opacity, so the text keeps 4.5:1 on white. */
+.ym-offline,
+.ym-offline .ym-friend-sub {
+  color: var(--offline-text);
 }
 
 .ym-row:hover {

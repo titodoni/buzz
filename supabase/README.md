@@ -89,7 +89,7 @@ exercises the policies and triggers as each of them, prints PASS/FAIL per
 check, and rolls everything back. `supabase/tests/rls.sql` holds the same
 scenarios as commented SQL for running by hand.
 
-Since migration `20250101001610`, the database refuses plaintext messages, so
+Since migration `20261124082027` (the cutover; it was `20250101001610` in the repo until it was renamed to match the hosted project's migration history), the database refuses plaintext messages, so
 the message checks insert the encrypted shape. The old plaintext `format`
 column is checked on stored rows inserted as the table owner.
 

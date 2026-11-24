@@ -17,4 +17,5 @@ next-env.d.ts
 # Internal documents that must not ship in the public repo
 /docs/cto-audit-response.md
 /docs/buzz-submission-pack.md
+/docs/ceo-audit-report-*.md
 /docs/Buzz CTO*.pdf
