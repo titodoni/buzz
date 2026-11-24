@@ -404,6 +404,7 @@ pub fn run() {
             set_tray_status,
             quit_app,
             now_playing::now_playing_supported,
+            now_playing::now_playing_platform,
             now_playing::set_now_playing_enabled,
             key_store::key_store_available,
             key_store::key_store_get,

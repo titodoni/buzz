@@ -33,6 +33,7 @@ messages as readable by anyone with access to the project's database.
 | Responsive windows (220x400 up to maximized) | Built; see [docs/responsive-checks.md](docs/responsive-checks.md) |
 | Installer config (task 17.1) and two-user integration tests | Not yet |
 | Nudge extended: row shake and red count, Recent Buzzes with Nudge back, 5 Buzzes per 10 minutes | Built and unit-tested; not yet checked between two running apps. The log and the limit live on the sender's computer only |
+| Share What I'm Playing (automatic Now Playing, off by default) | Linux: checked with Spotify and a test player. Windows (system media controls) and macOS (Spotify and Apple Music only) readers are written and compile, but have not been run on those systems |
 | Hangouts: templates and a custom line, banner, accept, decline, 15 minute expiry (ADR 0011) | Built; migration applied and its database rules checked (25 checks). Not yet checked between two running apps |
 | Encrypted Messages: keys, encrypt and decrypt, Safety Number, key-changed warning | Built; unit-tested and the database rules are checked. Not yet checked between two running apps. Keychain checked on Linux only; Windows and macOS not verified |
 

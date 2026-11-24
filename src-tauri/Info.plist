@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Shown when macOS asks to let Buzz read Spotify and Apple Music (Share What I'm Playing).
+       Tauri merges this file into the app's Info.plist on macOS builds. -->
+  <key>NSAppleEventsUsageDescription</key>
+  <string>Buzz asks Spotify and Apple Music which song is playing, so your friends can see it. Only the artist and title are shared.</string>
+</dict>
+</plist>

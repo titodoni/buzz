@@ -24,6 +24,7 @@ import { useSession } from "@/lib/auth/session"
 import { hasNowPlaying, shouldShowField } from "@/lib/profile/render"
 import { useOfflineDelivery } from "@/lib/offline/useOfflineDelivery"
 import { useNudgeInbox } from "@/lib/realtime/inbox"
+import { sharingNote } from "@/lib/nowPlaying/note"
 import { useAutoNowPlaying, useShareNowPlaying } from "@/lib/nowPlaying/useAutoNowPlaying"
 import { usePresenceTracker } from "@/lib/realtime/presence"
 import { useUpForChat } from "@/lib/status/useUpForChat"
@@ -211,11 +212,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
                 checked: share.enabled,
                 onSelect: () => {
                   share.setEnabled(!share.enabled)
-                  setNote(
-                    share.enabled
-                      ? "Buzz stopped sharing what you're playing."
-                      : "Friends now see what you're playing. Only the artist and title are shared.",
-                  )
+                  setNote(sharingNote(!share.enabled, share.platform))
                 },
               },
             ]

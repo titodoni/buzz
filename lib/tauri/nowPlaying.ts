@@ -1,12 +1,21 @@
 // Thin wrapper over the Rust now_playing module (src-tauri/src/now_playing.rs).
 // Safe no-ops in a plain browser.
 import type { OsTrack } from "@/lib/nowPlaying/auto"
+import type { NowPlayingPlatform } from "@/lib/nowPlaying/note"
 import { isTauri, onShellEvent } from "./windows"
 
 /** Must match EVENT_NOW_PLAYING in src-tauri/src/now_playing.rs. */
 export const NOW_PLAYING_EVENT = "buzz://now-playing"
 
-/** True when this desktop build can read what is playing (Linux today). */
+/** Which system the app reads from, so the wording can say what is read. */
+export async function nowPlayingPlatform(): Promise<NowPlayingPlatform> {
+  if (!isTauri()) return "other"
+  const { invoke } = await import("@tauri-apps/api/core")
+  const p = await invoke<string>("now_playing_platform").catch(() => "other")
+  return p === "linux" || p === "windows" || p === "macos" ? p : "other"
+}
+
+/** True when this desktop build can read what is playing (Linux, Windows, macOS). */
 export async function nowPlayingSupported(): Promise<boolean> {
   if (!isTauri()) return false
   const { invoke } = await import("@tauri-apps/api/core")

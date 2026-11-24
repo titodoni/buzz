@@ -78,3 +78,18 @@ brings the Buddy List back.
 
 Tell us what you did, what you expected, and what happened, with your system
 (for example "Windows 11" or "Ubuntu 24.04") and a screenshot if you can.
+
+## Share What I'm Playing (optional)
+
+In Buzz, **Messenger > Share What I'm Playing** is off until you turn it on.
+When it is on, your friends see the artist and title of what is playing.
+
+- **Windows and Linux:** Buzz reads players that report to the system, such
+  as Spotify and browsers. Nothing else leaves your computer.
+- **macOS:** Buzz reads **Spotify and Apple Music only**. The first time,
+  macOS asks to let Buzz control those apps. Choose **OK**. If you chose
+  **Don't Allow**, change it in **System Settings > Privacy & Security >
+  Automation**. Buzz never opens Spotify or Music by itself.
+- This beta is new on Windows and macOS and has not been tested there yet.
+  Tell us if your song doesn't show up.
+

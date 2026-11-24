@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { setMyNowPlaying } from "@/lib/profile/api"
-import { nowPlayingSupported, onNowPlaying, setNowPlayingEnabled } from "@/lib/tauri/nowPlaying"
+import { nowPlayingPlatform, nowPlayingSupported, onNowPlaying, setNowPlayingEnabled } from "@/lib/tauri/nowPlaying"
+import type { NowPlayingPlatform } from "./note"
 import { decideAuto, formatTrack, initAuto, stepAuto, type AutoState } from "./auto"
 
 const SETTING_KEY = "buzz:share-now-playing"
@@ -33,8 +34,14 @@ function writeSaved(me: string, s: Saved) {
 }
 
 /** The "Share What I'm Playing" setting (off by default, R7.1) and whether this build supports it. */
-export function useShareNowPlaying(): { supported: boolean; enabled: boolean; setEnabled: (v: boolean) => void } {
+export function useShareNowPlaying(): {
+  supported: boolean
+  platform: NowPlayingPlatform
+  enabled: boolean
+  setEnabled: (v: boolean) => void
+} {
   const [supported, setSupported] = useState(false)
+  const [platform, setPlatform] = useState<NowPlayingPlatform>("other")
   const [enabled, setState] = useState(() => {
     try {
       return localStorage.getItem(SETTING_KEY) === "1"
@@ -45,6 +52,7 @@ export function useShareNowPlaying(): { supported: boolean; enabled: boolean; se
   useEffect(() => {
     let active = true
     void nowPlayingSupported().then((v) => active && setSupported(v))
+    void nowPlayingPlatform().then((v) => active && setPlatform(v))
     return () => {
       active = false
     }
@@ -57,7 +65,7 @@ export function useShareNowPlaying(): { supported: boolean; enabled: boolean; se
       // the choice still applies for this run
     }
   }, [])
-  return { supported, enabled: enabled && supported, setEnabled }
+  return { supported, platform, enabled: enabled && supported, setEnabled }
 }
 
 export interface AutoNowPlayingOptions {

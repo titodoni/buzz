@@ -21,3 +21,7 @@ keyring = "4.2"
 # Automatic Now Playing on Linux: reads MPRIS players over D-Bus (buzz-trigger R7).
 [target.'cfg(target_os = "linux")'.dependencies]
 mpris = "2.1"
+
+# Automatic Now Playing on Windows: reads the system media controls (SMTC) (buzz-trigger R7.7).
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62", features = ["Media_Control", "Foundation", "Foundation_Collections", "Win32_System_WinRT"] }

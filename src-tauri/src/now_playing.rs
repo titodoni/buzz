@@ -26,7 +26,10 @@ pub struct Track {
     pub title: String,
 }
 
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#[cfg_attr(
+    not(any(target_os = "linux", target_os = "macos", windows)),
+    allow(dead_code)
+)]
 /// Trims, drops control characters, and bounds the length. None when empty.
 fn clean(s: &str) -> Option<String> {
     let t: String = s
@@ -38,7 +41,10 @@ fn clean(s: &str) -> Option<String> {
     (!t.is_empty()).then_some(t)
 }
 
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#[cfg_attr(
+    not(any(target_os = "linux", target_os = "macos", windows)),
+    allow(dead_code)
+)]
 /// Builds a Track from raw metadata; None without a usable title.
 fn track_from(artist: Option<&str>, title: Option<&str>) -> Option<Track> {
     let title = clean(title?)?;
@@ -46,6 +52,14 @@ fn track_from(artist: Option<&str>, title: Option<&str>) -> Option<Track> {
         artist: artist.and_then(clean),
         title,
     })
+}
+
+/// Reads the macOS script's one line: `artist<U+001F>title`. Anything else
+/// (an error message, an empty answer) is not a track. Pure, so it is tested on every OS.
+#[cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
+fn parse_script_output(raw: &str) -> Option<Track> {
+    let (artist, title) = raw.split_once('\u{1f}')?;
+    track_from(Some(artist), Some(title))
 }
 
 #[cfg(target_os = "linux")]
@@ -81,7 +95,119 @@ mod os {
     pub type State = Option<PlayerFinder>;
 }
 
-#[cfg(not(target_os = "linux"))]
+/// macOS: Spotify and Apple Music only, through AppleScript (buzz-trigger R7.7).
+/// macOS 15.4 and later blocks the general now-playing API for third-party
+/// apps, so other players cannot be read. The script asks `is running` first,
+/// so reading never launches either app. The first read makes macOS ask the
+/// user to allow Buzz to control those apps (the Automation prompt).
+#[cfg(target_os = "macos")]
+mod os {
+    use super::{parse_script_output, Track};
+    use std::io::Read;
+    use std::process::{Command, Stdio};
+    use std::time::{Duration, Instant};
+
+    pub const SUPPORTED: bool = true;
+    pub type State = ();
+
+    /// Prints `artist<U+001F>title` for the first app that is playing, else nothing.
+    const SCRIPT: &str = r#"
+if application "Spotify" is running then
+  tell application "Spotify"
+    if player state is playing then
+      return (artist of current track) & (character id 31) & (name of current track)
+    end if
+  end tell
+end if
+if application "Music" is running then
+  tell application "Music"
+    if player state is playing then
+      return (artist of current track) & (character id 31) & (name of current track)
+    end if
+  end tell
+end if
+return ""
+"#;
+
+    /// A stuck script (an app that hangs, an unanswered permission prompt) must not block the reader for long.
+    const SCRIPT_TIMEOUT: Duration = Duration::from_secs(2);
+
+    pub fn current(_: &mut ()) -> Option<Track> {
+        let mut child = Command::new("osascript")
+            .arg("-e")
+            .arg(SCRIPT)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .ok()?;
+        let started = Instant::now();
+        loop {
+            match child.try_wait().ok()? {
+                Some(status) if status.success() => break,
+                Some(_) => return None, // not allowed, or the script failed
+                None if started.elapsed() > SCRIPT_TIMEOUT => {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return None;
+                }
+                None => std::thread::sleep(Duration::from_millis(50)),
+            }
+        }
+        let mut out = String::new();
+        child.stdout.take()?.read_to_string(&mut out).ok()?;
+        parse_script_output(&out)
+    }
+}
+
+/// Windows: any player that reports to the system media controls (SMTC):
+/// Spotify, browsers, and most music and video players (buzz-trigger R7.7).
+#[cfg(windows)]
+mod os {
+    use super::{track_from, Track};
+    use windows::Media::Control::{
+        GlobalSystemMediaTransportControlsSessionManager as Manager,
+        GlobalSystemMediaTransportControlsSessionPlaybackStatus as Status,
+    };
+    use windows::Win32::System::WinRT::{RoInitialize, RO_INIT_MULTITHREADED};
+
+    pub const SUPPORTED: bool = true;
+
+    /// Whether this thread has joined the Windows Runtime yet.
+    #[derive(Default)]
+    pub struct State {
+        ready: bool,
+    }
+
+    fn read() -> windows::core::Result<Option<Track>> {
+        let manager = Manager::RequestAsync()?.join()?;
+        for session in manager.GetSessions()? {
+            if session.GetPlaybackInfo()?.PlaybackStatus()? != Status::Playing {
+                continue;
+            }
+            let props = session.TryGetMediaPropertiesAsync()?.join()?;
+            let artist = props.Artist()?.to_string();
+            let title = props.Title()?.to_string();
+            if let Some(track) = track_from(Some(&artist), Some(&title)) {
+                return Ok(Some(track));
+            }
+        }
+        Ok(None)
+    }
+
+    /// The first session that is playing right now.
+    pub fn current(state: &mut State) -> Option<Track> {
+        if !state.ready {
+            // The reader runs on its own thread, which must join the runtime
+            // before it can ask for media sessions. A failure here means the
+            // thread already joined in another mode, which is fine.
+            let _ = unsafe { RoInitialize(RO_INIT_MULTITHREADED) };
+            state.ready = true;
+        }
+        read().ok().flatten()
+    }
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "macos", windows)))]
 mod os {
     use super::Track;
 
@@ -90,6 +216,18 @@ mod os {
         None
     }
     pub type State = ();
+}
+
+/// Which system this build reads from: "linux", "windows", "macos", or "other".
+/// The app words the setting from this: on a Mac only Spotify and Apple Music are read.
+#[tauri::command]
+pub fn now_playing_platform() -> &'static str {
+    match std::env::consts::OS {
+        "linux" => "linux",
+        "windows" => "windows",
+        "macos" => "macos",
+        _ => "other",
+    }
 }
 
 /// True when this build can read what is playing.
@@ -130,7 +268,7 @@ pub fn set_now_playing_enabled(app: AppHandle, enabled: bool) {
 
 #[cfg(test)]
 mod tests {
-    use super::{clean, track_from, Track, MAX_FIELD_CHARS};
+    use super::{clean, parse_script_output, track_from, Track, MAX_FIELD_CHARS};
 
     #[test]
     fn keeps_artist_and_title() {
@@ -160,6 +298,56 @@ mod tests {
         assert_eq!(
             clean(&"x".repeat(500)).unwrap().chars().count(),
             MAX_FIELD_CHARS
+        );
+    }
+
+    // The macOS reader prints "artist<US>title" (US = unit separator, U+001F),
+    // so a newline inside a title cannot be mistaken for the divider.
+    #[test]
+    fn parses_artist_and_title_from_script_output() {
+        assert_eq!(
+            parse_script_output("Daft Punk\u{1f}One More Time\n"),
+            Some(Track {
+                artist: Some("Daft Punk".into()),
+                title: "One More Time".into()
+            })
+        );
+    }
+
+    #[test]
+    fn script_output_with_no_artist_keeps_the_title() {
+        assert_eq!(
+            parse_script_output("\u{1f}Podcast episode\n"),
+            Some(Track {
+                artist: None,
+                title: "Podcast episode".into()
+            })
+        );
+    }
+
+    #[test]
+    fn nothing_playing_gives_no_track() {
+        assert_eq!(parse_script_output(""), None);
+        assert_eq!(parse_script_output("\n"), None);
+        assert_eq!(parse_script_output("Artist\u{1f}\n"), None);
+    }
+
+    #[test]
+    fn output_without_the_divider_is_ignored() {
+        // An error message or anything unexpected must never become Now Playing.
+        assert_eq!(
+            parse_script_output("execution error: not authorized (-1743)"),
+            None
+        );
+    }
+
+    #[test]
+    fn a_newline_inside_the_title_is_kept_out_of_the_line() {
+        assert_eq!(
+            parse_script_output("A\u{1f}Part 1\nPart 2\n")
+                .unwrap()
+                .title,
+            "Part 1Part 2"
         );
     }
 }

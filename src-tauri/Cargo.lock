@@ -385,6 +385,7 @@ dependencies = [
  "mpris",
  "tauri",
  "tauri-build",
+ "windows",
 ]
 
 [[package]]
