@@ -32,7 +32,7 @@ messages as readable by anyone with access to the project's database.
 | Incoming-message alerts, "is now online" toast, tray icon, sounds | Built; checked in the Linux desktop app except the tray itself (see design.md, Requirement 16) |
 | Responsive windows (220x400 up to maximized) | Built; see [docs/responsive-checks.md](docs/responsive-checks.md) |
 | Installer config (task 17.1) and two-user integration tests | Not yet |
-| Hangouts: templates and a custom line, banner, accept, decline, 15 minute expiry (ADR 0011) | Written and unit-tested; the migration is not applied yet and nothing is checked between two running apps |
+| Hangouts: templates and a custom line, banner, accept, decline, 15 minute expiry (ADR 0011) | Built; migration applied and its database rules checked (25 checks). Not yet checked between two running apps |
 | Encrypted Messages: keys, encrypt and decrypt, Safety Number, key-changed warning | Built; unit-tested and the database rules are checked. Not yet checked between two running apps. Keychain checked on Linux only; Windows and macOS not verified |
 
 The migrations in [supabase/README.md](supabase/README.md) are applied to a
