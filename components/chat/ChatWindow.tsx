@@ -33,6 +33,10 @@ import { receiveTypingSignal, type TypingSignal } from "@/lib/typing/broadcast";
 import { reportActivity } from "@/lib/realtime/activity";
 import { sendNudgeToInbox } from "@/lib/realtime/inbox";
 import { clearAttention, closeWindow } from "@/lib/tauri/windows";
+import { HangoutBanner } from "@/components/hangout/HangoutBanner";
+import { HangoutButton } from "@/components/hangout/HangoutButton";
+import { chatLines, hasPendingWith, incomingPending } from "@/lib/hangout/state";
+import { useHangouts } from "@/lib/hangout/useHangouts";
 
 /** Req 17.9 */
 export function offlineLine(friendName: string): string {
@@ -178,6 +182,13 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   const friendIds = useMemo(() => [friendId], [friendId]);
   const onFriendProfile = useCallback((p: ProfileFields) => setFriend((cur) => mergeOne(cur, p)), []);
   useProfileUpdates(`profiles:chat:${me}:${friendId}`, friendIds, onFriendProfile);
+
+  // Hangouts with this friend: the banner, the button's guard, and the system lines (buzz-trigger R3).
+  const hangouts = useHangouts(me, `hangouts:chat:${me}:${friendId}`);
+  const hangoutNames = useMemo(() => ({ [me]: myName, [friendId]: friendName }), [me, friendId, myName, friendName]);
+  const hangoutBanners = incomingPending(hangouts.rows, me, hangouts.now).filter((r) => r.sender_id === friendId);
+  const hangoutLines = chatLines(hangouts.rows, me, friendId, hangoutNames, hangouts.now);
+  const hangoutPending = hasPendingWith(hangouts.rows, me, friendId, hangouts.now);
 
   // Unread messages stay unread until the window is focused and visible again.
   useEffect(() => {
@@ -399,6 +410,16 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
         }
         notice={
           <>
+            {hangoutBanners.map((h) => (
+              <HangoutBanner key={h.id} id={h.id} fromName={friendName} text={h.text} onAnswered={() => undefined} />
+            ))}
+            {hangoutLines.length > 0 ? (
+              <ul role="status" aria-live="polite" className="m-0 list-none px-2 py-1 text-xs">
+                {hangoutLines.map((l) => (
+                  <li key={l.id}>{l.text}</li>
+                ))}
+              </ul>
+            ) : null}
             {loadError ? (
               <p role="alert" style={{ color: "var(--buzz-red)", fontSize: 12, margin: "4px 8px" }}>
                 Couldn&apos;t load your earlier messages. We&apos;ll try again when you&apos;re back online.
@@ -451,6 +472,14 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
               Emoticons
             </button>
             <NudgeButton ref={nudgeRef} friendId={friendId} friendPresence={presence} onNudge={handleNudge} />
+            <HangoutButton
+              me={me}
+              friendId={friendId}
+              friendName={friendName}
+              friendPresence={presence}
+              hasPending={hangoutPending}
+              onNote={setNote}
+            />
             {pickerOpen ? (
               <EmoticonPicker
                 onPick={(code) => {

@@ -83,6 +83,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"hangouts": {
+                  Row: {
+                    "created_at": string,"id": string,"receiver_id": string,"responded_at": string | null,"sender_id": string,"status": string,"text": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"receiver_id": string,"responded_at"?: string | null,"sender_id": string,"status"?: string,"text": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"receiver_id"?: string,"responded_at"?: string | null,"sender_id"?: string,"status"?: string,"text"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "hangouts_receiver_id_fkey"
+      columns: ["receiver_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "hangouts_sender_id_fkey"
+      columns: ["sender_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"ignored_users": {
                   Row: {
                     "created_at": string,"ignored_id": string,"owner_id": string

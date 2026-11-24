@@ -77,3 +77,17 @@
 -- select jobname, schedule, command from cron.job;                            -- purge_undelivered_messages, 0 3 * * *
 -- select relname, relrowsecurity from pg_class
 --   where relname in ('profiles', 'friendships', 'messages');                 -- all true
+
+-- == 6. Hangouts (migration 20250101001700) ==
+-- The executable version of these checks is in supabase/tests/rls-check.mjs (npm run test:rls).
+-- As A (friend of B): insert into public.hangouts (sender_id, receiver_id, text) values (:'a', :'b', 'Play a game?'); -- ok
+--   same insert with sender_id = :'b'                          -- ERROR (sender must be me)
+--   a second pending Hangout for the pair, from either side    -- ERROR (one pending per pair)
+--   text of 61 characters, or blank                            -- ERROR (check)
+--   A cannot set status = 'accepted'                           -- ERROR (only the receiver answers)
+--   A sets status = 'expired' before 15 minutes                -- ERROR; after 15 minutes: ok
+-- As B: update status to 'accepted' or 'declined'              -- ok once; a second change: ERROR (final)
+--   update text                                                -- ERROR (only status may change)
+-- As C (stranger): select * from public.hangouts;              -- 0 rows; insert to A: ERROR
+-- If B ignores A: A's insert                                   -- ERROR (ADR 0009)
+-- Nobody: delete from public.hangouts;                         -- 0 rows

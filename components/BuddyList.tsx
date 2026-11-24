@@ -29,6 +29,9 @@ import { usePresenceTracker } from "@/lib/realtime/presence"
 import { useUpForChat } from "@/lib/status/useUpForChat"
 import { useMyKeys } from "@/lib/crypto/useMyKeys"
 import { openChatWindow } from "@/lib/tauri/windows"
+import { HangoutBanner } from "@/components/hangout/HangoutBanner"
+import { incomingPending } from "@/lib/hangout/state"
+import { useHangouts } from "@/lib/hangout/useHangouts"
 
 type Panel = "search" | "pick" | "about" | "newGroup" | "ignore" | null
 
@@ -91,6 +94,9 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
     // Nudges from someone I ignore are dropped (Req 15.3); the server blocks them too.
     if (friendIds.includes(sender) && !ignoredIds.has(sender)) void openChatWindow(sender, { nudge: true })
   })
+  // A friend's Hangout shows as a banner at the top of the list (buzz-trigger R3.2).
+  const hangouts = useHangouts(me, `hangouts:buddy:${me}`)
+  const hangoutBanners = incomingPending(hangouts.rows, me, hangouts.now).filter((h) => friendIds.includes(h.sender_id))
   const totalUnread = Object.values(unreadBySender).reduce((a, b) => a + b, 0)
   // What the computer is playing goes into Now Playing, only if the user turns it on (buzz-trigger R7).
   const share = useShareNowPlaying()
@@ -237,6 +243,19 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
           ) : null}
         </div>
       </header>
+
+      {hangoutBanners.map((h) => (
+        <HangoutBanner
+          key={h.id}
+          id={h.id}
+          fromName={friendNames.get(h.sender_id) ?? "A friend"}
+          text={h.text}
+          onAnswered={(answer) => {
+            // Accepting opens the Chat Window, where both sides read "[Name] accepted: ..." (R3.3).
+            if (answer === "accepted") void openChatWindow(h.sender_id)
+          }}
+        />
+      ))}
 
       {note ? (
         <p role="status" className="m-0 px-2 py-1 text-xs">

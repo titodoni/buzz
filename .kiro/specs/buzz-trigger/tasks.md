@@ -32,12 +32,12 @@ Calendar: today is 20 Nov 2026. Submit on 4 Dec. Feature freeze 1 Dec.
 
 ## Phase 3. Hangout: trigger 2 (25 to 28 Nov)
 
-- [ ] 3.1 Migration `hangouts` with RLS, partial unique index, publication, cron expiry. Extend `test:rls`: cross-user read denied, forged `sender_id` fails, second pending fails, ignored sender fails. _R3.6, R6.1, R6.2_
-- [ ] 3.2 Regenerate DB types; add `lib/hangout/templates.ts`, `state.ts`, `api.ts` with unit tests (transitions, 15 min expiry on read, line text). _R3.1, R3.5_
-- [ ] 3.3 Chat Window Hangout button and `HangoutPicker`: templates, custom field, pending guard, Busy hint, Offline disabled with reason. _R3.1, R3.6 to R3.8_
-- [ ] 3.4 `useHangouts` and `HangoutBanner` in Buddy List and Chat Window. Banner within 2 seconds. _R3.2_
-- [ ] 3.5 Accept, Decline, expiry, system lines for both sides. Verify all three paths. _R3.3 to R3.5_
-- [ ] Checkpoint: Hangout in `GLOSSARY.md`; ADR 0011 "Hangouts are stored, Nudges are not" (0010 is encryption); commit.
+- [~] 3.1 (WRITTEN, NOT APPLIED: `20250101001700_hangouts.sql` and 24 checks in `rls-check.mjs`; not run, no database URL, no Supabase CLI) Migration `hangouts` with RLS, partial unique index, publication, cron expiry. Extend `test:rls`: cross-user read denied, forged `sender_id` fails, second pending fails, ignored sender fails. _R3.6, R6.1, R6.2_
+- [~] 3.2 (Done: `templates.ts`, `state.ts`, `api.ts`, 23 unit tests. Types added by hand, regenerate after the migration is applied) Regenerate DB types; add `lib/hangout/templates.ts`, `state.ts`, `api.ts` with unit tests (transitions, 15 min expiry on read, line text). _R3.1, R3.5_
+- [~] 3.3 (Built, builds clean, NOT RUN in an app) Chat Window Hangout button and `HangoutPicker`: templates, custom field, pending guard, Busy hint, Offline disabled with reason. _R3.1, R3.6 to R3.8_
+- [~] 3.4 (Built, NOT RUN: needs two running app instances) `useHangouts` and `HangoutBanner` in Buddy List and Chat Window. Banner within 2 seconds. _R3.2_
+- [~] 3.5 (Built, NOT RUN: needs two running app instances for accept, decline, expiry) Accept, Decline, expiry, system lines for both sides. Verify all three paths. _R3.3 to R3.5_
+- [x] Checkpoint (glossary and ADR 0011 written; commit pending the migration check): Hangout in `GLOSSARY.md`; ADR 0011 "Hangouts are stored, Nudges are not" (0010 is encryption); commit.
 
 ## Phase 4. Nudge, extended: trigger 3 (29 to 30 Nov)
 

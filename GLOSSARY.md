@@ -16,6 +16,10 @@ _Avoid_: Invite, add request
 A named, collapsible section of the Buddy List that one user keeps their friends in. Groups are private to the user who made them.
 _Avoid_: Folder, category, list
 
+**Hangout**:
+A one-line invitation from one friend to another, such as "Play a game?". It is pending until the friend accepts or declines it, and expires after 15 minutes. Unlike a Nudge it is stored (ADR 0011). Only one can be pending between two friends.
+_Avoid_: Invite, game request, call
+
 **Ignore List**:
 The people a user has blocked from messaging, Nudging, or requesting them.
 _Avoid_: Block list, blacklist

@@ -34,6 +34,7 @@ supabase gen types typescript --linked > lib/supabase/database.types.ts
 | `20250101001000_ignore_enforcement.sql` | ignore blocks messages, friend requests, and channels; `is_ignored_by`, `ignorers_of_me` |
 | `20250101001100_is_ignored_by_uses_index.sql` | `is_ignored_by` rewritten to use the primary key index |
 | `20250101001200_message_format.sql` | `messages.format` (font, size, color, bold, italic, underline) with a `CHECK`; the receipt guard also freezes `format` |
+| `20250101001700_hangouts.sql` | `hangouts`: one pending per pair, guarded status changes, RLS, Realtime publication, `pg_cron` expiry (ADR 0011) |
 
 ## Notes
 
