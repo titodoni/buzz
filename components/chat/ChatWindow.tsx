@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { WindowFrame } from "@/components/WindowFrame";
-import { PresenceDot, presenceLabel } from "@/components/PresenceDot";
+import { PresenceDot } from "@/components/PresenceDot";
 import { NudgeButton, type NudgeButtonHandle } from "@/components/chat/NudgeButton";
-import { AboutDialog } from "@/components/AboutDialog";
-import { Dialog } from "@/components/Dialog";
-import { MenuBar, type MenuDef } from "@/components/friends/MenuBar";
+import { ChatMenuBar, type ChatDialogKind } from "./chatMenus";
+import { ChatDialogs } from "./ChatDialogs";
+import { ChatHeader } from "./ChatHeader";
+import { KeyChangedNotice } from "./KeyChangedNotice";
 import { EmoticonPicker } from "./EmoticonPicker";
 import { FormatBar } from "./FormatBar";
 import { MessageInput, type MessageInputHandle } from "./MessageInput";
@@ -15,12 +16,10 @@ import { Avatar, ChatLayout } from "./ChatLayout";
 import { TypingIndicator } from "./TypingIndicator";
 import { conversation, earlierCursor, emptyConversation, type MessageRow } from "@/lib/chat/conversation";
 import { EARLIER_PAGE_SIZE, loadEarlier, loadHistory, markConversationRead, sendEncryptedMessage, trustFriendKey } from "@/lib/chat/api";
-import { SafetyNumber } from "./SafetyNumber";
 import { readWireRow, readWireRows, type ReadKey, type WireRow } from "@/lib/chat/wire";
 import { useMyKeys } from "@/lib/crypto/useMyKeys";
 import { conversationText, copyText } from "@/lib/chat/copy";
 import { useChatView } from "@/lib/chat/useChatView";
-import { hasNowPlaying, shouldShowField, shownNowPlaying } from "@/lib/profile/render";
 import { useChatChannel } from "@/lib/realtime/chat";
 import { useFriendPresence } from "@/lib/realtime/presence";
 import { ignoreUser, isIgnoredByMe, unignoreUser, useIgnorers } from "@/lib/friends/ignore";
@@ -45,8 +44,6 @@ export function offlineLine(friendName: string): string {
   return `${friendName} is offline. Your messages will be waiting when they sign in.`;
 }
 
-type ChatDialogKind = "profile" | "ignore" | "about";
-
 export interface ChatWindowProps {
   me: string;
   friendId: string;
@@ -67,7 +64,6 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   const [dialog, setDialog] = useState<ChatDialogKind | null>(null);
   /** A short note under the header, e.g. "Copied." or a failure. */
   const [note, setNote] = useState<string | null>(null);
-  const [ignored, setIgnored] = useState(false);
   // True after a send was stopped because the friend's key changed (ADR 0010, E3.1).
   const [keyChanged, setKeyChanged] = useState(false);
   const loadingEarlierRef = useRef(false);
@@ -76,6 +72,11 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   const keysLoading = myKeys.status === "loading";
   const readKey: ReadKey = myKeys.status === "ready" ? { id: me, privateKey: myKeys.keys.privateKey } : null;
   const readKeyRef = useRef<ReadKey>(readKey);
+  // The friend key whose Safety Number is on screen; that is the key "Trust" may pin.
+  const shownKeyRef = useRef<string | null>(null);
+  const rememberShownKey = useCallback((key: string | null) => {
+    shownKeyRef.current = key;
+  }, []);
   const sendKeys = myKeys.status === "ready" ? myKeys.keys : myKeys.status === "unavailable" ? ("unavailable" as const) : null;
   const keysRef = useRef(sendKeys);
   useEffect(() => {
@@ -89,6 +90,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   // A friend who ignores me looks Offline (Req 15.5); then the Nudge button is off too.
   const ignorers = useIgnorers(me);
   const presence = ignorers.has(friendId) ? "offline" : livePresence;
+  const [ignored, setIgnored] = useState(false);
   // Buzz! and typing from someone I ignore are dropped here too (Req 15.3); the server blocks them first.
   const ignoredRef = useRef(false);
   // Resolves once the first check is done, so a window opened by a Buzz! can
@@ -366,66 +368,34 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     [me, friendId, friendName],
   );
 
-  const menus: MenuDef[] = [
-    {
-      label: "Conversation",
-      items: [
-        { label: "Copy Conversation", onSelect: () => void copyConversation() },
-        { label: "Close", onSelect: () => void closeWindow() },
-      ],
-    },
-    {
-      label: "Edit",
-      items: [
-        { label: "Copy", shortcut: "Ctrl+C", onSelect: () => void copySelection() },
-        { label: "Select All", onSelect: selectAll },
-        { label: "Clear Window", onSelect: () => dispatch({ type: "cleared" }) },
-      ],
-    },
-    {
-      label: "View",
-      items: [
-        { label: "Show Timestamps", checked: view.showTimestamps, onSelect: () => updateView({ showTimestamps: !view.showTimestamps }) },
-        { label: "Show Earlier Messages", shortcut: "F3", disabled: state.reachedStart, onSelect: showEarlier },
-        {
-          label: "Show Friends' Fonts",
-          checked: view.showFriendsFonts,
-          onSelect: () => updateView({ showFriendsFonts: !view.showFriendsFonts }),
-        },
-      ],
-    },
-    {
-      label: "Actions",
-      items: [
-        { label: "Buzz!", shortcut: "Ctrl+G", disabled: presence === "offline", onSelect: () => nudgeRef.current?.send() },
-        { label: "View Profile", onSelect: () => setDialog("profile") },
-        ignored
-          ? { label: "Stop Ignoring", onSelect: () => void setIgnoring(false) }
-          : { label: "Ignore...", onSelect: () => setDialog("ignore") },
-      ],
-    },
-    { label: "Help", items: [{ label: "About Buzz", onSelect: () => setDialog("about") }] },
-  ];
-
   return (
     <WindowFrame title={`${friendName} - Instant Message`} icon={<PresenceDot state={presence} size={14} />}>
       <ChatLayout
         rootRef={rootRef}
-        menu={<MenuBar menus={menus} label="Chat menu" />}
+        menu={
+          <ChatMenuBar
+            state={{ view, reachedStart: state.reachedStart, friendOffline: presence === "offline", ignored }}
+            actions={{
+              copyConversation: () => void copyConversation(),
+              closeWindow: () => void closeWindow(),
+              copySelection: () => void copySelection(),
+              selectAll,
+              clearWindow: () => dispatch({ type: "cleared" }),
+              showEarlier,
+              sendBuzz: () => nudgeRef.current?.send(),
+              stopIgnoring: () => void setIgnoring(false),
+              openDialog: setDialog,
+              updateView,
+            }}
+          />
+        }
         header={
-          <>
-            <PresenceDot state={presence} />
-            <strong className="ym-truncate">{friendName}</strong>
-            <span className="ym-truncate" style={{ fontSize: 12, color: "var(--text-muted)" }}>
-              {friend?.statusMessage ? `"${friend.statusMessage}"` : presenceLabel(presence)}
-            </span>
-            {hasNowPlaying(friend?.nowPlaying) ? (
-              <span className="ym-truncate" style={{ fontSize: 12 }} title={friend?.nowPlaying ?? undefined}>
-                <span aria-hidden="true">♪ </span>
-                {shownNowPlaying(friend?.nowPlaying ?? "")}
-              </span>
-            ) : null}
-          </>
+          <ChatHeader
+            friendName={friendName}
+            presence={presence}
+            statusMessage={friend?.statusMessage}
+            nowPlaying={friend?.nowPlaying}
+          />
         }
         notice={
           <>
@@ -448,21 +418,18 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
               {note ?? ""}
             </p>
             {keyChanged && myKeys.status === "ready" ? (
-              <div role="alert" style={{ fontSize: 12, margin: "4px 8px" }}>
-                <SafetyNumber myPublicKey={myKeys.keys.publicKey} friendId={friendId} friendName={friendName} />
-                <button
-                  type="button"
-                  className="ym-button mt-1"
-                  onClick={() => {
-                    void trustFriendKey(me, friendId).then((ok) => {
-                      setKeyChanged(!ok);
-                      setNote(ok ? `You trust ${friendName}'s new key. Send your message again.` : "Couldn't update the key. Try again.");
-                    });
-                  }}
-                >
-                  I checked it. Trust the new key.
-                </button>
-              </div>
+              <KeyChangedNotice
+                myPublicKey={myKeys.keys.publicKey}
+                friendId={friendId}
+                friendName={friendName}
+                onKey={rememberShownKey}
+                onTrust={() => {
+                  void trustFriendKey(me, friendId, shownKeyRef.current).then((ok) => {
+                    setKeyChanged(!ok);
+                    setNote(ok ? `You trust ${friendName}'s new key. Send your message again.` : "Couldn't update the key. Try again.");
+                  });
+                }}
+              />
             ) : null}
           </>
         }
@@ -526,36 +493,15 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
           </>
         }
       />
-      {dialog === "about" ? <AboutDialog onClose={() => setDialog(null)} /> : null}
-      {dialog === "profile" ? (
-        <Dialog title={`${friendName}'s profile`} onClose={() => setDialog(null)}>
-          <p className="m-0 font-bold">{friendName}</p>
-          {shouldShowField(friend?.statusMessage) ? <p className="m-0 text-xs">{friend?.statusMessage}</p> : null}
-          {hasNowPlaying(friend?.nowPlaying) ? <p className="m-0 text-xs">♪ {friend?.nowPlaying}</p> : null}
-          {myKeys.status === "ready" ? (
-            <SafetyNumber myPublicKey={myKeys.keys.publicKey} friendId={friendId} friendName={friendName} />
-          ) : null}
-          <button type="button" className="ym-button mt-2" onClick={() => setDialog(null)}>
-            Close
-          </button>
-        </Dialog>
-      ) : null}
-      {dialog === "ignore" ? (
-        <Dialog title={`Ignore ${friendName}`} role="alertdialog" onClose={() => setDialog(null)}>
-          <p className="m-0 text-xs">
-            Ignore {friendName}? They won&apos;t be able to message you, Buzz you, or send you friend requests, and
-            they&apos;ll see you as offline. Buzz won&apos;t tell them.
-          </p>
-          <div className="mt-2 flex gap-1">
-            <button type="button" className="ym-button" onClick={() => void setIgnoring(true)}>
-              Ignore
-            </button>
-            <button type="button" className="ym-button" data-autofocus onClick={() => setDialog(null)}>
-              Cancel
-            </button>
-          </div>
-        </Dialog>
-      ) : null}
+      <ChatDialogs
+        dialog={dialog}
+        friendId={friendId}
+        friendName={friendName}
+        friend={friend}
+        myPublicKey={myKeys.status === "ready" ? myKeys.keys.publicKey : null}
+        onClose={() => setDialog(null)}
+        onIgnore={() => void setIgnoring(true)}
+      />
     </WindowFrame>
   );
 }

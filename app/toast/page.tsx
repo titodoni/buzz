@@ -2,9 +2,8 @@
 import { Suspense, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { PresenceDot } from "@/components/PresenceDot"
+import { isUuid } from "@/lib/validation/ids"
 import { closeWindow, openChatWindow } from "@/lib/tauri/windows"
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
  * The "<name> is now online" desktop toast (Req 16.4, 16.5). The Rust shell
@@ -27,7 +26,7 @@ function Toast() {
       className="ym-window block w-screen px-3 text-left text-sm"
       style={{ height: "100vh", cursor: "pointer", boxSizing: "border-box" }}
       onClick={async () => {
-        if (UUID.test(friendId)) await openChatWindow(friendId).catch(() => undefined)
+        if (isUuid(friendId)) await openChatWindow(friendId).catch(() => undefined)
         await closeWindow()
       }}
     >

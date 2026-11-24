@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { acceptInboundNudge, type InboundLog } from "../nudge/inbound";
 import { closeChannel, openChannel } from "./channel";
 
 // Each signed-in user's Buddy List listens on a personal inbox channel. A nudge
@@ -51,6 +52,7 @@ export function useNudgeInbox(me: string, onNudge: (senderId: string, receivedAt
   useEffect(() => {
     if (!me) return;
     const name = inboxChannel(me);
+    const seen: InboundLog = new Map();
     let cancelled = false;
     let opened: RealtimeChannel | null = null;
     void (async () => {
@@ -61,7 +63,10 @@ export function useNudgeInbox(me: string, onNudge: (senderId: string, receivedAt
         .on("broadcast", { event: NUDGE_EVENT }, ({ payload }) => {
           // Payload comes from another client, so check its shape before use.
           const sender = (payload as { sender?: unknown } | null)?.sender;
-          if (typeof sender === "string" && sender !== me) onNudgeRef.current(sender, Date.now());
+          if (typeof sender !== "string" || sender === me) return;
+          // A friend's modified app could Buzz in a loop; honest apps wait (lib/nudge/inbound.ts).
+          const now = Date.now();
+          if (acceptInboundNudge(seen, sender, now)) onNudgeRef.current(sender, now);
         })
         .subscribe();
     })();

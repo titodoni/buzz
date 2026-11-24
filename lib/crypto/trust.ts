@@ -17,6 +17,16 @@ export function checkFriendKey(pinned: string | null, current: string | null): K
   return pinned === current ? { status: "ok" } : { status: "changed" }
 }
 
+/**
+ * The key to remember when the user taps "Trust the new key": the key now on
+ * the server, but only if it is the one whose Safety Number they just compared.
+ * If the server shows a different key by now, nothing is pinned and the user checks again.
+ */
+export function keyToPin(shown: string | null, current: string | null): string | null {
+  if (shown === null || current === null) return null
+  return shown === current ? current : null
+}
+
 export type SendGate = { allowed: true } | { allowed: false; reason: "missing" | "changed"; message: string }
 
 /** Whether a message may go now, with the words to show when it may not. */

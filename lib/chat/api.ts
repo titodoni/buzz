@@ -2,7 +2,7 @@
 
 import { getSupabase } from "@/lib/supabase/browser-client"
 import { fetchPublicKey } from "@/lib/crypto/keys"
-import { loadPins, pinFriendKey } from "@/lib/crypto/trust"
+import { keyToPin, loadPins, pinFriendKey } from "@/lib/crypto/trust"
 import { DEFAULT_MESSAGE_LIMIT } from "./messages"
 import { sendEncrypted, type SendDeps } from "./send"
 import type { WireRow } from "./wire"
@@ -101,11 +101,12 @@ export async function markConversationRead(me: string, friendId: string): Promis
 
 /**
  * The user has compared the Safety Number and accepts the friend's new key
- * (ADR 0010, E3.1). Reads the key now and remembers it. False if it could not be read.
+ * (ADR 0010, E3.1). `shownKey` is the key whose Safety Number they compared. It is
+ * remembered only if the server still shows that same key. False if it could not be read or changed again.
  */
-export async function trustFriendKey(me: string, friendId: string): Promise<boolean> {
+export async function trustFriendKey(me: string, friendId: string, shownKey: string | null): Promise<boolean> {
   try {
-    const key = await fetchPublicKey(friendId)
+    const key = keyToPin(shownKey, await fetchPublicKey(friendId))
     if (key === null) return false
     pinFriendKey(localStorage, me, friendId, key)
     return true

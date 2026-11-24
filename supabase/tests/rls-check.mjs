@@ -151,6 +151,21 @@ await check("sender A can expire a Hangout older than 15 minutes", async () => s
 await check("an answered Hangout is final", async () => { const id = await seedHangout(A, B); await setStatus(B, id, "accepted"); return setStatus(B, id, "declined"); }, (g) => /cannot change/.test(g));
 await check("receiver B cannot edit the text", async () => { const id = await seedHangout(A, B); await as(B); await c.query(`update hangouts set text='mine' where id=$1`, [id]); return "updated"; }, (g) => /only status/.test(g));
 await check("nobody can delete a Hangout", async () => { const id = await seedHangout(A, B); await as(A); const a = (await c.query(`delete from hangouts where id=$1`, [id])).rowCount; await as(B); return a + (await c.query(`delete from hangouts where id=$1`, [id])).rowCount; }, 0);
+// ---- Security hardening (migration 20261124120000).
+await check("the server sets created_at and delivered_at on a new message", async () => {
+  await asAdmin(); await c.query(`update friendships set status='accepted'`);
+  await as(A);
+  await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}, created_at, delivered_at) values ($1,$2,true,'srv','y',$3, now() + interval '1 day', now())`, [A, B, K]);
+  await asAdmin();
+  return (await c.query(`select (created_at <= now() and delivered_at is null) ok from messages where cipher_receiver='srv'`)).rows[0].ok;
+}, true);
+await check("receiver B cannot accept a Hangout after its 15 minutes", async () => setStatus(B, await seedHangout(A, B, 20), "accepted"), (g) => /not allowed/.test(g));
+await check("nobody can edit responded_at without answering", async () => { const id = await seedHangout(A, B); await as(B); await c.query(`update hangouts set responded_at=now() where id=$1`, [id]); return "updated"; }, (g) => /only status/.test(g));
+await check("a two-letter name search lists nobody", async () => { await as(C); return (await c.query(`select count(*)::int n from search_users('an')`)).rows[0].n; }, 0);
+await check("a three-letter name search still finds the person", async () => { await as(C); return (await c.query(`select count(*)::int n from search_users('ann')`)).rows[0].n; }, 1);
+await check("anon holds no privilege on messages", async () => { await asAdmin(); return (await c.query(`select has_table_privilege('anon','public.messages','select') or has_table_privilege('anon','public.messages','insert') as p`)).rows[0].p; }, false);
+await check("signed-in users cannot TRUNCATE a table", async () => { await asAdmin(); return (await c.query(`select has_table_privilege('authenticated','public.messages','truncate') as p`)).rows[0].p; }, false);
+await check("an avatar_url over 512 characters is refused", async () => { await as(A); await c.query(`update profiles set avatar_url = '/avatars/' || repeat('a', 600) where id=$1`, [A]); return "updated"; }, (g) => /profiles_avatar_url_len|check constraint/.test(g));
 await c.query("rollback");
 await c.end();
 console.table(results);

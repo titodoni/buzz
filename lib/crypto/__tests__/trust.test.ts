@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { generateKeyPair } from "../box"
 import { safetyNumber } from "../safetyNumber"
-import { checkFriendKey, loadPins, parsePins, pinFriendKey, sendGate } from "../trust"
+import { checkFriendKey, keyToPin, loadPins, parsePins, pinFriendKey, sendGate } from "../trust"
 
 // Feature: buzz-encryption, Safety Number and key trust (E3)
 describe("safetyNumber", () => {
@@ -90,5 +90,18 @@ describe("pins", () => {
   it("treats malformed storage as none and keeps only text values", () => {
     for (const raw of [null, "", "nope", "null", "[]", "5"]) expect(parsePins(raw)).toEqual({})
     expect(parsePins('{"ann":"k1","bob":5}')).toEqual({ ann: "k1" })
+  })
+})
+
+describe("keyToPin", () => {
+  it("pins the server's key only when it is the key the user compared", () => {
+    expect(keyToPin("K1", "K1")).toBe("K1")
+  })
+  it("pins nothing when the key changed again after the user looked", () => {
+    expect(keyToPin("K1", "K2")).toBeNull()
+  })
+  it("pins nothing without a compared key or a published key", () => {
+    expect(keyToPin(null, "K1")).toBeNull()
+    expect(keyToPin("K1", null)).toBeNull()
   })
 })

@@ -9,7 +9,18 @@ import { safetyNumber } from "@/lib/crypto/safetyNumber"
  * (ADR 0010, E3.2). Read from the server now, so it shows the key that
  * the next message would use.
  */
-export function SafetyNumber({ myPublicKey, friendId, friendName }: { myPublicKey: string; friendId: string; friendName: string }) {
+export function SafetyNumber({
+  myPublicKey,
+  friendId,
+  friendName,
+  onKey,
+}: {
+  myPublicKey: string
+  friendId: string
+  friendName: string
+  /** Called with the friend's key that this number was made from (null when there is none). */
+  onKey?: (key: string | null) => void
+}) {
   const [state, setState] = useState<{ status: "loading" } | { status: "none" } | { status: "error" } | { status: "ready"; number: string }>({
     status: "loading",
   })
@@ -19,13 +30,14 @@ export function SafetyNumber({ myPublicKey, friendId, friendName }: { myPublicKe
     fetchPublicKey(friendId)
       .then(async (key) => {
         if (!active) return
+        onKey?.(key)
         setState(key ? { status: "ready", number: await safetyNumber(myPublicKey, key) } : { status: "none" })
       })
       .catch(() => active && setState({ status: "error" }))
     return () => {
       active = false
     }
-  }, [myPublicKey, friendId])
+  }, [myPublicKey, friendId, onKey])
 
   return (
     <div className="mt-2 text-xs" aria-label="Safety Number">

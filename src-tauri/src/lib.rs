@@ -1,3 +1,4 @@
+mod ids;
 mod key_store;
 mod now_playing;
 
@@ -19,7 +20,6 @@ const CHAT_PATH: &str = "chat/";
 /// Query parameter carrying the friend id to the chat page.
 const CHAT_QUERY_KEY: &str = "friendId";
 const CHAT_LABEL_PREFIX: &str = "chat-";
-const MAX_FRIEND_ID_LEN: usize = 64;
 /// The main window: the Buddy List.
 const MAIN_LABEL: &str = "main";
 /// The "<name> is now online" toast (Req 16.4); at most one at a time.
@@ -43,11 +43,9 @@ const EVENT_EXIT: &str = "buzz://exit-requested";
 /// How long Exit waits for the Buddy List to go offline before quitting.
 const EXIT_GRACE: Duration = Duration::from_millis(1500);
 
-/// Accepts uuid-like ids only: non-empty, bounded, ASCII alphanumerics and dashes.
+/// Friend ids are Supabase user ids: UUIDs, exactly. Each valid id is one chat window.
 fn is_valid_friend_id(id: &str) -> bool {
-    !id.is_empty()
-        && id.len() <= MAX_FRIEND_ID_LEN
-        && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+    ids::is_uuid(id)
 }
 
 /// Query flag telling a newly opened chat window that it was opened by an
@@ -489,5 +487,8 @@ mod tests {
         assert!(!is_valid_friend_id("a?b=c"));
         assert!(!is_valid_friend_id("../x"));
         assert!(!is_valid_friend_id(&"a".repeat(65)));
+        // Letters, digits and dashes are not enough: it must be a real UUID.
+        assert!(!is_valid_friend_id("abc-123"));
+        assert!(!is_valid_friend_id("123e4567-e89b-12d3-a456-42661417400"));
     }
 }

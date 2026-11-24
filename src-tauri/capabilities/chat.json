@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "chat",
-  "description": "Chat windows: window controls, the Buzz! shake, and clearing the taskbar flash",
+  "description": "Chat windows: window controls, the Buzz! shake, clearing the taskbar flash, and reading (never writing) the private key",
   "windows": [
     "chat-*"
   ],
@@ -15,8 +15,6 @@
     "core:window:allow-is-maximized",
     "core:window:allow-request-user-attention",
     "allow-key-store-available",
-    "allow-key-store-get",
-    "allow-key-store-set",
-    "allow-key-store-delete"
+    "allow-key-store-get"
   ]
 }

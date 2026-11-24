@@ -6,14 +6,13 @@ import type { BuddyView } from "@/lib/friends/buddyView"
 import { deleteGroup, moveFriend, renameGroup, type ContactGroup, type GroupMembership } from "@/lib/friends/groups"
 import { ignoreUser, unignoreUser } from "@/lib/friends/ignore"
 import type { PresenceState } from "@/lib/presence/state"
-import { hasNowPlaying, shouldShowField } from "@/lib/profile/render"
 import { sendEncryptedMessage } from "@/lib/chat/api"
 import { DEFAULT_FORMAT } from "@/lib/chat/format"
 import type { KeyPair } from "@/lib/crypto/box"
 import { SAY_HI_TEXT, canSayHi } from "@/lib/status/sayHi"
 import { openChatWindow } from "@/lib/tauri/windows"
-import { SafetyNumber } from "@/components/chat/SafetyNumber"
 import { FriendListItem } from "./FriendListItem"
+import { DeleteGroupDialog, IgnoreDialog, MoveDialog, ProfileDialog, RemoveFriendDialog, RenameDialog } from "./FriendDialogs"
 
 /** Key used to remember a group's collapsed state; the default group has no id. */
 const viewKey = (id: string | null) => id ?? "default"
@@ -340,136 +339,35 @@ export function FriendList({
         </ul>
       ) : null}
       {overlay?.kind === "move" ? (
-        <div
-          role="dialog"
-          aria-label={`Move ${overlay.friend.displayName} to a group`}
-          className="m-2 border p-2"
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setOverlay(null)
-          }}
-        >
-          <p className="m-0 text-xs font-bold">Move {overlay.friend.displayName} to:</p>
-          <ul className="m-0 mt-1 list-none p-0">
-            {[{ id: null as string | null, name: DEFAULT_GROUP_NAME }, ...groups].map((g, i) => (
-              <li key={viewKey(g.id)}>
-                <button
-                  type="button"
-                  className={MENU_ITEM}
-                  // Focus lands in the dialog, so keyboard users don't have to Tab past the list.
-                  autoFocus={i === 0}
-                  onClick={() => void doMove(overlay.friend, g.id)}
-                >
-                  {g.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-          <button type="button" className="ym-button mt-1" onClick={() => setOverlay(null)}>
-            Cancel
-          </button>
-        </div>
+        <MoveDialog
+          friend={overlay.friend}
+          groups={groups}
+          onMove={(groupId) => void doMove(overlay.friend, groupId)}
+          onCancel={() => setOverlay(null)}
+        />
       ) : null}
       {overlay?.kind === "rename" ? (
-        <form
-          role="dialog"
-          aria-label={`Rename the ${overlay.group.name} group`}
-          className="m-2 border p-2"
-          onSubmit={(e) => void doRename(e, overlay.group)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setOverlay(null)
+        <RenameDialog
+          group={overlay.group}
+          text={renameText}
+          error={renameError}
+          onTextChange={(text) => {
+            setRenameText(text)
+            setRenameError(null)
           }}
-        >
-          <label className="block text-xs font-bold">
-            New name
-            <input
-              type="text"
-              autoFocus
-              value={renameText}
-              onChange={(e) => {
-                setRenameText(e.target.value)
-                setRenameError(null)
-              }}
-              className="mt-1 block w-full font-normal"
-            />
-          </label>
-          {renameError ? (
-            <p role="alert" className="m-0 text-xs" style={{ color: "var(--buzz-red)" }}>
-              {renameError}
-            </p>
-          ) : null}
-          <div className="mt-1 flex gap-1">
-            <button type="submit" className="ym-button">
-              Rename
-            </button>
-            <button type="button" className="ym-button" onClick={() => setOverlay(null)}>
-              Cancel
-            </button>
-          </div>
-        </form>
+          onSubmit={(e) => void doRename(e, overlay.group)}
+          onCancel={() => setOverlay(null)}
+        />
       ) : null}
       {overlay?.kind === "deleteGroup" ? (
-        <div role="alertdialog" aria-label="Delete group" className="m-2 border p-2">
-          <p className="m-0 text-xs">
-            Delete {overlay.group.name}? Its friends move back to {DEFAULT_GROUP_NAME}. Nobody is removed.
-          </p>
-          <div className="mt-1 flex gap-1">
-            <button type="button" className="ym-button" onClick={() => void doDeleteGroup(overlay.group)}>
-              Delete
-            </button>
-            <button type="button" className="ym-button" autoFocus onClick={() => setOverlay(null)}>
-              Keep
-            </button>
-          </div>
-        </div>
+        <DeleteGroupDialog group={overlay.group} onDelete={() => void doDeleteGroup(overlay.group)} onKeep={() => setOverlay(null)} />
       ) : null}
       {overlay?.kind === "ignore" ? (
-        <div
-          role="alertdialog"
-          aria-label={`Ignore ${overlay.friend.displayName}`}
-          className="m-2 border p-2"
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setOverlay(null)
-          }}
-        >
-          <p className="m-0 text-xs">
-            Ignore {overlay.friend.displayName}? They won&apos;t be able to message you, Buzz you, or send you friend
-            requests, and they&apos;ll see you as offline. Buzz won&apos;t tell them.
-          </p>
-          <div className="mt-1 flex gap-1">
-            <button type="button" className="ym-button" onClick={() => void doIgnore(overlay.friend, true)}>
-              Ignore
-            </button>
-            <button type="button" className="ym-button" autoFocus onClick={() => setOverlay(null)}>
-              Cancel
-            </button>
-          </div>
-        </div>
+        <IgnoreDialog friend={overlay.friend} onIgnore={() => void doIgnore(overlay.friend, true)} onCancel={() => setOverlay(null)} />
       ) : null}
-      {overlay?.kind === "profile" ? (
-        <div role="dialog" aria-label={`${overlay.friend.displayName}'s profile`} className="m-2 border p-2">
-          <p className="m-0 font-bold">{overlay.friend.displayName}</p>
-          {shouldShowField(overlay.friend.statusMessage) ? <p className="m-0 text-xs">{overlay.friend.statusMessage}</p> : null}
-          {hasNowPlaying(overlay.friend.nowPlaying) ? <p className="m-0 text-xs">♪ {overlay.friend.nowPlaying}</p> : null}
-          {keys !== null && keys !== "unavailable" ? (
-            <SafetyNumber myPublicKey={keys.publicKey} friendId={overlay.friend.id} friendName={overlay.friend.displayName} />
-          ) : null}
-          <button type="button" className="ym-button mt-1" autoFocus onClick={() => setOverlay(null)}>
-            Close
-          </button>
-        </div>
-      ) : null}
+      {overlay?.kind === "profile" ? <ProfileDialog friend={overlay.friend} keys={keys} onClose={() => setOverlay(null)} /> : null}
       {overlay?.kind === "confirm" ? (
-        <div role="alertdialog" aria-label="Remove friend" className="m-2 border p-2">
-          <p className="m-0">Remove {overlay.friend.displayName} from your friends?</p>
-          <div className="mt-1 flex gap-1">
-            <button type="button" className="ym-button" onClick={() => void doRemove(overlay.friend)}>
-              Remove
-            </button>
-            <button type="button" className="ym-button" autoFocus onClick={() => setOverlay(null)}>
-              Keep
-            </button>
-          </div>
-        </div>
+        <RemoveFriendDialog friend={overlay.friend} onRemove={() => void doRemove(overlay.friend)} onKeep={() => setOverlay(null)} />
       ) : null}
     </section>
   )

@@ -5,14 +5,13 @@ import { useSearchParams } from "next/navigation";
 import { AuthGuard } from "@/components/AuthGuard";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { useSession } from "@/lib/auth/session";
-
-const UUID_LIKE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { isUuid } from "@/lib/validation/ids";
 
 function ChatContent() {
   const friendId = useSearchParams().get("friendId");
   const { user } = useSession();
 
-  if (!friendId || !UUID_LIKE.test(friendId)) {
+  if (!friendId || !isUuid(friendId)) {
     return (
       <main className="p-4">
         <p role="alert">

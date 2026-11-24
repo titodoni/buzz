@@ -91,3 +91,15 @@
 -- As C (stranger): select * from public.hangouts;              -- 0 rows; insert to A: ERROR
 -- If B ignores A: A's insert                                   -- ERROR (ADR 0009)
 -- Nobody: delete from public.hangouts;                         -- 0 rows
+
+-- == 7. Security hardening (migration 20261124120000) ==
+-- The executable version of these checks is in supabase/tests/rls-check.mjs (npm run test:rls).
+-- As A: insert a message with created_at = now() + 1 day and delivered_at = now()
+--   read it back: created_at <= now() and delivered_at is null       -- the server sets both
+-- As B: accept a Hangout older than 15 minutes                       -- ERROR (not allowed)
+-- As B: update hangouts set responded_at = now() (status unchanged)  -- ERROR (only status may change)
+-- As C: select * from public.search_users('an');                     -- 0 rows (name needs 3+ letters)
+--       select * from public.search_users('ann');                    -- finds ann; at most 20 rows ever
+-- select has_table_privilege('anon', 'public.messages', 'select');   -- false
+-- select has_table_privilege('authenticated', 'public.messages', 'truncate'); -- false
+-- As A: update public.profiles set avatar_url = '/avatars/' || repeat('a', 600); -- ERROR (check)

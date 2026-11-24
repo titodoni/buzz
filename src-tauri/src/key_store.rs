@@ -15,7 +15,7 @@ const MAX_KEY_CHARS: usize = 128;
 
 /// Account ids are Supabase user ids (UUIDs); nothing else is accepted as a keychain name.
 fn valid_account(account: &str) -> bool {
-    account.len() == 36 && account.chars().all(|c| c.is_ascii_hexdigit() || c == '-')
+    crate::ids::is_uuid(account)
 }
 
 /// Keys are base64url text without padding.
