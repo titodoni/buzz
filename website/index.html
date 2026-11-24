@@ -934,7 +934,7 @@
         <div class="feature-card">
           <div class="feature-icon-wrapper icon-blue">☕</div>
           <h3>15-Minute Hangouts</h3>
-          <p>No calendar invites, no awkward planning. Send quick invitations like "Coffee break?" or "Gaming now?". If unanswered, they gracefully expire in 15 minutes.</p>
+          <p>No calendar invites, no awkward planning. Send quick invitations like "Play a game?" or "Study together?". If unanswered, they gracefully expire in 15 minutes.</p>
         </div>
 
         <!-- 6 -->
@@ -1475,8 +1475,8 @@
       });
       $('ymxHangout').addEventListener('click', function () {
         const id = current, f = FRIENDS[id];
-        addMsg(id, { k: 'sys', tone: 'info', text: 'Hangout sent: Coffee break?' });
-        setTimeout(function () { addMsg(id, { k: 'sys', tone: 'info', text: f.short + ' accepted: Coffee break?' }); }, 1800);
+        addMsg(id, { k: 'sys', tone: 'info', text: 'Hangout sent: Study together?' });
+        setTimeout(function () { addMsg(id, { k: 'sys', tone: 'info', text: f.short + ' accepted: Study together?' }); }, 1800);
       });
 
       // Emoticon picker
