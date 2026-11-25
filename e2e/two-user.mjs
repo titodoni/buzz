@@ -28,10 +28,12 @@ const A = { email: env.BUZZ_E2E_A_EMAIL, password: env.BUZZ_E2E_A_PASSWORD, name
 const B = { email: env.BUZZ_E2E_B_EMAIL, password: env.BUZZ_E2E_B_PASSWORD, name: "E2E Bob" }
 const WAIT = Number(env.E2E_WAIT_MS ?? 25_000)
 const OUT_DIR = "e2e/out"
+/** The static web files B loads; E2E_WEB lets CI test a build of another commit. */
+const WEB = env.E2E_WEB ?? "out"
 
 for (const [what, ok] of [
   ["the app (npm run tauri build -- --debug --no-bundle)", existsSync(APP)],
-  ["out/ (the same build makes it)", existsSync("out/index.html")],
+  [`${WEB}/ (the same build makes it)`, existsSync(join(WEB, "index.html"))],
   ["the test accounts (node e2e/setup-accounts.mjs)", Boolean(A.email && B.email)],
 ]) if (!ok) throw new Error(`Missing ${what}`)
 
@@ -199,7 +201,7 @@ const procs = []
 const cleanups = []
 let a, browser, bPage, bChat, mainHandle, aChat
 
-const server = await serveStatic("out", Number(env.E2E_PORT ?? 48711))
+const server = await serveStatic(WEB, Number(env.E2E_PORT ?? 48711))
 cleanups.push(() => server.close())
 
 // Each user keeps a profile between runs, as a real user does: the saved
@@ -393,7 +395,7 @@ try {
     return `A sees "${label}"; app windows open: ${handles.length}`
   }))
 
-  await step("T12", "A opens B's chat again after B came back", async () => {
+  await step("T12", "A opens B's chat again after B came back and sees the earlier messages", async () => {
     await a.switchTo(mainHandle)
     const before = await a.handles()
     await waitFor("A's row for B", () => aRun(page.openRow, B.name))
@@ -407,8 +409,11 @@ try {
       return null
     })
     await waitFor("the chat window to load", () => aRun(page.chatReady))
-    const old = await aRun(page.logText)
-    return old.includes(m1) ? "history shows the earlier messages" : "opened (earlier messages not shown)"
+    await waitFor("the earlier messages in the reopened chat", async () => {
+      const log = await aRun(page.logText)
+      return log.includes(m1) && log.includes(m2)
+    })
+    return "history shows both earlier messages"
   })
 } finally {
   await a?.quit()
@@ -423,9 +428,9 @@ const pass = results.filter((r) => r.result === "PASS").length
 const lines = [
   "# Two-user check (automated)",
   "",
-  `Date: ${new Date().toISOString()}  Platform: ${process.platform}  App: ${APP}`,
+  `Date: ${new Date().toISOString()}  Platform: ${process.platform}  App: ${APP}${env.E2E_LABEL ? `  Build: ${env.E2E_LABEL}` : ""}`,
   "",
-  "User A: the Buzz desktop app, driven by tauri-driver. User B: the same web files in headless Chrome.",
+  `User A: the Buzz desktop app, driven by ${WIN ? "msedgedriver" : "tauri-driver"}. User B: the same web files in headless Chrome.`,
   "Both use the throwaway accounts from `e2e/setup-accounts.mjs` on the hosted Supabase project.",
   "Not judged here: the shake you see and the sound you hear, the tray, and anything only a person can notice.",
   "",

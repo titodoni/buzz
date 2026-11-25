@@ -9,6 +9,11 @@ name: e2e
 
 on:
   workflow_dispatch:
+    inputs:
+      app_ref:
+        description: "Which build to test: a tag, branch or commit (the check itself always comes from main)"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -24,6 +29,9 @@ jobs:
       E2E_FRESH: "1"
       # The check runs below administrator, so it writes only into e2e/out, which it makes.
       E2E_REPORT: e2e/out/report.md
+      E2E_APP: under-test/src-tauri/target/debug/buzz.exe
+      E2E_WEB: under-test/out
+      E2E_LABEL: ${{ inputs.app_ref || github.sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -33,9 +41,18 @@ jobs:
       - uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable
       - uses: swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
-          workspaces: src-tauri
+          workspaces: under-test/src-tauri
 
       - run: npm ci
+
+      # The app under test, built from app_ref (default: this commit) in under-test/.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.app_ref || github.sha }}
+          path: under-test
+      - name: App dependencies
+        working-directory: under-test
+        run: npm ci
 
       - name: An msedgedriver that matches this WebView2
         shell: pwsh
@@ -45,13 +62,14 @@ jobs:
           $PWD.Path >> $env:GITHUB_PATH
 
       - name: Build the app (debug, no installer)
+        working-directory: under-test
         run: npm run tauri build -- --debug --no-bundle
 
       # Does the app start and keep answering on its own, without any driver?
       - name: Start the app by itself for 20 seconds
         shell: pwsh
         run: |
-          $p = Start-Process -FilePath src-tauri/target/debug/buzz.exe -PassThru `
+          $p = Start-Process -FilePath under-test/src-tauri/target/debug/buzz.exe -PassThru `
             -RedirectStandardOutput app-out.txt -RedirectStandardError app-err.txt
           Start-Sleep -Seconds 20
           $p.Refresh()
