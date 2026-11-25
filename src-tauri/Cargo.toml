@@ -16,6 +16,10 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["macos-private-api", "tray-icon", "image-png"] }
 
+# Launching Buzz again raises the running Buddy List instead of starting a second
+# copy on the same account (classic Yahoo Messenger behaviour). Official Tauri plugin.
+tauri-plugin-single-instance = "2.5"
+
 # The Message private key lives in the OS keychain (buzz-encryption E1.2, ADR 0010).
 keyring = "4.2"
 

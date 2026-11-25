@@ -396,6 +396,11 @@ fn build_tray(app: &AppHandle) -> tauri::Result<TrayIcon> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Registered first, as the plugin requires: a second launch (often after the
+        // Buddy List was closed to the tray) just brings the running one back.
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            show_main(app);
+        }))
         .setup(|app| {
             // Some Linux desktops have no tray; Buzz still runs, without hide-to-tray.
             match build_tray(app.handle()) {
