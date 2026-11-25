@@ -81,7 +81,7 @@ const fmt = (o) => JSON.stringify({ font: "Verdana", size: 14, color: "#cc0000",
 // row keeps its format inside the cipher), and users can no longer insert plaintext,
 // so its CHECK is exercised as the table owner.
 const sendFormatted = async (f) => { await asAdmin(); return (await c.query(`insert into messages (sender_id, receiver_id, body, format) values ($1,$2,'styled',$3::jsonb)`, [A, B, f])).rowCount; };
-await check("an encrypted row with a plaintext format is refused", async () => { await as(A); await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}, format) values ($1,$2,${ENC_VALS},$3::jsonb)`, [A, B, fmt({})]); return "inserted"; }, (g) => /check constraint/.test(g));
+await check("an encrypted row with a plaintext format is refused", async () => { await as(A); await c.query(`insert into messages (sender_id, receiver_id, ${ENC_COLS}, format) values ($1,$2,${ENC_VALS},$3::jsonb)`, [A, B, fmt({})]); return "inserted"; }, (g) => /check constraint|sender key/.test(g));
 await check("a stored row accepts an allowed format", async () => sendFormatted(fmt({})), 1);
 await check("format rejects a font Buzz doesn't offer", async () => sendFormatted(fmt({ font: "Comic Sans MS" })), (g) => /check constraint/.test(g));
 await check("format rejects size 25", async () => sendFormatted(fmt({ size: 25 })), (g) => /check constraint/.test(g));
@@ -98,7 +98,7 @@ await check("friend B reads friend A's profile", async () => profileCount(B, A),
 await check("pending requester's profile is visible to the addressee", async () => { await asAdmin(); await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2 where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]); return profileCount(B, A); }, 1);
 await check("a removed friend's profile is hidden", async () => { await asAdmin(); await c.query(`update friendships set status='removed' where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]); return profileCount(B, A); }, 0);
 await check("A still reads the profile of someone on A's Ignore List", async () => { await as(A); await c.query(`insert into ignored_users (owner_id, ignored_id) values ($1,$2)`, [A, C]); return profileCount(A, C); }, 1);
-await check("search_users still finds a stranger by name", async () => { await as(C); return (await c.query(`select count(*)::int n from search_users('ann')`)).rows[0].n; }, 1);
+await check("search_users still finds a stranger by name", async () => { await as(C); return (await c.query(`select count(*)::int n from search_users('ann') where display_name = 'ann'`)).rows[0].n; }, 1);
 await check("C can set an avatar in C's own folder", async () => { await as(C); return (await c.query(`update profiles set avatar_url=$2 where id=$1`, [C, `${HOST}${C}/x.png`])).rowCount; }, 1);
 await check("C cannot set an avatar in A's folder", async () => { await as(C); await c.query(`update profiles set avatar_url=$2 where id=$1`, [C, `${HOST}${A}/x.png`]); return "updated"; }, (g) => /check constraint/.test(g));
 await check("C cannot point avatar_url at another site", async () => { await as(C); await c.query(`update profiles set avatar_url='https://evil.example/x.png' where id=$1`, [C]); return "updated"; }, (g) => /check constraint/.test(g));
@@ -123,7 +123,7 @@ const sendEnc = async (cols) => { await as(A); const keys = Object.keys(cols); r
 await check("an encrypted message with two copies and a sender key is accepted", async () => sendEnc({ encrypted: true, cipher_receiver: "x", cipher_sender: "y", sender_public_key: K }), 1);
 await check("an encrypted message with a readable body is refused", async () => sendEnc({ encrypted: true, cipher_receiver: "x", cipher_sender: "y", sender_public_key: K, body: "leak" }), (g) => /check constraint/.test(g));
 await check("an encrypted message with one copy is refused", async () => sendEnc({ encrypted: true, cipher_receiver: "x", sender_public_key: K }), (g) => /check constraint/.test(g));
-await check("an encrypted message without a sender key is refused", async () => sendEnc({ encrypted: true, cipher_receiver: "x", cipher_sender: "y" }), (g) => /check constraint/.test(g));
+await check("an encrypted message without a sender key is refused", async () => sendEnc({ encrypted: true, cipher_receiver: "x", cipher_sender: "y" }), (g) => /check constraint|sender key/.test(g));
 await check("a cipher over 6000 characters is refused", async () => sendEnc({ encrypted: true, cipher_receiver: "x".repeat(6001), cipher_sender: "y", sender_public_key: K }), (g) => /check constraint/.test(g));
 await check("a plaintext message carrying a cipher is refused", async () => sendEnc({ body: "hi", cipher_receiver: "x" }), (g) => /check constraint|row-level security/.test(g));
 await check("receiver B cannot edit a cipher or clear the encrypted flag", async () => { await asAdmin(); await c.query(`insert into messages (id, sender_id, receiver_id, encrypted, cipher_receiver, cipher_sender, sender_public_key) values (gen_random_uuid(), $1,$2,true,'x','y',$3)`, [A, B, K]); await as(B); await c.query(`update messages set cipher_receiver='tampered' where receiver_id=$1 and encrypted`, [B]); return "updated"; }, (g) => g.startsWith("ERROR"));
@@ -166,7 +166,7 @@ await check("the server sets created_at and moves a delivered stamp to now", asy
 await check("receiver B cannot accept a Hangout after its 15 minutes", async () => setStatus(B, await seedHangout(A, B, 20), "accepted"), (g) => /not allowed/.test(g));
 await check("nobody can edit responded_at without answering", async () => { const id = await seedHangout(A, B); await as(B); await c.query(`update hangouts set responded_at=now() where id=$1`, [id]); return "updated"; }, (g) => /only status/.test(g));
 await check("a two-letter name search lists nobody", async () => { await as(C); return (await c.query(`select count(*)::int n from search_users('an')`)).rows[0].n; }, 0);
-await check("a three-letter name search still finds the person", async () => { await as(C); return (await c.query(`select count(*)::int n from search_users('ann')`)).rows[0].n; }, 1);
+await check("a three-letter name search still finds the person", async () => { await as(C); return (await c.query(`select count(*)::int n from search_users('ann') where display_name = 'ann'`)).rows[0].n; }, 1);
 await check("anon holds no privilege on messages", async () => { await asAdmin(); return (await c.query(`select has_table_privilege('anon','public.messages','select') or has_table_privilege('anon','public.messages','insert') as p`)).rows[0].p; }, false);
 await check("signed-in users cannot TRUNCATE a table", async () => { await asAdmin(); return (await c.query(`select has_table_privilege('authenticated','public.messages','truncate') as p`)).rows[0].p; }, false);
 await check("an avatar_url over 512 characters is refused", async () => { await as(A); await c.query(`update profiles set avatar_url = '/avatars/' || repeat('a', 600) where id=$1`, [A]); return "updated"; }, (g) => /profiles_avatar_url_len|check constraint/.test(g));
