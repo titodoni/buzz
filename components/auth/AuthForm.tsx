@@ -1,12 +1,22 @@
 "use client"
 
-import { useEffect, useId, useState, type FormEvent } from "react"
+import { useEffect, useId, useRef, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 import { WindowFrame } from "@/components/WindowFrame"
 import { signIn, signUp, MSG_CONFIRM_EMAIL } from "@/lib/auth/session"
-import { isValidEmail, isValidPassword, PASSWORD_MAX, PASSWORD_MIN } from "@/lib/validation/profile"
+import { MSG_NAME_TOO_LONG } from "@/lib/profile/save"
+import {
+  AVATAR_TYPES,
+  DISPLAY_NAME_MAX,
+  PASSWORD_MAX,
+  PASSWORD_MIN,
+  checkAvatar,
+  isValidDisplayName,
+  isValidEmail,
+  isValidPassword,
+} from "@/lib/validation/profile"
 import { BuzzHero } from "@/components/BuzzHero"
 import { AboutDialog } from "@/components/AboutDialog"
 import { MenuBar, type MenuDef } from "@/components/friends/MenuBar"
@@ -46,6 +56,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const uid = useId()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [displayName, setDisplayName] = useState("")
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarError, setAvatarError] = useState("")
+  const [displayNameError, setDisplayNameError] = useState("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [remember, setRemember] = useState(false)
   const [autoSignIn, setAutoSignIn] = useState(true)
   const [invisible, setInvisible] = useState(false)
@@ -55,6 +71,30 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [formError, setFormError] = useState("")
   const [notice, setNotice] = useState("")
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    }
+  }, [avatarPreview])
+
+  function onPickAvatar(file: File | undefined) {
+    if (!file) return
+    const check = checkAvatar(file)
+    if (!check.ok) {
+      setAvatarError(check.reason ?? "That picture can't be used.")
+      return
+    }
+    setAvatarError("")
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
+  }
+
+  function clearAvatar() {
+    setAvatarFile(null)
+    setAvatarPreview(null)
+    setAvatarError("")
+  }
 
   useEffect(() => {
     if (mode !== "signin") return
@@ -80,6 +120,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     e.preventDefault()
     if (submitting) return
     const trimmed = email.trim()
+    const trimmedName = displayName.trim()
     setFormError("")
     setNotice("")
     const emailMsg = isValidEmail(trimmed) ? "" : "Enter an email like name@example.com."
@@ -92,9 +133,18 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         : password
           ? ""
           : "Enter your password."
+    const nameMsg =
+      mode === "signup"
+        ? isValidDisplayName(trimmedName)
+          ? ""
+          : trimmedName.length === 0
+            ? "Enter a display name."
+            : MSG_NAME_TOO_LONG
+        : ""
     setEmailError(emailMsg)
     setPasswordError(passwordMsg)
-    if (emailMsg || passwordMsg) return
+    setDisplayNameError(nameMsg)
+    if (emailMsg || passwordMsg || nameMsg || avatarError) return
 
     setSubmitting(true)
     try {
@@ -107,13 +157,13 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         markRunStarted()
         router.replace("/")
       } else {
-        const res = await signUp(trimmed, password)
+        const res = await signUp(trimmed, password, { displayName: trimmedName, avatarFile })
         if (!res.ok) return setFormError(res.message)
         if (res.needsConfirmation) return setNotice(MSG_CONFIRM_EMAIL)
         markRunStarted()
         // A brand-new account starts Available, whatever this device chose before.
         markPresenceStarted()
-        router.replace("/")
+        router.replace(res.avatarError ? "/profile/" : "/")
       }
     } finally {
       setSubmitting(false)
@@ -135,6 +185,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   ]
   const emailId = `${uid}-email`
   const passwordId = `${uid}-password`
+  const nameId = `${uid}-display-name`
 
   return (
     <WindowFrame title={copy.title} menuBar={<MenuBar menus={menus} />}>
@@ -144,6 +195,31 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         <BuzzHero height={200} />
         <div className="flex flex-1 items-center justify-center p-4">
         <form onSubmit={onSubmit} noValidate className="flex w-full max-w-sm flex-col gap-3">
+          {mode === "signup" && (
+            <div className="flex flex-col gap-1">
+              <label htmlFor={nameId} className="text-sm font-bold">
+                Display name
+              </label>
+              <input
+                id={nameId}
+                type="text"
+                autoComplete="nickname"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                aria-invalid={displayNameError ? true : undefined}
+                aria-describedby={displayNameError ? `${nameId}-err` : undefined}
+                className="rounded border border-gray-400 px-2 py-2"
+              />
+              <div className="flex justify-between text-xs">
+                <span id={`${nameId}-err`} className="text-red-700">
+                  {displayNameError}
+                </span>
+                <span>
+                  {displayName.length}/{DISPLAY_NAME_MAX}
+                </span>
+              </div>
+            </div>
+          )}
           <div className="flex flex-col gap-1">
             <label htmlFor={emailId} className="text-sm font-bold">
               Email
@@ -184,6 +260,48 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               </p>
             )}
           </div>
+          {mode === "signup" && (
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-bold">Profile picture (optional)</span>
+              <div className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element -- static export, local preview or default avatar */}
+                <img
+                  src={avatarPreview ?? "/avatars/default.png"}
+                  alt="Profile picture preview"
+                  width={56}
+                  height={56}
+                  className="shrink-0 rounded border border-gray-400 object-cover"
+                  style={{ width: 56, height: 56 }}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept={AVATAR_TYPES.join(",")}
+                    hidden
+                    onChange={(e) => {
+                      onPickAvatar(e.target.files?.[0])
+                      e.target.value = ""
+                    }}
+                  />
+                  <button type="button" className="ym-button" onClick={() => fileInputRef.current?.click()}>
+                    Choose picture
+                  </button>
+                  {avatarFile ? (
+                    <button type="button" className="ym-button" onClick={clearAvatar}>
+                      Remove
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+              <span className="text-xs">PNG, JPEG or WebP, up to 2 MB.</span>
+              {avatarError ? (
+                <p role="alert" className="text-sm text-red-700">
+                  {avatarError}
+                </p>
+              ) : null}
+            </div>
+          )}
           {mode === "signin" && (
             <fieldset className="m-0 flex flex-col gap-1 border-0 p-0 text-sm">
               <legend className="sr-only">Sign-in options</legend>

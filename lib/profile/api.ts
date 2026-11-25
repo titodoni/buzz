@@ -1,6 +1,6 @@
 import { getSupabase } from "@/lib/supabase/browser-client"
 import type { Database } from "@/lib/supabase/database.types"
-import { checkAvatar, isValidNowPlaying } from "@/lib/validation/profile"
+import { checkAvatar, isValidNowPlaying } from "../validation/profile"
 import { planProfileSave, type ProfileDraft, type ProfileFields } from "./save"
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"]

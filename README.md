@@ -72,7 +72,7 @@ from the service either.
 
 ## Project state
 
-Buzz is a **beta (v0.1.1)** made for Kiroween 2026, in the Resurrection
+Buzz is a **beta (v0.1.2)** made for Kiroween 2026, in the Resurrection
 category. It was developed and checked mainly on Linux. The Windows and macOS
 builds compile and are produced by CI, but nobody has run them on those
 systems yet, including Now Playing on those systems. Expect rough edges and

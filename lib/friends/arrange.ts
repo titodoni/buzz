@@ -78,3 +78,13 @@ export function arrangeBuddyList(input: ArrangeInput): ArrangedGroup[] {
   // An empty default group is noise once the user has groups of their own.
   return result.filter((g) => g.id !== null || g.total > 0 || ordered.length === 0)
 }
+
+/** Filters and alphabetically sorts outgoing pending friend requests for the Buddy List. */
+export function filterPendingFriends<T extends { displayName: string }>(
+  pending: readonly T[],
+  search: string,
+): T[] {
+  const term = search.trim().toLowerCase()
+  const filtered = term ? pending.filter((p) => p.displayName.toLowerCase().includes(term)) : [...pending]
+  return filtered.sort(byName)
+}

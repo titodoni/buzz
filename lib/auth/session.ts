@@ -4,13 +4,20 @@ import { useEffect, useState } from "react"
 import type { Session, User } from "@supabase/supabase-js"
 
 import { getSupabase } from "@/lib/supabase/browser-client"
+import { uploadAvatar } from "../profile/api"
+import { checkAvatar } from "../validation/profile"
 import { MSG_GENERIC, MSG_EMAIL_IN_USE, mapAuthError, mapThrownError } from "./errors"
 import { mapNewPasswordError, mapRecoveryError } from "./recovery"
 
 export type AuthResult = { ok: true } | { ok: false; message: string }
 export type SignUpResult =
-  | { ok: true; needsConfirmation: boolean }
+  | { ok: true; needsConfirmation: boolean; avatarError?: string }
   | { ok: false; message: string }
+
+export interface SignUpOptions {
+  displayName?: string
+  avatarFile?: File | null
+}
 
 export const MSG_CONFIRM_EMAIL = "Check your email to confirm your account."
 
@@ -66,13 +73,37 @@ export async function signIn(email: string, password: string): Promise<AuthResul
   }
 }
 
-export async function signUp(email: string, password: string): Promise<SignUpResult> {
+export async function signUp(
+  email: string,
+  password: string,
+  opts: SignUpOptions = {},
+): Promise<SignUpResult> {
+  if (opts.avatarFile) {
+    const check = checkAvatar(opts.avatarFile)
+    if (!check.ok) return { ok: false, message: check.reason ?? "That picture can't be used." }
+  }
+  const trimmedName = opts.displayName?.trim() ?? ""
   try {
-    const { data, error } = await getSupabase().auth.signUp({ email, password })
+    const supabase = getSupabase()
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      ...(trimmedName ? { options: { data: { display_name: trimmedName } } } : {}),
+    })
     if (error) return { ok: false, message: mapAuthError(error) }
     // With confirmation enabled, an existing email returns an obfuscated user with no identities.
     if (data.user && (data.user.identities?.length ?? 1) === 0) {
       return { ok: false, message: MSG_EMAIL_IN_USE }
+    }
+    if (data.session && data.user) {
+      if (trimmedName) {
+        // Also persist directly so sign-up sets Display Name even before the trigger migration is applied.
+        await supabase.from("profiles").update({ display_name: trimmedName }).eq("id", data.user.id)
+      }
+      if (opts.avatarFile) {
+        const up = await uploadAvatar(data.user.id, opts.avatarFile)
+        if (!up.ok) return { ok: true, needsConfirmation: false, avatarError: up.message }
+      }
     }
     return { ok: true, needsConfirmation: !data.session }
   } catch (e) {

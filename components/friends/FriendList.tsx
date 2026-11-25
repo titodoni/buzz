@@ -1,7 +1,8 @@
 "use client"
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from "react"
-import { removeFriend, type FriendEntry } from "@/lib/friends/api"
-import { arrangeBuddyList, countOnline, DEFAULT_GROUP_NAME, type ArrangedGroup } from "@/lib/friends/arrange"
+import { removeFriend, type FriendEntry, type RequestEntry } from "@/lib/friends/api"
+import { arrangeBuddyList, countOnline, DEFAULT_GROUP_NAME, filterPendingFriends, type ArrangedGroup } from "@/lib/friends/arrange"
+import { PresenceDot } from "@/components/PresenceDot"
 import type { BuddyView } from "@/lib/friends/buddyView"
 import { deleteGroup, moveFriend, renameGroup, type ContactGroup, type GroupMembership } from "@/lib/friends/groups"
 import { ignoreUser, unignoreUser } from "@/lib/friends/ignore"
@@ -33,6 +34,7 @@ const MENU_ITEM = "ym-row block w-full cursor-pointer border-0 bg-transparent px
 export interface FriendListProps {
   me: string
   friends: FriendEntry[]
+  pending?: readonly RequestEntry[]
   groups: ContactGroup[]
   memberships: GroupMembership[]
   /** Friend id to state. Missing ids are treated as offline. */
@@ -61,6 +63,7 @@ export interface FriendListProps {
 export function FriendList({
   me,
   friends,
+  pending = [],
   groups,
   memberships,
   presence = {},
@@ -86,6 +89,11 @@ export function FriendList({
   const sayHiAt = useRef(new Map<string, number>())
   const byId = new Map(friends.map((f) => [f.id, f]))
   const arranged = arrangeBuddyList({ friends, groups, memberships, presence, showOffline: view.showOffline, search })
+  const pendingShown = filterPendingFriends(pending, search)
+  const groupsToRender =
+    pendingShown.length > 0 && !arranged.some((g) => g.id === null)
+      ? [{ id: null, name: DEFAULT_GROUP_NAME, online: 0, total: 0, friends: [] }, ...arranged]
+      : arranged
   const onlineNow = countOnline(friends, presence)
   const menuOpen = overlay?.kind === "menu" || overlay?.kind === "groupMenu"
   const searching = search.trim() !== ""
@@ -200,16 +208,16 @@ export function FriendList({
 
   return (
     <section aria-label="Friends" className="ym-list">
-      {friends.length === 0 && !searching ? (
+      {friends.length === 0 && pending.length === 0 && !searching ? (
         <p className="px-2 text-xs">No friends yet. Tap “Add” to find someone!</p>
       ) : null}
-      {searching && arranged.length === 0 ? <p className="px-2 text-xs">No friends match “{search.trim()}”.</p> : null}
+      {searching && groupsToRender.length === 0 ? <p className="px-2 text-xs">No friends match “{search.trim()}”.</p> : null}
       {friends.length > 0 && !searching ? (
         <p role="status" aria-live="polite" className="ym-friend-sub m-0 px-2 py-1 text-xs">
           {onlineNow > 0 ? `${onlineNow} online now` : "No one is around right now."}
         </p>
       ) : null}
-      {arranged.map((g) => {
+      {groupsToRender.map((g) => {
         const key = viewKey(g.id)
         // While searching, every matching group stays open so results are visible.
         const open = searching || !view.collapsed.includes(key)
@@ -252,6 +260,21 @@ export function FriendList({
                     />
                   )
                 })}
+                {g.id === null
+                  ? pendingShown.map((p) => (
+                      <li
+                        key={`pending-${p.friendshipId}`}
+                        className="ym-row ym-offline flex items-center gap-1.5 px-2 py-0.5"
+                        aria-label={`${p.displayName}, pending`}
+                      >
+                        <PresenceDot state="offline" />
+                        <div className="min-w-0 flex-1 truncate">
+                          <span>{p.displayName}</span>
+                          <span className="ym-friend-sub"> (pending)</span>
+                        </div>
+                      </li>
+                    ))
+                  : null}
               </ul>
             ) : null}
           </div>

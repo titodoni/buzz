@@ -493,9 +493,15 @@ body {
 }
 
 /* The contact list is white, like the classic list pane. */
+.ym-buddy {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
 .ym-list {
   background: #ffffff;
-  min-height: 100%;
+  flex: 1;
 }
 
 /* A friend's song, shown in place of the status line. */

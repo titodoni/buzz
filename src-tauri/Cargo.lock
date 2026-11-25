@@ -379,7 +379,7 @@ checksum = "87a0cf66fd1eb2fb7b822cb78370d82303750809bc6ba855f3f58e517d3238db"
 
 [[package]]
 name = "buzz"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "keyring",
  "mpris",

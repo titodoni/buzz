@@ -1,11 +1,37 @@
 "use client"
 
 import { useCallback, useEffect, useState, type FormEvent } from "react"
-import { searchProfiles, sendFriendRequest, type PublicProfile } from "@/lib/friends/api"
+import {
+  acceptRequest,
+  declineRequest,
+  searchProfiles,
+  sendFriendRequest,
+  type FriendEntry,
+  type PublicProfile,
+  type RequestEntry,
+} from "@/lib/friends/api"
+import { searchResultRelation } from "@/lib/friends/search"
 
-export function FriendSearch({ me, onSent, initialQuery = "" }: { me: string; onSent?: () => void; initialQuery?: string }) {
+export interface FriendSearchProps {
+  me: string
+  friends?: readonly FriendEntry[]
+  incoming?: readonly RequestEntry[]
+  outgoing?: readonly RequestEntry[]
+  onSent?: () => void
+  initialQuery?: string
+}
+
+export function FriendSearch({
+  me,
+  friends = [],
+  incoming = [],
+  outgoing = [],
+  onSent,
+  initialQuery = "",
+}: FriendSearchProps) {
   const [query, setQuery] = useState(initialQuery)
   const [results, setResults] = useState<PublicProfile[] | null>(null)
+  const [sentIds, setSentIds] = useState<ReadonlySet<string>>(() => new Set())
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
 
@@ -13,6 +39,7 @@ export function FriendSearch({ me, onSent, initialQuery = "" }: { me: string; on
     async (q: string) => {
       setBusy(true)
       setNote(null)
+      setSentIds(new Set())
       try {
         setResults(await searchProfiles(q, me))
       } catch {
@@ -37,29 +64,26 @@ export function FriendSearch({ me, onSent, initialQuery = "" }: { me: string; on
   }, [initialQuery, run])
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    setBusy(true)
-    setNote(null)
-    try {
-      setResults(await searchProfiles(query, me))
-    } catch {
-      setResults(null)
-      setNote("Search didn't work. Please try again.")
-    } finally {
-      setBusy(false)
-    }
+    await run(query)
   }
 
   async function add(p: PublicProfile) {
     const res = await sendFriendRequest(me, p.id)
     setNote(res.message ?? null)
     if (res.ok) {
-      setResults((r) => r?.filter((x) => x.id !== p.id) ?? null)
-      onSent?.()
+      setSentIds((prev) => new Set(prev).add(p.id))
     }
+    onSent?.()
+  }
+
+  async function respond(fn: (id: string) => Promise<{ ok: boolean; message?: string }>, friendshipId: string) {
+    const res = await fn(friendshipId)
+    setNote(res.message ?? null)
+    if (res.ok) onSent?.()
   }
 
   return (
-    <section aria-label="Find a friend" className="p-2">
+    <section aria-label="Find a friend" className="border-b p-2">
       <form onSubmit={onSubmit} role="search" className="flex gap-1">
         <input
           type="search"
@@ -78,14 +102,32 @@ export function FriendSearch({ me, onSent, initialQuery = "" }: { me: string; on
       </p>
       {results && results.length === 0 ? <p className="text-xs">No one found. Type at least 3 letters of their name, or their exact email.</p> : null}
       <ul className="m-0 list-none p-0">
-        {results?.map((p) => (
-          <li key={p.id} className="ym-row flex items-center justify-between gap-2 px-1 py-1">
-            <span className="truncate font-bold">{p.displayName}</span>
-            <button type="button" className="ym-button" onClick={() => void add(p)}>
-              Add
-            </button>
-          </li>
-        ))}
+        {results?.map((p) => {
+          const rel = searchResultRelation(p.id, { friends, incoming, outgoing }, sentIds)
+          return (
+            <li key={p.id} className="ym-row flex items-center justify-between gap-1 px-1 py-1">
+              <span className="min-w-0 flex-1 truncate font-bold">{p.displayName}</span>
+              {rel.kind === "none" ? (
+                <button type="button" className="ym-button" onClick={() => void add(p)}>
+                  Add
+                </button>
+              ) : rel.kind === "incoming" ? (
+                <>
+                  <button type="button" className="ym-button" onClick={() => void respond(acceptRequest, rel.friendshipId)}>
+                    Accept
+                  </button>
+                  <button type="button" className="ym-button" onClick={() => void respond(declineRequest, rel.friendshipId)}>
+                    Decline
+                  </button>
+                </>
+              ) : rel.kind === "outgoing" ? (
+                <span className="text-xs italic">(pending)</span>
+              ) : (
+                <span className="text-xs italic">Friend</span>
+              )}
+            </li>
+          )
+        })}
       </ul>
     </section>
   )

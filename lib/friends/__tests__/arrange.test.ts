@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import fc from "fast-check"
-import { DEFAULT_GROUP_NAME, arrangeBuddyList, countOnline, type ArrangeInput } from "../arrange"
+import { DEFAULT_GROUP_NAME, arrangeBuddyList, countOnline, filterPendingFriends, type ArrangeInput } from "../arrange"
 import type { PresenceState } from "../../presence/state"
 
 const f = (id: string, displayName = id) => ({ id, displayName })
@@ -130,5 +130,13 @@ describe("countOnline (R1.2)", () => {
   it("is zero with no friends or nobody around", () => {
     expect(countOnline([], {})).toBe(0)
     expect(countOnline([f("a")], { a: "offline" })).toBe(0)
+  })
+})
+
+describe("filterPendingFriends", () => {
+  it("sorts pending entries alphabetically and filters by search term", () => {
+    const pending = [f("2", "Zed"), f("1", "amy"), f("3", "Bob")]
+    expect(filterPendingFriends(pending, "").map((x) => x.displayName)).toEqual(["amy", "Bob", "Zed"])
+    expect(filterPendingFriends(pending, " bo ").map((x) => x.displayName)).toEqual(["Bob"])
   })
 })

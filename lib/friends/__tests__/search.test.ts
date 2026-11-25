@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import fc from "fast-check";
-import { searchUsers, canSendRequest, canonicalPair, pairKey } from "../search";
+import { searchUsers, canSendRequest, canonicalPair, pairKey, searchResultRelation } from "../search";
 
 const user = fc.record({
   id: fc.string({ minLength: 1, maxLength: 6 }),
@@ -84,5 +84,24 @@ describe("canSendRequest", () => {
       }),
       opts,
     );
+  });
+});
+
+describe("searchResultRelation", () => {
+  const lists = {
+    friends: [{ id: "f1", friendshipId: "fs-f1" }],
+    incoming: [{ id: "in1", friendshipId: "fs-in1" }],
+    outgoing: [{ id: "out1", friendshipId: "fs-out1" }],
+  };
+
+  it("identifies existing friends, incoming requests, outgoing requests, and strangers", () => {
+    expect(searchResultRelation("f1", lists)).toEqual({ kind: "friend" });
+    expect(searchResultRelation("in1", lists)).toEqual({ kind: "incoming", friendshipId: "fs-in1" });
+    expect(searchResultRelation("out1", lists)).toEqual({ kind: "outgoing", friendshipId: "fs-out1" });
+    expect(searchResultRelation("stranger", lists)).toEqual({ kind: "none" });
+  });
+
+  it("marks optimistically sent ids as outgoing even before reload completes", () => {
+    expect(searchResultRelation("stranger", lists, new Set(["stranger"]))).toEqual({ kind: "outgoing" });
   });
 });

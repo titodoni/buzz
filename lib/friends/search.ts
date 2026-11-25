@@ -53,3 +53,32 @@ export function canSendRequest(
   if (rel?.status === "pending") return { ok: false, reason: "A request is already pending." };
   return { ok: true };
 }
+
+export type SearchResultRelation =
+  | { kind: "friend" }
+  | { kind: "incoming"; friendshipId: string }
+  | { kind: "outgoing"; friendshipId?: string }
+  | { kind: "none" };
+
+/**
+ * Classifies a user appearing in friend-search results against the caller's
+ * current friend/request state so the search row can offer Accept/Decline or
+ * show Waiting.../Friend instead of a failing Add button.
+ */
+export function searchResultRelation(
+  userId: string,
+  lists: {
+    friends: readonly { id: string }[];
+    incoming: readonly { id: string; friendshipId: string }[];
+    outgoing: readonly { id: string; friendshipId: string }[];
+  },
+  justSentIds?: ReadonlySet<string>,
+): SearchResultRelation {
+  if (lists.friends.some((f) => f.id === userId)) return { kind: "friend" };
+  const inc = lists.incoming.find((r) => r.id === userId);
+  if (inc) return { kind: "incoming", friendshipId: inc.friendshipId };
+  const out = lists.outgoing.find((r) => r.id === userId);
+  if (out) return { kind: "outgoing", friendshipId: out.friendshipId };
+  if (justSentIds?.has(userId)) return { kind: "outgoing" };
+  return { kind: "none" };
+}

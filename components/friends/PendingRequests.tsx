@@ -5,11 +5,11 @@ import { acceptRequest, declineRequest, type ApiResult, type RequestEntry } from
 
 export function PendingRequests({
   incoming,
-  outgoing,
+  outgoing = [],
   onChanged,
 }: {
   incoming: RequestEntry[]
-  outgoing: RequestEntry[]
+  outgoing?: RequestEntry[]
   onChanged: () => void
 }) {
   const [note, setNote] = useState<string | null>(null)

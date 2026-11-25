@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSignOut } from "@/components/AuthGuard"
 import { WindowFrame } from "@/components/WindowFrame"
@@ -51,6 +52,7 @@ export function BuddyList() {
 }
 
 function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promise<void> }) {
+  const router = useRouter()
   const { friends, incoming, outgoing, loading, error, reload } = useFriends(me)
   const [mine, setMine] = useState<PublicProfile | null>(null)
   const [panel, setPanel] = useState<Panel>(null)
@@ -208,6 +210,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
       label: "Messenger",
       items: [
         { label: "My Status", onSelect: () => setStatusMenu(true) },
+        { label: "Edit Profile...", onSelect: () => router.push("/profile/") },
         ...(share.supported
           ? [
               {
@@ -241,9 +244,15 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
     { label: "Help", items: [{ label: "About Buzz", onSelect: () => setPanel("about") }] },
   ]
 
+  const visibleIncoming = useMemo(
+    () => incoming.filter((r) => !ignoredIds.has(r.id)),
+    [incoming, ignoredIds],
+  )
+
   return (
     <WindowFrame title="Buzz" icon={<PresenceDot state={myState} size={14} />} menuBar={<MenuBar menus={menus} />}>
-      <header className="ym-me">
+      <div className="ym-buddy">
+        <header className="ym-me">
         <Link href="/profile/" title="Edit my profile" aria-label="Edit my profile" className="shrink-0">
           <BuddyPicture name={mine?.displayName ?? "Me"} url={mine?.avatarUrl ?? null} size={48} />
         </Link>
@@ -380,7 +389,15 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
         />
       </div>
       {panel === "search" ? (
-        <FriendSearch key={addQuery} me={me} initialQuery={addQuery} onSent={reload} />
+        <FriendSearch
+          key={addQuery}
+          me={me}
+          friends={friends}
+          incoming={visibleIncoming}
+          outgoing={outgoing}
+          initialQuery={addQuery}
+          onSent={reload}
+        />
       ) : null}
       {panel === "newGroup" ? (
         <NewGroupForm
@@ -394,9 +411,35 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
           onCancel={() => setPanel(null)}
         />
       ) : null}
+      {panel === "pick" ? (
+        <PickFriendPanel
+          friends={friends}
+          onPick={(id) => {
+            void openChatWindow(id)
+            setPanel(null)
+          }}
+        />
+      ) : null}
+      {panel === "ignore" ? (
+        <IgnoreListPanel
+          ignored={ignored}
+          onClose={() => setPanel(null)}
+          onRemove={async (p) => {
+            const res = await unignoreUser(me, p.id)
+            setNote(res.ok ? `You're no longer ignoring ${p.displayName}.` : res.message)
+            reloadIgnore()
+          }}
+        />
+      ) : null}
+      {/* A request someone sent before I ignored them stays hidden (Req 15.4). */}
+      <PendingRequests
+        incoming={visibleIncoming}
+        onChanged={reload}
+      />
       <FriendList
         me={me}
         friends={friends}
+        pending={outgoing}
         groups={groups}
         memberships={memberships}
         presence={visiblePresence}
@@ -413,22 +456,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
         onChanged={reload}
         onGroupsChanged={reloadGroups}
       />
-      {/* A request someone sent before I ignored them stays hidden (Req 15.4). */}
-      <PendingRequests
-        incoming={incoming.filter((r) => !ignoredIds.has(r.id))}
-        outgoing={outgoing}
-        onChanged={reload}
-      />
-
-      {panel === "pick" ? (
-        <PickFriendPanel
-          friends={friends}
-          onPick={(id) => {
-            void openChatWindow(id)
-            setPanel(null)
-          }}
-        />
-      ) : null}
+      </div>
 
       {panel === "about" ? <AboutDialog onClose={() => setPanel(null)} /> : null}
       <ToastStack
@@ -438,17 +466,6 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
           void openChatWindow(t.friendId)
         }}
       />
-      {panel === "ignore" ? (
-        <IgnoreListPanel
-          ignored={ignored}
-          onClose={() => setPanel(null)}
-          onRemove={async (p) => {
-            const res = await unignoreUser(me, p.id)
-            setNote(res.ok ? `You're no longer ignoring ${p.displayName}.` : res.message)
-            reloadIgnore()
-          }}
-        />
-      ) : null}
     </WindowFrame>
   )
 }
