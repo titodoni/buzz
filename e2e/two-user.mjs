@@ -436,6 +436,7 @@ const lines = [
   ...results.map((r) => `| ${r.id} | ${r.title} | ${r.result} | ${r.notes.replace(/\|/g, "\\|")} |`),
   "",
 ]
-writeFileSync("e2e/report.md", lines.join("\n"))
-console.log(`\n${pass}/${results.length} PASS. Report: e2e/report.md`)
+const REPORT = env.E2E_REPORT ?? "e2e/report.md"
+writeFileSync(REPORT, lines.join("\n"))
+console.log(`\n${pass}/${results.length} PASS. Report: ${REPORT}`)
 process.exit(pass === results.length ? 0 : 1)
