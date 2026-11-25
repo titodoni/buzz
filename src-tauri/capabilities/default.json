@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Buddy List window: window controls, the tray's shell events, opening chats, alerts, tray status, Now Playing, and the key store",
+  "description": "Buddy List window: window controls, the tray's shell events, opening chats and Preferences, alerts, tray status, Now Playing, and the key store",
   "windows": [
     "main"
   ],
@@ -24,6 +24,7 @@
     "allow-quit-app",
     "allow-now-playing-supported",
     "allow-now-playing-platform",
-    "allow-set-now-playing-enabled"
+    "allow-set-now-playing-enabled",
+    "allow-open-preferences-window"
   ]
 }

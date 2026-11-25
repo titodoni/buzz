@@ -11,6 +11,7 @@ import {
   showToast,
   SHELL_EVENTS,
 } from "@/lib/tauri/windows"
+import { readPrefs } from "@/lib/prefs/usePrefs"
 import { friendOnlineAlerts, incomingMessagePlan } from "./plan"
 import { playMessageSound, playOnlineSound, playSignInSound } from "./sounds"
 
@@ -22,8 +23,7 @@ const SETTLE_MS = 8_000
 /** How long an in-window toast stays (Rust closes the desktop toast after the same time). */
 export const TOAST_MS = 5_000
 
-// Sounds and Toasts are always on until Preferences (Section 28) adds the switches.
-const SWITCHES = { allSounds: true, messageSound: true, onlineSound: true, onlineToast: true }
+// The sound and Toast switches are read from Preferences each time (Req 19.3, 19.6).
 
 export interface InWindowToast {
   key: number
@@ -55,7 +55,7 @@ export function useBuddyAlerts(input: {
 
   // Sign-in sound, once per run.
   useEffect(() => {
-    if (input.firstStartThisRun) playSignInSound()
+    if (input.firstStartThisRun && readPrefs().alerts.allSounds) playSignInSound()
   }, [input.firstStartThisRun])
 
   // "<name> is now online" (Req 16.4, 16.5).
@@ -67,7 +67,7 @@ export function useBuddyAlerts(input: {
   const prevPresence = useRef(input.presence)
   const nextKey = useRef(0)
   useEffect(() => {
-    const alerts = friendOnlineAlerts(prevPresence.current, input.presence, { settled, ...SWITCHES })
+    const alerts = friendOnlineAlerts(prevPresence.current, input.presence, { settled, ...readPrefs().alerts })
     prevPresence.current = input.presence
     if (alerts.sound) playOnlineSound()
     for (const id of alerts.toastFor) {
@@ -117,7 +117,7 @@ export function useBuddyAlerts(input: {
     void (async () => {
       const state = await chatWindowState(senderId).catch(() => null)
       // In a browser the chat window can't be seen; just play the sound.
-      const plan = incomingMessagePlan(state ?? "unfocused", SWITCHES)
+      const plan = incomingMessagePlan(state ?? "unfocused", readPrefs().alerts)
       if (plan.sound) playMessageSound()
       if (state === null) return
       if (plan.open) await openChatWindow(senderId, { focus: false }).catch(() => undefined)

@@ -21,6 +21,7 @@ it, see the [README](../README.md).
 | Sign-in options, forgot password by emailed code, About Buzz | Built; recovery email needs the template change in [supabase/README.md](../supabase/README.md) and a real inbox to test |
 | Chat menus (Conversation, Edit, View, Actions, Help), fonts and colors, F3 earlier messages, Clear Window | Built; checked with two users in the Linux desktop app |
 | Incoming-message alerts, "is now online" toast, tray icon, sounds | Built; checked in the Linux desktop app except the tray itself (see design.md, Requirement 16) |
+| Preferences window (General, Alerts and Sounds, Messages, Buzz!, Ignore List), applied to every open window; Buzz! options (Allow, sound, shake, raise before shaking) | Built and unit-tested; not yet checked between two running apps |
 | Responsive windows (220x400 up to maximized) | Built; see [docs/responsive-checks.md](responsive-checks.md) |
 | "B!" logo with sparks background, four themes, in the title bar, sign-in, About, and app icon | Built; the theme is set in code only |
 | Installer config (task 17.1) and two-user integration tests | Not yet |

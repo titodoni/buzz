@@ -44,8 +44,14 @@ export function useChatView(): { view: ChatView; update: (change: Partial<ChatVi
         // Storage unavailable: keep the defaults.
       }
     })
+    // Preferences (or another chat window) changed it: apply at once (Req 19.6).
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === KEY || e.key === null) setView(parseChatView(e.key === null ? null : e.newValue))
+    }
+    window.addEventListener("storage", onStorage)
     return () => {
       active = false
+      window.removeEventListener("storage", onStorage)
     }
   }, [])
   const update = useCallback((change: Partial<ChatView>) => {

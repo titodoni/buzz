@@ -6,6 +6,7 @@ fn main() {
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
         tauri_build::AppManifest::new().commands(&[
             "open_chat_window",
+            "open_preferences_window",
             "chat_window_state",
             "flash_chat_window",
             "show_toast",

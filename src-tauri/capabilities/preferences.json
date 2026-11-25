@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "preferences",
+  "description": "The Preferences window: window controls only; settings live in localStorage and the Ignore List goes through Supabase",
+  "windows": [
+    "preferences"
+  ],
+  "permissions": [
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-start-dragging"
+  ]
+}

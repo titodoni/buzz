@@ -25,6 +25,8 @@ import { useChatChannel } from "@/lib/realtime/chat";
 import { useFriendPresence } from "@/lib/realtime/presence";
 import { ignoreUser, isIgnoredByMe, unignoreUser, useIgnorers } from "@/lib/friends/ignore";
 import { playNudgeSound, shakeChatWindow } from "@/lib/nudge/effects";
+import { shouldAcceptNudge } from "@/lib/prefs/prefs";
+import { readPrefs } from "@/lib/prefs/usePrefs";
 import { getProfile, type PublicProfile } from "@/lib/friends/api";
 import { useProfileUpdates } from "@/lib/friends/profileFeed";
 import { mergeOne, type ProfileFields } from "@/lib/friends/profileMerge";
@@ -34,7 +36,7 @@ import { reportActivity } from "@/lib/realtime/activity";
 import { sendNudgeToInbox } from "@/lib/realtime/inbox";
 import { NUDGE_LIMIT_MESSAGE, canNudge } from "@/lib/nudge/limiter";
 import { announceChatSeen, loadSentLog, recordDeliveredNudge } from "@/lib/nudge/store";
-import { clearAttention, closeWindow } from "@/lib/tauri/windows";
+import { clearAttention, closeWindow, raiseWindow } from "@/lib/tauri/windows";
 import { HangoutBanner } from "@/components/hangout/HangoutBanner";
 import { HangoutButton } from "@/components/hangout/HangoutButton";
 import { chatLines, hasPendingWith, incomingPending } from "@/lib/hangout/state";
@@ -137,11 +139,22 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     formatRef.current = view.myFormat;
   });
 
+  // When this friend's last Buzz was shown here, for the receive-side gap (Req 18.5).
+  const lastNudgeAtRef = useRef<number | undefined>(undefined);
   const receiveNudge = useCallback(() => {
     if (ignoredRef.current) return;
-    dispatch({ type: "nudgeReceived", at: new Date().toISOString() });
-    playNudgeSound();
-    void shakeChatWindow(rootRef.current);
+    const prefs = readPrefs();
+    const now = Date.now();
+    // "Allow Buzz!" off, or a second Buzz too soon: dropped (Req 18.2, 18.5).
+    if (!shouldAcceptNudge(prefs, lastNudgeAtRef.current, now)) return;
+    lastNudgeAtRef.current = now;
+    dispatch({ type: "nudgeReceived", at: new Date(now).toISOString() });
+    if (prefs.buzz.sound && prefs.alerts.allSounds) playNudgeSound();
+    if (!prefs.buzz.shake) return;
+    // A minimized or hidden window comes to the front first, then shakes (Req 18.1).
+    void raiseWindow()
+      .catch(() => undefined)
+      .then(() => shakeChatWindow(rootRef.current));
   }, []);
 
   // A window opened by an incoming Nudge has `nudge=1` in its URL (chatUrl).

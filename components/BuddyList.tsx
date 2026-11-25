@@ -33,7 +33,8 @@ import { useAutoNowPlaying, useShareNowPlaying } from "@/lib/nowPlaying/useAutoN
 import { usePresenceTracker } from "@/lib/realtime/presence"
 import { useUpForChat } from "@/lib/status/useUpForChat"
 import { useMyKeys } from "@/lib/crypto/useMyKeys"
-import { chatWindowState, openChatWindow } from "@/lib/tauri/windows"
+import { chatWindowState, openChatWindow, openPreferencesWindow } from "@/lib/tauri/windows"
+import { readPrefs } from "@/lib/prefs/usePrefs"
 import { RecentNudgesPanel } from "@/components/friends/RecentNudgesPanel"
 import { addBadge, clearBadge, type NudgeBadges, type RecentNudge } from "@/lib/nudge/recent"
 import { nudgeBackText, sendNudgeBack } from "@/lib/nudge/send"
@@ -124,6 +125,8 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
   useNudgeInbox(me, (sender, receivedAt) => {
     // Nudges from someone I ignore are dropped (Req 15.3); the server blocks them too.
     if (!friendIds.includes(sender) || ignoredIds.has(sender)) return
+    // "Allow Buzz!" off in Preferences drops every Buzz (Req 18.2).
+    if (!readPrefs().buzz.allow) return
     setRecentNudges(saveReceivedNudge({ senderId: sender, receivedAt }))
     shakeRow(sender)
     void (async () => {
@@ -223,7 +226,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
               },
             ]
           : []),
-        { label: "Preferences", onSelect: () => setNote("Preferences are coming soon.") },
+        { label: "Preferences...", onSelect: () => void openPreferencesWindow().catch(() => setNote("Couldn't open Preferences. Try again.")) },
         { label: "Sign Out", onSelect: () => void onSignOut() },
       ],
     },

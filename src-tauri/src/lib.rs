@@ -37,6 +37,9 @@ static TOAST_GENERATION: AtomicU64 = AtomicU64::new(0);
 /// False when the desktop has no tray; then closing the Buddy List really closes it.
 static HAS_TRAY: AtomicBool = AtomicBool::new(false);
 const TRAY_ID: &str = "buzz-tray";
+/// The Preferences window (Req 19.1); at most one.
+const PREFERENCES_LABEL: &str = "preferences";
+const PREFERENCES_PATH: &str = "preferences/";
 /// Events the shell sends to the Buddy List window.
 const EVENT_SET_STATUS: &str = "buzz://set-status";
 const EVENT_EXIT: &str = "buzz://exit-requested";
@@ -170,6 +173,35 @@ fn open_chat_window_inner(
             .map_err(|e| e.to_string())?;
     }
     Ok("opened".into())
+}
+
+/// Opens the Preferences window, or raises it when it is already open (Req 19.1).
+///
+/// Must stay `async` for the same Windows deadlock as `open_chat_window`.
+#[tauri::command]
+async fn open_preferences_window(app: AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window(PREFERENCES_LABEL) {
+        window.unminimize().map_err(|e| e.to_string())?;
+        window.show().map_err(|e| e.to_string())?;
+        return window.set_focus().map_err(|e| e.to_string());
+    }
+    WebviewWindowBuilder::new(
+        &app,
+        PREFERENCES_LABEL,
+        WebviewUrl::App(PREFERENCES_PATH.into()),
+    )
+    .title("Buzz Preferences")
+    .inner_size(460.0, 520.0)
+    .min_inner_size(340.0, 360.0)
+    .resizable(true)
+    .decorations(false)
+    .transparent(true)
+    .build()
+    .map(|_| ())
+    .map_err(|e| {
+        eprintln!("buzz: could not open Preferences: {e}");
+        e.to_string()
+    })
 }
 
 /// "closed", "focused", or "unfocused": what an incoming message should do (Req 16.1, 16.2).
@@ -420,6 +452,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             open_chat_window,
+            open_preferences_window,
             chat_window_state,
             flash_chat_window,
             show_toast,

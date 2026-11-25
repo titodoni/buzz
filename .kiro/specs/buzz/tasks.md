@@ -349,26 +349,27 @@ running desktop app instances (or two app windows), per `tech.md`.
   - [x] 26.8 Show the offline line while the friend is Offline and put the friend's Status_Icon, Display_Name, and Status in the chat header and the Status_Icon in the title bar
     - _Requirements: 17.9, 17.10_
 
-- [ ] 27. Buzz! options
-  - [ ] 27.1 Implement the pure `shouldAcceptNudge(prefs, lastAt, now)`: reject when "Allow Buzz!" is off or when the previous Buzz from that friend was under 10 seconds ago
+- [x] 27. Buzz! options
+  - [x] 27.1 Implement the pure `shouldAcceptNudge(prefs, lastAt, now)`: reject when "Allow Buzz!" is off or when the previous Buzz from that friend was under 10 seconds ago
     - No I/O; pure functions only
     - _Requirements: 18.2, 18.5_
-  - [ ]* 27.2 Write tests for `shouldAcceptNudge`, including exactly 10 seconds and 9.999 seconds
+  - [x]* 27.2 Write tests for `shouldAcceptNudge`, including exactly 10 seconds and 9.999 seconds
     - _Requirements: 18.2, 18.5_
-  - [ ] 27.3 Apply the Buzz! preferences in the receive path: skip the sound or the shake when switched off, and raise a minimized or hidden window to the front before it shakes
+  - [x] 27.3 Apply the Buzz! preferences in the receive path: skip the sound or the shake when switched off, and raise a minimized or hidden window to the front before it shakes
+    - The receive-side gap is `INBOUND_MIN_GAP_MS` (10 s less 2 s of delivery jitter), so an honest sender's Buzz is never dropped
     - _Requirements: 18.1, 18.3, 18.4_
-  - [ ] 27.4 Add Actions then Buzz! to the chat menu using the same send path as the button and Ctrl+G, disabled for an Offline or Invisible friend
+  - [x] 27.4 Add Actions then Buzz! to the chat menu using the same send path as the button and Ctrl+G, disabled for an Offline or Invisible friend
     - _Requirements: 18.6, 18.7_
 
-- [ ] 28. Preferences
-  - [ ] 28.1 Implement the pure `lib/prefs/prefs.ts`: the preference types, the defaults, and `parsePrefs(raw)` that returns the defaults for anything missing or damaged
+- [x] 28. Preferences
+  - [x] 28.1 Implement the pure `lib/prefs/prefs.ts`: the preference types, the defaults, and `parsePrefs(raw)` that returns the defaults for anything missing or damaged
     - No I/O; pure functions only
     - _Requirements: 19.7_
-  - [ ]* 28.2 Write tests: damaged JSON, wrong types, and unknown keys all fall back safely, and a valid object round-trips
+  - [x]* 28.2 Write tests: damaged JSON, wrong types, and unknown keys all fall back safely, and a valid object round-trips
     - _Requirements: 19.7_
-  - [ ] 28.3 Implement `usePrefs`: read and write `buzz:prefs`, and apply a change in every open window through the `storage` event
+  - [x] 28.3 Implement `usePrefs`: read and write `buzz:prefs`, and apply a change in every open window through the `storage` event
     - _Requirements: 19.6, 19.8_
-  - [ ] 28.4 Build the Preferences window at `/preferences` with General, Alerts and Sounds, Messages, Buzz!, and Ignore List, and the Tauri command that opens it from Messenger then Preferences
+  - [x] 28.4 Build the Preferences window at `/preferences` with General, Alerts and Sounds, Messages, Buzz!, and Ignore List, and the Tauri command that opens it from Messenger then Preferences
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.8_
 
 - [ ] 29. Verify and document

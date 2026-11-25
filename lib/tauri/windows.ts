@@ -65,6 +65,30 @@ export async function startDraggingWindow(): Promise<void> {
   await getCurrentWindow().startDragging();
 }
 
+/** Brings this window back from minimized or hidden and to the front (Req 18.1). */
+export async function raiseWindow(): Promise<void> {
+  if (!isTauri()) {
+    window.focus();
+    return;
+  }
+  const { getCurrentWindow } = await import("@tauri-apps/api/window");
+  const win = getCurrentWindow();
+  await win.unminimize();
+  await win.show();
+  await win.setFocus();
+}
+
+/** Opens (or raises) the Preferences window (Req 19.1). */
+export async function openPreferencesWindow(): Promise<void> {
+  if (isTauri()) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("open_preferences_window");
+    return;
+  }
+  // Browser fallback for development only.
+  window.open("/preferences/", "buzz-preferences", "width=460,height=520");
+}
+
 /**
  * Whether a friend's chat window is closed, open behind others, or focused
  * (Req 16.1, 16.2). In a browser the other windows can't be seen, so null.

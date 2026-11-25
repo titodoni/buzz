@@ -25,8 +25,14 @@ export function useBuddyView(): {
         // Storage unavailable: keep the defaults.
       }
     })
+    // Preferences changed "Show Offline Contacts": apply at once (Req 19.6).
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === KEY || e.key === null) setView(parseBuddyView(e.key === null ? null : e.newValue))
+    }
+    window.addEventListener("storage", onStorage)
     return () => {
       active = false
+      window.removeEventListener("storage", onStorage)
     }
   }, [])
   const save = useCallback((next: BuddyView) => {
