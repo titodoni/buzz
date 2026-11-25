@@ -22,7 +22,9 @@ and every row is PASS.
 
 ## 1. Code checks
 
-Run on the `v0.1.3` tag in a clean checkout of that commit.
+TypeScript checks were run on a clean checkout of the `v0.1.3` tag. Rust checks
+were run on `762ce75`, whose Rust code is the same as the tag's (the release
+commit only changed version numbers).
 
 | Check | Result | Detail |
 | --- | --- | --- |

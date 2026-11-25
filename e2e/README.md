@@ -2,7 +2,8 @@
 
 `two-user.mjs` runs two people against the hosted Supabase project:
 
-- **A** in the real Buzz desktop app, driven through `tauri-driver`. Its chat
+- **A** in the real Buzz desktop app, driven through `tauri-driver` (Linux) or
+  `msedgedriver` (Windows). Its chat
   windows are real app windows.
 - **B** in headless Chrome, using the same web files (`out/`).
 

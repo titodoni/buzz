@@ -230,9 +230,14 @@ if (!WIN) {
   delete appEnv.WAYLAND_DISPLAY
   for (const d of ["data", "config", "cache"]) mkdirSync(join(profile, d), { recursive: true })
 }
-const driverArgs = ["--port", "4444"]
-if (env.E2E_NATIVE_DRIVER) driverArgs.push("--native-driver", env.E2E_NATIVE_DRIVER)
-const driver = spawn(env.TAURI_DRIVER ?? "tauri-driver", driverArgs, { env: appEnv, stdio: ["ignore", "inherit", "inherit"] })
+// Windows talks to msedgedriver directly (what tauri-driver does there), so its
+// verbose log can go into e2e/out when the app does not start.
+const driver = WIN
+  ? spawn(env.E2E_NATIVE_DRIVER ?? "msedgedriver", ["--port=4444", "--verbose", `--log-path=${join(OUT_DIR, "msedgedriver.log")}`], {
+      env: appEnv,
+      stdio: ["ignore", "inherit", "inherit"],
+    })
+  : spawn(env.TAURI_DRIVER ?? "tauri-driver", ["--port", "4444"], { env: appEnv, stdio: ["ignore", "inherit", "inherit"] })
 procs.push(driver)
 await sleep(1500)
 
@@ -288,7 +293,7 @@ try {
 
   await step("T2", "A opens Buzz (desktop app), signs in if asked, and the Buddy List loads", critical(async () => {
     a = new WebDriver("http://127.0.0.1:4444")
-    await a.start(APP)
+    await a.start(APP, WIN)
     mainHandle = await a.current()
     const row = await signInIfAsked(aRun, A, B)
     return `A's row for B: "${row}"`

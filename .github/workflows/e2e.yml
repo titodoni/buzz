@@ -1,5 +1,5 @@
 # Two-user check on Windows (e2e/two-user.mjs): user A in the real Buzz
-# desktop app (WebView2, driven by tauri-driver and msedgedriver), user B in
+# desktop app (WebView2, driven by msedgedriver), user B in
 # headless Chrome, both on the hosted Supabase project. Started by hand from the
 # Actions tab, because every run makes two new throwaway accounts there.
 #
@@ -35,16 +35,29 @@ jobs:
 
       - run: npm ci
 
-      - name: tauri-driver and an msedgedriver that matches this WebView2
+      - name: An msedgedriver that matches this WebView2
         shell: pwsh
         run: |
-          cargo install tauri-driver --locked --version 2.1.0
           cargo install --git https://github.com/chippers/msedgedriver-tool --rev 8c4b34f51b45f5cf08013366d703de464ab871d1 --locked
           & "$HOME/.cargo/bin/msedgedriver-tool.exe"
           $PWD.Path >> $env:GITHUB_PATH
 
       - name: Build the app (debug, no installer)
         run: npm run tauri build -- --debug --no-bundle
+
+      # Does the app start and keep answering on its own, without any driver?
+      - name: Start the app by itself for 20 seconds
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath src-tauri/target/debug/buzz.exe -PassThru `
+            -RedirectStandardOutput app-out.txt -RedirectStandardError app-err.txt
+          Start-Sleep -Seconds 20
+          $p.Refresh()
+          "Exited: $($p.HasExited)  Responding: $($p.Responding)  Window title: '$($p.MainWindowTitle)'"
+          if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
+          Start-Sleep -Seconds 2
+          "--- stdout"; Get-Content app-out.txt -ErrorAction SilentlyContinue
+          "--- stderr"; Get-Content app-err.txt -ErrorAction SilentlyContinue
 
       - name: Make two throwaway accounts
         run: node e2e/setup-accounts.mjs

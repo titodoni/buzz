@@ -26,10 +26,12 @@ export class WebDriver {
     return `/session/${this.id}${path}`
   }
 
-  async start(application, env) {
-    const value = await this.cmd("POST", "/session", {
-      capabilities: { alwaysMatch: { "tauri:options": { application, ...(env ? { env } : {}) } } },
-    })
+  /** `edge`: talk to msedgedriver directly (Windows) instead of through tauri-driver. */
+  async start(application, edge = false) {
+    const caps = edge
+      ? { browserName: "webview2", "ms:edgeOptions": { binary: application, args: [], webviewOptions: {} } }
+      : { "tauri:options": { application } }
+    const value = await this.cmd("POST", "/session", { capabilities: { alwaysMatch: caps } })
     this.id = value.sessionId
   }
 
