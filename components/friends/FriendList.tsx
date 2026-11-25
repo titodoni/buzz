@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type MouseEvent } from "react"
-import { removeFriend, type FriendEntry, type RequestEntry } from "@/lib/friends/api"
+import { cancelRequest, removeFriend, type FriendEntry, type RequestEntry } from "@/lib/friends/api"
 import { arrangeBuddyList, countOnline, DEFAULT_GROUP_NAME, filterPendingFriends, type ArrangedGroup } from "@/lib/friends/arrange"
 import { PresenceDot } from "@/components/PresenceDot"
 import type { BuddyView } from "@/lib/friends/buddyView"
@@ -272,6 +272,14 @@ export function FriendList({
                           <span>{p.displayName}</span>
                           <span className="ym-friend-sub"> (pending)</span>
                         </div>
+                        <button
+                          type="button"
+                          className="ym-button"
+                          aria-label={`Cancel friend request to ${p.displayName}`}
+                          onClick={() => void cancelRequest(p.friendshipId).then((r) => r.ok && onChanged())}
+                        >
+                          Cancel
+                        </button>
                       </li>
                     ))
                   : null}

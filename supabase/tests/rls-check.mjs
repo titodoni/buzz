@@ -187,6 +187,15 @@ await check("a declined request cannot be re-opened within an hour", async () =>
   await asAdmin(); await c.query(`update friendships set status='declined' where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]);
   await as(A); await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2 where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]); return "updated";
 }, (g) => /wait before asking again/.test(g));
+// ---- Cancel a sent friend request (migration 20261125120000).
+await check("the sender can cancel a pending request", async () => {
+  await asAdmin(); await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2 where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]);
+  await as(A); return (await c.query(`update friendships set status='removed' where requester_id=$1 and addressee_id=$2`, [A, B])).rowCount;
+}, 1);
+await check("the receiver cannot turn a pending request into removed", async () => {
+  await asAdmin(); await c.query(`update friendships set status='pending', requester_id=$1, addressee_id=$2 where requester_id in ($1,$2) and addressee_id in ($1,$2)`, [A, B]);
+  await as(B); await c.query(`update friendships set status='removed' where requester_id=$1 and addressee_id=$2`, [A, B]); return "updated";
+}, (g) => /not allowed/.test(g));
 // ---- Sender key and private presence (migration 20261124124401).
 await check("a message carrying a key the sender has not published is refused", async () => {
   await publishTestKey(A); await as(A);

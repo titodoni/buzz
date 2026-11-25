@@ -393,8 +393,9 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
           key={addQuery}
           me={me}
           friends={friends}
-          incoming={visibleIncoming}
+          incoming={incoming}
           outgoing={outgoing}
+          ignoredIds={ignoredIds}
           initialQuery={addQuery}
           onSent={reload}
         />

@@ -17,6 +17,8 @@ export interface FriendSearchProps {
   friends?: readonly FriendEntry[]
   incoming?: readonly RequestEntry[]
   outgoing?: readonly RequestEntry[]
+  /** People I ignore: their requests stay hidden, so search must not offer to accept them. */
+  ignoredIds?: ReadonlySet<string>
   onSent?: () => void
   initialQuery?: string
 }
@@ -26,6 +28,7 @@ export function FriendSearch({
   friends = [],
   incoming = [],
   outgoing = [],
+  ignoredIds,
   onSent,
   initialQuery = "",
 }: FriendSearchProps) {
@@ -111,6 +114,8 @@ export function FriendSearch({
                 <button type="button" className="ym-button" onClick={() => void add(p)}>
                   Add
                 </button>
+              ) : rel.kind === "incoming" && ignoredIds?.has(p.id) ? (
+                <span className="text-xs italic">Ignored</span>
               ) : rel.kind === "incoming" ? (
                 <>
                   <button type="button" className="ym-button" onClick={() => void respond(acceptRequest, rel.friendshipId)}>

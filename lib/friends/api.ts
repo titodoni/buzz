@@ -160,6 +160,7 @@ async function setStatus(
 
 export const acceptRequest = (id: string) => setStatus(id, "accepted", "You're now friends!")
 export const declineRequest = (id: string) => setStatus(id, "declined", "Request declined.")
+export const cancelRequest = (id: string) => setStatus(id, "removed", "Request cancelled.")
 export const removeFriend = (id: string) => setStatus(id, "removed", "Friend removed.")
 
 export interface FriendsData {
