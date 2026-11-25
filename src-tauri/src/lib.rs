@@ -110,8 +110,11 @@ fn chat_label(friend_id: &str) -> String {
 ///   and flashes its taskbar entry instead of taking focus (Req 16.1).
 ///
 /// Returns "opened" for a new window or "existing" when one was already open.
+///
+/// Must stay `async`: creating a webview window in a synchronous command
+/// deadlocks on Windows (WebView2), leaving a blank, frozen window.
 #[tauri::command]
-fn open_chat_window(
+async fn open_chat_window(
     app: AppHandle,
     friend_id: String,
     nudge: Option<bool>,
@@ -198,8 +201,10 @@ fn flash_chat_window(app: AppHandle, friend_id: String) -> Result<(), String> {
 
 /// Shows the "<name> is now online" toast at the bottom-right of the primary
 /// screen for 5 seconds; a newer toast replaces it.
+///
+/// Must stay `async` for the same Windows deadlock as `open_chat_window`.
 #[tauri::command]
-fn show_toast(app: AppHandle, friend_id: String, text: String) -> Result<(), String> {
+async fn show_toast(app: AppHandle, friend_id: String, text: String) -> Result<(), String> {
     if !is_valid_friend_id(&friend_id) {
         return Err("invalid friend id".into());
     }
