@@ -25,7 +25,7 @@ Chat built around people being present. The Buddy List is the home screen, every
 
 ## Operating Context
 
-The page is static HTML on Hostinger at https://buzz.asmorodonitito.my.id, deployed from `website/`. Downloads come from GitHub Releases (tag `v0.1.2`). The installers are not code signed; `docs/beta-install.md` explains the first-launch warnings.
+The page is static HTML on Hostinger at https://buzz.asmorodonitito.my.id, deployed from `website/`. Downloads come from GitHub Releases (tag `v0.1.3`). The installers are not code signed; `docs/beta-install.md` explains the first-launch warnings.
 
 ## Capabilities and Constraints
 
