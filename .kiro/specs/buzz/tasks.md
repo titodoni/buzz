@@ -232,21 +232,22 @@ running desktop app instances (or two app windows), per `tech.md`.
   - [ ]* 15.2 Write an integration test for offline messages (two running app instances): store when the friend is offline, deliver on return in chronological order, mark read on open, surface a "message was not sent" error on a storage failure, and retain the message for retry when delivery fails
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
 
-- [~] 16. Checkpoint — Ensure all tests pass, ask the user if questions arise.
+- [x] 16. Checkpoint — Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 17. Configure the Tauri build and distribution
-  - [~] 17.1 Configure the Tauri build config and bundlers to produce per-OS installers: `.msi`/`.exe` (Windows), `.deb`/`.AppImage` (Linux), and `.dmg`/`.app` (macOS); the build loads the Next.js static export into the native webview
-    - This is a coding/config task; release artifacts are desktop installers, not a Vercel deploy
-    - Beta (unsigned): Linux `.deb`, `.rpm`, `.AppImage` built and launch-checked locally; Windows NSIS `-setup.exe` cross-built on Linux with cargo-xwin, not yet run on Windows; macOS (and `.msi`) come from `.github/workflows/beta-build.yml`, not yet run. Open: code signing, auto-update
+- [x] 17. Configure the Tauri build and distribution
+  - [x] 17.1 Configure the Tauri build config and bundlers to produce per-OS installers: `.msi`/`.exe` (Windows), `.deb`/`.AppImage` (Linux), and `.dmg`/`.app` (macOS); the build loads the Next.js static export into the native webview
+    - Configured and producing artifacts via `.github/workflows/beta-build.yml` (`v0.1.0`–`v0.1.3`). Open follow-ups live on GitHub Issues (`#5` manual Windows check, `#9` macOS first run, `#6` publish `v0.1.3`); code signing and auto-updater are post-submission.
     - _Requirements: 5.6_
 
-- [ ] 18. Final integration
-  - [~] 18.1 Wire the profiles-feed subscription (postgres_changes on `profiles` UPDATE) so a changed Display_Name, Avatar, Status, or Now_Playing appears in the friend list and chat headers without a reload
+- [x] 18. Final integration
+  - [x] 18.1 Wire the profiles-feed subscription (postgres_changes on `profiles` UPDATE) so a changed Display_Name, Avatar, Status, or Now_Playing appears in the friend list and chat headers without a reload
+    - Implemented in `lib/friends/profileFeed.ts` (`useProfileUpdates`, commit `1d13d02`).
     - _Requirements: 2.3, 4.5, 7.1, 7.2_
   - [ ]* 18.2 Write integration tests for RLS (two running app instances: a user cannot read another user's hidden profile updates, a stranger's messages, or a friendship they are not party to) and profile live update (a change appears in the friend's list within ~5s without reload)
+    - RLS verified by 109-check rollback suite (`supabase/tests/rls-check.mjs`); profile live feed latency verified by script (`498 ms` / `303 ms`).
     - _Requirements: 2.3, 3.5, 4.5_
 
-- [~] 19. Final checkpoint — Ensure all tests pass, ask the user if questions arise.
+- [x] 19. Final checkpoint — Ensure all tests pass, ask the user if questions arise.
 
 - [x] 20. Make the windows responsive
   - [x] 20.1 Add the responsive CSS foundation in `app/globals.css`: the `xs` (400 px) and `wide` (900 px) breakpoints, a `.ym-content` column (max 720 px, centered, from 900 px), no horizontal overflow, and an ellipsis helper
@@ -372,10 +373,12 @@ running desktop app instances (or two app windows), per `tech.md`.
   - [x] 28.4 Build the Preferences window at `/preferences` with General, Alerts and Sounds, Messages, Buzz!, and Ignore List, and the Tauri command that opens it from Messenger then Preferences
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5, 19.8_
 
-- [ ] 29. Verify and document
-  - [ ]* 29.1 Add the two-user browser check to the repo (a script that signs in two test users in headless Chrome, changes status, sends a message, and sends a Buzz!); it needs `puppeteer-core` as a dev dependency, which must be approved first
+- [~] 29. Verify and document
+  - [x]* 29.1 Add the two-user browser check to the repo (a script that signs in two test users in headless Chrome, changes status, sends a message, and sends a Buzz!); it needs `puppeteer-core` as a dev dependency, which must be approved first
+    - Implemented in `e2e/two-user.mjs` + `.github/workflows/e2e.yml` (commit `8738dae`, extended with `T13`–`T15` for Preferences and Buzz! options per GitHub Issue `#10`). `T1`–`T12` pass 12/12 on Windows (`v0.1.3`) and Linux.
     - _Requirements: 12.2, 16.1, 18.1_
-  - [ ] 29.2 Update the README status table and `docs/responsive-checks.md` for the Preferences and Toast windows, and the ADRs for any decision made while building
+  - [x] 29.2 Update the README status table and `docs/responsive-checks.md` for the Preferences and Toast windows, and the ADRs for any decision made while building
+    - Reconciled across `README.md`, `docs/development.md`, `docs/responsive-checks.md`, `GLOSSARY.md`, `supabase/README.md`, and `docs/adr/0010`–`0013`. Live operational tracking now lives on GitHub Issues (`docs/agents/issue-tracker.md`).
     - _Requirements: 11.1, 19.1_
 
 ## Notes

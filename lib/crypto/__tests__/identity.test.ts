@@ -89,6 +89,13 @@ describe("ensureMyKeyPair", () => {
     expect(await store.get("u1")).not.toBeNull()
   })
 
+  it("refuses to publish or claim ready if the store drops the written key", async () => {
+    const droppingStore = { ...memStore(), set: async () => undefined }
+    const { api, calls } = fakeApi(null)
+    expect(await ensureMyKeyPair("u1", droppingStore, api)).toEqual({ ok: false, reason: "store-failed" })
+    expect(calls).toEqual([])
+  })
+
   it("does not make a key when the server cannot be asked", async () => {
     const store = memStore()
     const api: KeyApi = { fetchPublished: async () => { throw new Error("offline") }, publish: async () => true }

@@ -27,6 +27,8 @@ The Tauri minimum sizes are 220x400 (Buddy List) and 320x280 (chat).
 | Buddy List | 220x400 (minimum), 260x560 (default), 1400x900 (wide); with the Help menu open at 220 wide |
 | Sign in | 220x400, 260x560, 1400x900 |
 | Sign up | 220x400, 260x300 |
+| Forgot password (`/forgot/`) | 220x400, 260x560, 1400x900 (`out/` in headless Chrome: `overflowX: false`, 6 controls, 0 clipped) |
+| Online Toast (`/toast/`) | 260x72 with short and long truncated names (`out/` in headless Chrome: `overflowX: false`, 0 clipped) |
 
 ## Found and fixed while checking
 
@@ -47,9 +49,7 @@ The Tauri minimum sizes are 220x400 (Buddy List) and 320x280 (chat).
   to the message list); if a webview scrolls the whole window instead of the
   message list, start there. Also unchecked: dragging the edges of a transparent
   frameless window to resize it on Linux.
-- The Profile page (needs a signed-in user). It uses the same frame and field
-  styles as the pages above, and its picture button now has the `ym-button`
-  style it was missing.
+- The Profile and Preferences (`/preferences/`, min 340x360, default 460x520) pages (both need a signed-in user). Profile uses the same frame and field styles as the pages above, and its picture button has the `ym-button` style; Preferences uses a `128 px` category sidebar with `flex-1 overflow-auto` content and a wrapping `.ym-format-bar` (`flex-wrap: wrap`). Visual check on a signed-in window is still open.
 - The custom-status dialog in the Buddy List header at 220 px. It opens inside
   the narrow status column, so it cannot overflow the window but may look
   cramped.

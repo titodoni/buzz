@@ -34,7 +34,20 @@ supabase gen types typescript --linked > lib/supabase/database.types.ts
 | `20250101001000_ignore_enforcement.sql` | ignore blocks messages, friend requests, and channels; `is_ignored_by`, `ignorers_of_me` |
 | `20250101001100_is_ignored_by_uses_index.sql` | `is_ignored_by` rewritten to use the primary key index |
 | `20250101001200_message_format.sql` | `messages.format` (font, size, color, bold, italic, underline) with a `CHECK`; the receipt guard also freezes `format` |
+| `20250101001400_privacy_hardening.sql` | `profiles` select limited to self, accepted friends, pending parties, and ignored users; `avatar_url` host/path check; drop `avatars` bucket listing |
+| `20250101001401_revoke_handle_new_user.sql` | revoke `execute` on `handle_new_user()` from `public`, `anon`, and `authenticated` |
+| `20250101001500_user_keys.sql` | `user_keys`: one public key per account, readable by accepted friends only |
+| `20250101001600_encrypted_messages.sql` | Encrypted Messages columns (`encrypted`, `cipher_receiver`, `cipher_sender`) and cipher guards (step 1, additive) |
+| `20250101001601_message_sender_key.sql` | `sender_public_key` on `messages` so key rotation does not break older readable messages |
+| `20250101001602_message_sender_key_required.sql` | require non-null `sender_public_key` on encrypted rows |
 | `20250101001700_hangouts.sql` | `hangouts`: one pending per pair, guarded status changes, RLS, Realtime publication, `pg_cron` expiry (ADR 0011) |
+| `20261124082027_require_encrypted_messages.sql` | Encrypted Messages cutover (step 2): refuse new plaintext `messages` inserts (ADR 0010) |
+| `20261124124350_security_hardening.sql` | server-enforced timestamps, 15m hangout acceptance guard, 3+ char name search (max 20), FK/cron indexes, revoke `anon` table privileges |
+| `20261124124357_rate_limits.sql` | database-enforced rate limits (60 messages/min, 10 hangouts/10min, 20 friend requests/hr, 1h declined re-request cooldown) |
+| `20261124124401_private_presence_and_sender_key.sql` | private `presence:<userId>` Realtime policies and trigger verifying `sender_public_key` matches `user_keys` |
+| `20261124124656_messages_keep_delivered_stamp.sql` | preserve sender-set `delivered_at` (clamped to server clock) for online recipients |
+| `20261125034400_signup_display_name.sql` | `handle_new_user()` reads optional `display_name` from auth user metadata |
+| `20261125120000_cancel_friend_request.sql` | allow the requester to cancel (`pending -> removed`) a sent friend request |
 
 ## Notes
 
@@ -50,9 +63,8 @@ supabase gen types typescript --linked > lib/supabase/database.types.ts
   `create extension` is not permitted by your plan.
 - The service-role key is never used by the app. Only the project URL and
   publishable key are public build inputs.
-- `tests/rls.sql` holds two-user verification queries to run manually.
-- None of this SQL has been executed yet (no local Postgres/Supabase available
-  when written).
+- `tests/rls.sql` holds two-user verification queries to run manually; `tests/rls-check.mjs` runs the automated 109-check rollback suite.
+- All 27 migrations (`20250101000000` through `20261125120000`) are applied on the hosted project (`mkeozqwudranxrdferai`). Four `SECURITY DEFINER` helpers (`search_users`, `is_friend_of_me`, `is_ignored_by`, `ignorers_of_me`) intentionally remain callable by `authenticated` with `anon` revoked (see `docs/adr/0013-cto-technical-debt-and-delivery-baseline.md`).
 
 ## Realtime Authorization
 

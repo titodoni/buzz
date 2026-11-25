@@ -101,16 +101,29 @@ export function acceptedKeys(store: Pick<Storage, "getItem">, me: string, friend
 }
 
 /**
- * Whether a received message's sender key may be used. The first key ever
- * seen for a friend is accepted and remembered (trust on first use, as on
- * send). After that only accepted keys pass; any other key waits until the
- * user checks the Safety Number and accepts it.
+ * Ensures first-sight trust for a friend uses their currently published key
+ * (Option 1 for ADR 0010 / issue #8) rather than pinning an older key found
+ * in chat history. No-op once any key has already been accepted for this friend.
  */
-export function trustReceivedKey(store: Pick<Storage, "getItem" | "setItem">, me: string, friendId: string, key: string): boolean {
-  const accepted = acceptedKeys(store, me, friendId)
-  if (accepted.length === 0) {
-    pinFriendKey(store, me, friendId, key)
-    return true
-  }
-  return accepted.includes(key)
+export async function seedFriendTrust(
+  store: Pick<Storage, "getItem" | "setItem">,
+  me: string,
+  friendId: string,
+  fetchKey: (id: string) => Promise<string | null>,
+): Promise<string | null> {
+  const existing = acceptedKeys(store, me, friendId)
+  if (existing.length > 0) return loadPins(store, me)[friendId] ?? existing[existing.length - 1]
+  const current = await fetchKey(friendId)
+  if (current !== null) pinFriendKey(store, me, friendId, current)
+  return current
+}
+
+/**
+ * Whether a received message's sender key may be used. Only keys previously
+ * accepted for this friend (seeded from their published key on first sight,
+ * or confirmed via Safety Number) pass; unpinned or older keys stay unread
+ * until verified rather than poisoning first-sight trust from history.
+ */
+export function trustReceivedKey(store: Pick<Storage, "getItem">, me: string, friendId: string, key: string): boolean {
+  return acceptedKeys(store, me, friendId).includes(key)
 }

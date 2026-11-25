@@ -15,9 +15,10 @@ import { hhmm, MessageList } from "./MessageList";
 import { Avatar, ChatLayout } from "./ChatLayout";
 import { TypingIndicator } from "./TypingIndicator";
 import { conversation, earlierCursor, emptyConversation, type MessageRow } from "@/lib/chat/conversation";
-import { EARLIER_PAGE_SIZE, loadEarlier, loadHistory, markConversationRead, sendEncryptedMessage, trustFriendKey } from "@/lib/chat/api";
+import { EARLIER_PAGE_SIZE, ensureFriendTrust, hasFriendKeyChanged, loadEarlier, loadHistory, markConversationRead, sendEncryptedMessage, trustFriendKey } from "@/lib/chat/api";
 import { readWireRow, readWireRows, type ReadKey, type WireRow } from "@/lib/chat/wire";
 import { useMyKeys } from "@/lib/crypto/useMyKeys";
+import type { KeyPair } from "@/lib/crypto/box";
 import { trustReceivedKey } from "@/lib/crypto/trust";
 import { conversationText, copyText } from "@/lib/chat/copy";
 import { useChatView } from "@/lib/chat/useChatView";
@@ -92,10 +93,39 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   }, []);
   const sendKeys = myKeys.status === "ready" ? myKeys.keys : myKeys.status === "unavailable" ? ("unavailable" as const) : null;
   const keysRef = useRef(sendKeys);
+  const keyWaitersRef = useRef<Array<(keys: KeyPair | "unavailable" | null) => void>>([]);
   useEffect(() => {
     readKeyRef.current = readKey;
     keysRef.current = sendKeys;
+    if (myKeys.status !== "loading" && myKeys.status !== "none") {
+      const settled = myKeys.status === "ready" ? myKeys.keys : myKeys.status === "unavailable" ? ("unavailable" as const) : null;
+      const waiters = keyWaitersRef.current.splice(0);
+      for (const resolve of waiters) resolve(settled);
+    }
   });
+  useEffect(() => {
+    const waitersRef = keyWaitersRef;
+    return () => {
+      const waiters = waitersRef.current.splice(0);
+      for (const resolve of waiters) resolve(null);
+    };
+  }, []);
+  const waitForSendKeys = useCallback((): Promise<KeyPair | "unavailable" | null> => {
+    if (keysRef.current !== null) return Promise.resolve(keysRef.current);
+    if (myKeys.status !== "loading" && myKeys.status !== "none") return Promise.resolve(null);
+    return new Promise((resolve) => {
+      const finish = (keys: KeyPair | "unavailable" | null) => {
+        window.clearTimeout(timer);
+        resolve(keys);
+      };
+      const timer = window.setTimeout(() => {
+        const idx = keyWaitersRef.current.indexOf(finish);
+        if (idx >= 0) keyWaitersRef.current.splice(idx, 1);
+        resolve(keysRef.current);
+      }, 8000);
+      keyWaitersRef.current.push(finish);
+    });
+  }, [myKeys.status]);
 
   const friendName = friend?.displayName ?? "Your friend";
   const myName = mine?.displayName ?? "Me";
@@ -170,11 +200,16 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   }, [me, friendId]);
 
   const reload = useCallback(() => {
-    return loadHistory(me, friendId)
-      .then((rows) => readWireRows(rows, readKeyRef.current))
-      .then((rows) => {
+    return Promise.all([
+      loadHistory(me, friendId),
+      readKeyRef.current ? ensureFriendTrust(me, friendId) : Promise.resolve(),
+    ])
+      .then(([rows]) => readWireRows(rows, readKeyRef.current))
+      .then(async (rows) => {
         dispatch({ type: "historyLoaded", messages: rows });
-        if (rows.some((r) => r.unverified)) setKeyChanged(true);
+        if (rows.some((r) => r.unverified) && (await hasFriendKeyChanged(me, friendId))) {
+          setKeyChanged(true);
+        }
         setLoadError(false);
         markReadIfActive();
       })
@@ -244,15 +279,17 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
 
   const onMessage = useCallback(
     (wire: WireRow) => {
-      void readWireRow(wire, readKeyRef.current).then((message) => {
+      void (async () => {
+        if (readKeyRef.current) await ensureFriendTrust(me, friendId);
+        const message = await readWireRow(wire, readKeyRef.current);
         dispatch({ type: "messageArrived", message });
         if (message.sender_id !== friendId) return;
-        if (message.unverified) setKeyChanged(true); // my own send, seen from another instance
+        if (message.unverified) setKeyChanged(true);
         setFriendTyping((s) => typingOnSend(s));
         markReadIfActive();
-      });
+      })();
     },
-    [friendId, markReadIfActive],
+    [me, friendId, markReadIfActive],
   );
 
   const onTyping = useCallback((signal: TypingSignal, at: number) => {
@@ -270,7 +307,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   });
 
   const handleSend = useCallback(
-    (body: string) => {
+    async (body: string) => {
       const row: MessageRow = {
         id: crypto.randomUUID(),
         sender_id: me,
@@ -280,6 +317,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
         format: formatRef.current,
       };
       dispatch({ type: "sendStarted", message: row });
+      const activeKeys = keysRef.current ?? (await waitForSendKeys());
       // Encrypts on this device first; the text never goes to the database (ADR 0010).
       return sendEncryptedMessage({
         me,
@@ -289,7 +327,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
         format: formatRef.current,
         id: row.id,
         delivered: presenceRef.current !== "offline",
-        keys: keysRef.current,
+        keys: activeKeys,
       }).then((res) => {
         dispatch(res.ok ? { type: "sendConfirmed", id: row.id } : { type: "sendFailed", id: row.id });
         setNote(res.ok ? null : res.message);
@@ -297,7 +335,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
         return res.ok;
       });
     },
-    [me, friendId, friendName],
+    [me, friendId, friendName, waitForSendKeys],
   );
 
   const handleNudge = useCallback(async () => {
@@ -339,8 +377,11 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     const s = stateRef.current;
     if (loadingEarlierRef.current || s.reachedStart) return;
     loadingEarlierRef.current = true;
-    loadEarlier(me, friendId, earlierCursor(s))
-      .then((rows) => readWireRows(rows, readKeyRef.current))
+    Promise.all([
+      loadEarlier(me, friendId, earlierCursor(s)),
+      readKeyRef.current ? ensureFriendTrust(me, friendId) : Promise.resolve(),
+    ])
+      .then(([rows]) => readWireRows(rows, readKeyRef.current))
       .then((rows) => {
         dispatch({ type: "earlierLoaded", messages: rows, pageSize: EARLIER_PAGE_SIZE });
         setNote(null);

@@ -14,6 +14,7 @@ Message bodies are encrypted on the sender's device and decrypted on the friend'
 ## Decisions that follow
 
 - Each Encrypted Message row carries the sender's public key as it was when the message was sent. A friend who later starts fresh therefore does not make their older messages to you unreadable; only the person who started fresh loses their own history. Authenticity is as strong as the trust in that key (see Key swap above).
+- On a computer that has never seen a friend's key yet (no local pin), first-sight trust pins the friend's **currently published key** (`user_keys`) rather than auto-pinning an older key from chat history (Issue `#8`, CTO decision). That matches what sending already does, so newer messages from a reinstalled friend open cleanly while pre-rotation history shows the unverified warning instead of locking out current chat.
 - One key per account, kept in the OS keychain on desktop. A new device or reinstall starts a fresh key, and older Encrypted Messages cannot be read there. No recovery in the first version. A recovery file can be added later without changing the message format.
 - No plaintext fallback. If a friend has no key yet, or this computer has no keychain, sending is blocked with a clear message. A Linux machine without a Secret Service (gnome-keyring, KWallet) therefore cannot send messages.
 - Messages stored before this change stay as they are and are marked not encrypted. They remain readable by anyone with database access. The database refuses new plaintext inserts once the app ships.

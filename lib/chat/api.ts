@@ -2,7 +2,7 @@
 
 import { getSupabase } from "@/lib/supabase/browser-client"
 import { fetchPublicKey } from "@/lib/crypto/keys"
-import { keyToPin, loadPins, pinFriendKey } from "@/lib/crypto/trust"
+import { checkFriendKey, keyToPin, loadPins, pinFriendKey, seedFriendTrust } from "@/lib/crypto/trust"
 import { DEFAULT_MESSAGE_LIMIT } from "./messages"
 import { sendEncrypted, type SendDeps } from "./send"
 import type { WireRow } from "./wire"
@@ -116,6 +116,31 @@ export async function trustFriendKey(me: string, friendId: string, shownKey: str
     if (key === null) return false
     pinFriendKey(localStorage, me, friendId, key)
     return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Seeds first-sight trust from the friend's currently published key before
+ * decrypting history so an older history key never locks out newer messages
+ * (ADR 0010, issue #8). Best-effort: offline failures leave trust unset.
+ */
+export async function ensureFriendTrust(me: string, friendId: string): Promise<void> {
+  try {
+    await seedFriendTrust(localStorage, me, friendId, fetchPublicKey)
+  } catch {
+    // Offline or transient read failure: do not fall back to auto-pinning history.
+  }
+}
+
+/** Whether the friend's published key currently differs from the pinned one. */
+export async function hasFriendKeyChanged(me: string, friendId: string): Promise<boolean> {
+  try {
+    const pinned = loadPins(localStorage, me)[friendId] ?? null
+    if (pinned === null) return false
+    const current = await fetchPublicKey(friendId)
+    return checkFriendKey(pinned, current).status === "changed"
   } catch {
     return false
   }

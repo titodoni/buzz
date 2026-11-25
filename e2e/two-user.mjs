@@ -103,6 +103,33 @@ const page = {
     b.click()
     return "clicked"
   },
+  openMenu(label) {
+    const b = [...document.querySelectorAll('button[aria-haspopup="menu"]')].find((el) => el.textContent.trim() === label)
+    if (!b) return false
+    if (b.getAttribute("aria-expanded") !== "true") b.click()
+    return true
+  },
+  pickMenuItem(label) {
+    const item = [...document.querySelectorAll('[role="menuitem"],[role="menuitemcheckbox"]')].find(
+      (el) => el.textContent.replace(/^✓\s*/, "").trim() === label,
+    )
+    if (!item) return false
+    item.click()
+    return true
+  },
+  pickPrefCategory(label) {
+    const btn = [...document.querySelectorAll('nav[aria-label="Categories"] button')].find((el) => el.textContent.trim() === label)
+    if (!btn) return false
+    btn.click()
+    return true
+  },
+  setPrefCheck(label, wanted) {
+    const lbl = [...document.querySelectorAll("label")].find((el) => el.textContent.trim() === label)
+    const input = lbl?.querySelector('input[type="checkbox"]')
+    if (!input) return null
+    if (input.checked !== wanted) input.click()
+    return input.checked
+  },
   /** Desktop only: whether this window can read my private key from the keychain. */
   async keyInKeychain() {
     const k = Object.keys(localStorage).find((x) => x.startsWith("sb-") && x.endsWith("-auth-token"))
@@ -243,6 +270,8 @@ const driver = WIN
 procs.push(driver)
 await sleep(1500)
 
+let aPrefs
+
 /** Opens the app and signs in if it asks; a saved sign-in goes straight to the Buddy List. */
 async function signInIfAsked(run, acc, friend) {
   return waitFor(`${acc.name}'s Buddy List`, async () => {
@@ -325,9 +354,9 @@ try {
     aChat = await waitFor("a new window", async () => (await a.handles()).find((h) => !before.includes(h)))
     await a.switchTo(aChat)
     await waitFor("the chat window to load (message box and conversation)", () => aRun(page.chatReady))
-    const chatKey = await aRun(page.keyInKeychain)
+    const chatKey = await waitFor("A's encryption key in the chat window", async () => ((await aRun(page.keyInKeychain)) === "yes" ? "yes" : null))
     await a.switchTo(mainHandle)
-    const mainKey = await aRun(page.keyInKeychain)
+    const mainKey = await waitFor("A's encryption key in the Buddy List", async () => ((await aRun(page.keyInKeychain)) === "yes" ? "yes" : null))
     await a.switchTo(aChat)
     return `windows: ${before.length} -> ${(await a.handles()).length}; key readable from Buddy List: ${mainKey}, from chat: ${chatKey}`
   }))
@@ -414,6 +443,84 @@ try {
       return log.includes(m1) && log.includes(m2)
     })
     return "history shows both earlier messages"
+  })
+
+  await step("T13", "A opens Preferences from Messenger menu; opening again raises the same window", async () => {
+    await a.switchTo(mainHandle)
+    const before = await a.handles()
+    await waitFor("Messenger menu", () => aRun(page.openMenu, "Messenger"))
+    await waitFor("Preferences... item", () => aRun(page.pickMenuItem, "Preferences..."))
+    aPrefs = await waitFor("the Preferences window", async () => {
+      for (const h of await a.handles()) {
+        if (before.includes(h)) continue
+        await a.switchTo(h)
+        if (await aRun(() => location.pathname).then((p) => p.startsWith("/preferences"))) return h
+      }
+      await a.switchTo(mainHandle)
+      return null
+    })
+    const countAfterFirst = (await a.handles()).length
+    await a.switchTo(mainHandle)
+    await waitFor("Messenger menu again", () => aRun(page.openMenu, "Messenger"))
+    await waitFor("Preferences... item again", () => aRun(page.pickMenuItem, "Preferences..."))
+    await sleep(600)
+    const countAfterSecond = (await a.handles()).length
+    if (countAfterSecond !== countAfterFirst) {
+      throw new Error(`expected 1 Preferences window, saw ${countAfterSecond} total handles (was ${countAfterFirst})`)
+    }
+    return `windows: ${before.length} -> ${countAfterFirst}; second open kept ${countAfterSecond}`
+  })
+
+  await step("T14", "A changes Show Timestamps in Preferences; open chat updates without reload", async () => {
+    await a.switchTo(aChat)
+    const beforeLog = await aRun(page.logText)
+    if (!/\(\d{2}:\d{2}\)/.test(beforeLog)) throw new Error(`expected timestamps before toggle, got: ${beforeLog.slice(0, 120)}`)
+    await a.switchTo(aPrefs)
+    await waitFor("Messages category", () => aRun(page.pickPrefCategory, "Messages"))
+    const unchecked = await waitFor("Show Timestamps off", async () => (await aRun(page.setPrefCheck, "Show Timestamps", false)) === false)
+    if (!unchecked) throw new Error("could not uncheck Show Timestamps")
+    await a.switchTo(aChat)
+    await waitFor("timestamps to disappear in open chat without reload", async () => !/\(\d{2}:\d{2}\)/.test(await aRun(page.logText)))
+    await a.switchTo(aPrefs)
+    await waitFor("Show Timestamps restored", async () => (await aRun(page.setPrefCheck, "Show Timestamps", true)) === true)
+    await a.switchTo(aChat)
+    await waitFor("timestamps to return in open chat", async () => /\(\d{2}:\d{2}\)/.test(await aRun(page.logText)))
+    return "Show Timestamps toggled live in open chat"
+  })
+
+  await step("T15", "A turns Allow Buzz! off and back on in Preferences; Buzz! is dropped while off and arrives once on", async () => {
+    await bPage.evaluate(page.openRow, A.name)
+    await waitFor("B's chat window", async () => bChat && !bChat.isClosed() && (await bChat.evaluate(page.chatReady)))
+    await a.switchTo(aChat)
+    const countBuzz = (s) => (s.match(/BUZZ!!!/g) ?? []).length
+    const beforeCount = countBuzz(await aRun(page.logText))
+    await a.switchTo(aPrefs)
+    await waitFor("Buzz! category", () => aRun(page.pickPrefCategory, "Buzz!"))
+    const offOk = await waitFor("Allow Buzz! unchecked", async () => (await aRun(page.setPrefCheck, "Allow Buzz!", false)) === false)
+    if (!offOk) throw new Error("could not uncheck Allow Buzz!")
+    // Wait for storage event propagation, then B sends a Buzz! that A must drop.
+    await sleep(400)
+    const rOff = await waitFor("B's BUZZ! button enabled", async () => {
+      const s = await bChat.evaluate(page.buzz)
+      return s === "clicked" ? s : null
+    })
+    await waitFor("B to record the sent nudge locally", async () => (await bChat.evaluate(page.logText)).includes("You nudged"))
+    await sleep(2500)
+    await a.switchTo(aChat)
+    const duringOffCount = countBuzz(await aRun(page.logText))
+    if (duringOffCount !== beforeCount) {
+      throw new Error(`expected BUZZ!!! count to stay ${beforeCount} while Allow Buzz! was off, got ${duringOffCount}`)
+    }
+    await a.switchTo(aPrefs)
+    await waitFor("Allow Buzz! checked", async () => (await aRun(page.setPrefCheck, "Allow Buzz!", true)) === true)
+    // Wait for B's 10-second per-friend cooldown to clear, then B sends another Buzz!.
+    const rOn = await waitFor("B's BUZZ! button after 10s cooldown", async () => {
+      const s = await bChat.evaluate(page.buzz)
+      return s === "clicked" ? s : null
+    }, 20_000)
+    await a.switchTo(aChat)
+    await waitFor("BUZZ!!! to arrive after Allow Buzz! re-enabled", async () => countBuzz(await aRun(page.logText)) === beforeCount + 1)
+    return `off (${rOff}) dropped -> count ${duringOffCount}; on (${rOn}) delivered -> count ${beforeCount + 1}`
   })
 } finally {
   await a?.quit()

@@ -76,6 +76,10 @@ _Avoid_: Display image, profile picture
 A short line you write about yourself that friends see under your name, such as "Out to Lunch".
 _Avoid_: Status message, mood, bio
 
+**Up for Chat**:
+A Status a user turns on with one tap to say they want company now. Friends see it highlighted under the name. It clears itself after an hour.
+_Avoid_: Lagi gabut, quick chat status
+
 **Now Playing**:
 A line you type about the song or artist you're listening to, shown with a music note.
 _Avoid_: Current song, music status
@@ -103,8 +107,12 @@ A message sent while the friend was offline; it waits and reaches them when they
 _Avoid_: Queued message, pending message
 
 **Nudge**:
-A playful attention-getter sent to a friend: their chat window pops open if it was closed, shakes, and makes a sound, then the sender must wait before nudging again. The on-screen label is "Buzz!".
+A playful attention-getter sent to a friend: their chat window pops open if it was closed, shakes, and makes a sound, then the sender must wait before nudging again. When the Chat Window cannot take focus, the friend's Buddy List row also shakes and shows a count badge. The on-screen label is "Buzz!".
 _Avoid_: Buzz (in specs and code), poke, ping
+
+**Recent Nudges**:
+The last few Nudges you received, kept on your own computer so you can Nudge back.
+_Avoid_: Nudge history, buzz log
 
 **Typing Indicator**:
 The line telling you a friend is currently writing to you.

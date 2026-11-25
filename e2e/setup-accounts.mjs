@@ -10,9 +10,10 @@ import { randomBytes } from "node:crypto"
 import { existsSync, writeFileSync } from "node:fs"
 import { loadEnv } from "./env.mjs"
 
-// E2E_ACCOUNTS picks another file, e.g. for CI, which makes new accounts each run.
+// E2E_ACCOUNTS picks another file, e.g. for CI, which makes new accounts each run
+// unless BUZZ_E2E_A_EMAIL..BUZZ_E2E_B_PASSWORD are already provided in the environment.
 const FILE = process.env.E2E_ACCOUNTS ?? ".env.e2e.local"
-const env = loadEnv([".env", FILE])
+const env = { ...loadEnv([".env", FILE]), ...process.env }
 const url = env.NEXT_PUBLIC_SUPABASE_URL
 const key = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 if (!url || !key) throw new Error("Put NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in .env")
@@ -20,10 +21,24 @@ if (!url || !key) throw new Error("Put NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_
 const client = () => createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
 
 let accounts
-if (existsSync(FILE) && env.BUZZ_E2E_A_EMAIL) {
+if (env.BUZZ_E2E_A_EMAIL && env.BUZZ_E2E_A_PASSWORD && env.BUZZ_E2E_B_EMAIL && env.BUZZ_E2E_B_PASSWORD) {
   accounts = {
     a: { email: env.BUZZ_E2E_A_EMAIL, password: env.BUZZ_E2E_A_PASSWORD, name: "E2E Ann" },
     b: { email: env.BUZZ_E2E_B_EMAIL, password: env.BUZZ_E2E_B_PASSWORD, name: "E2E Bob" },
+  }
+  if (!existsSync(FILE)) {
+    writeFileSync(
+      FILE,
+      [
+        "# Reused accounts for e2e/two-user.mjs (git-ignored).",
+        `BUZZ_E2E_A_EMAIL=${accounts.a.email}`,
+        `BUZZ_E2E_A_PASSWORD=${accounts.a.password}`,
+        `BUZZ_E2E_B_EMAIL=${accounts.b.email}`,
+        `BUZZ_E2E_B_PASSWORD=${accounts.b.password}`,
+        "",
+      ].join("\n"),
+      { mode: 0o600 },
+    )
   }
 } else {
   const tag = randomBytes(3).toString("hex")

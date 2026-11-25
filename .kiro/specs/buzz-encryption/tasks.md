@@ -20,15 +20,15 @@ Calendar: today is 20 Nov 2026. Freeze 1 Dec, submit 4 Dec. If the freeze comes 
 
 ## Phase 2. Send and read (E2)
 
-- [x] 2.1 (additive `...001600`, `...001601`, `...001602` applied and checked; found and fixed a null gap in the sender key check; the cutover `...001610` is written but NOT applied, and its SQL was not run on the cloud project because the client cancelled the confirmation) Extend `test:rls`. _E2.1, E4.2_
+- [x] 2.1 (`...001600`, `...001601`, `...001602` applied, plus cutover `20261124082027_require_encrypted_messages.sql` and `20261124124401_private_presence_and_sender_key.sql` applied on hosted project `mkeozqwudranxrdferai`; 109 RLS checks pass in rolled-back SQL). Extend `test:rls`. _E2.1, E4.2_
 - [x] 2.2 Encrypt on send and decrypt on read in `api.ts`, `conversation.ts`, `chat.ts`, `ChatWindow`. Unreadable-row line. Old rows unchanged. _E2.1, E2.2, E2.7_
 - [x] 2.3 "Say hi" uses the same encrypt step. Block with "[Name] hasn't set up encryption yet." _E2.3, E2.5_
-- [ ] 2.4 NOT RUN, needs two running app instances: Two-user check: send, reload history, Offline Message on return, sender rereads own message.
+- [~] 2.4 (`E1`–`E4` passed on local stack in `docs/two-user-check.md`; `T5`–`T8`/`T12` passed on hosted Windows `v0.1.3` and Linux `e2e/two-user.mjs`; Linux first-sign-in key race `#7` fixed on `main`, pending 5x fresh-account verification) Two-user check: send, reload history, Offline Message on return, sender rereads own message.
 - [x] Checkpoint: commit. Release the app, then apply 2.1.
 
 ## Phase 3. Trust and wording (E3, E4)
 
-- [x] 3.1 Key-changed warning and confirm in the chat; Safety Number on the friend profile. _E3_
-- [ ] 3.2 NOT RUN, needs two running app instances: Two-user check: reset one account's key, the other sees the warning and the Safety Numbers differ.
+- [x] 3.1 Key-changed warning and confirm in the chat; Safety Number on the friend profile; first-sight published-key trust (`seedFriendTrust`, `#8` Option 1) applied. _E3_
+- [~] 3.2 (`E5`–`E6` passed on local stack in `docs/two-user-check.md`; hosted release re-check open) Two-user check: reset one account's key, the other sees the warning and the Safety Numbers differ.
 - [x] 3.3 (README says plainly that nothing is claimed yet) README, in-app text and submission text use only the sentence in product steering. Say what is not hidden. _E4.3_
 - [x] 3.4 Link ADR 0010 and add Encrypted Messages to the README status table. Commit.

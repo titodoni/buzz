@@ -36,38 +36,58 @@ fn entry(account: &str) -> Result<Entry, String> {
 
 /// True when this computer has a usable keychain.
 #[tauri::command]
-pub fn key_store_available() -> bool {
-    Entry::store_status().is_ok()
+pub async fn key_store_available() -> bool {
+    tauri::async_runtime::spawn_blocking(|| Entry::store_status().is_ok())
+        .await
+        .unwrap_or(false)
 }
 
-/// The stored private key for `account`, or `None` if there is none yet.
-#[tauri::command]
-pub fn key_store_get(account: String) -> Result<Option<String>, String> {
-    match entry(&account)?.get_password() {
+fn key_store_get_sync(account: &str) -> Result<Option<String>, String> {
+    match entry(account)?.get_password() {
         Ok(key) => Ok(Some(key)),
         Err(Error::NoEntry) => Ok(None),
         Err(_) => Err("keychain read failed".into()),
     }
 }
 
-/// Stores the private key for `account`, replacing any earlier one.
+/// The stored private key for `account`, or `None` if there is none yet.
 #[tauri::command]
-pub fn key_store_set(account: String, key: String) -> Result<(), String> {
-    if !valid_key(&key) {
+pub async fn key_store_get(account: String) -> Result<Option<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || key_store_get_sync(&account))
+        .await
+        .map_err(|_| "keychain read failed".to_string())?
+}
+
+fn key_store_set_sync(account: &str, key: &str) -> Result<(), String> {
+    if !valid_key(key) {
         return Err("invalid key".into());
     }
-    entry(&account)?
-        .set_password(&key)
+    entry(account)?
+        .set_password(key)
         .map_err(|_| "keychain write failed".to_string())
+}
+
+/// Stores the private key for `account`, replacing any earlier one.
+#[tauri::command]
+pub async fn key_store_set(account: String, key: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || key_store_set_sync(&account, &key))
+        .await
+        .map_err(|_| "keychain write failed".to_string())?
+}
+
+fn key_store_delete_sync(account: &str) -> Result<(), String> {
+    match entry(account)?.delete_credential() {
+        Ok(()) | Err(Error::NoEntry) => Ok(()),
+        Err(_) => Err("keychain delete failed".into()),
+    }
 }
 
 /// Removes the stored key for `account`. Missing is not an error.
 #[tauri::command]
-pub fn key_store_delete(account: String) -> Result<(), String> {
-    match entry(&account)?.delete_credential() {
-        Ok(()) | Err(Error::NoEntry) => Ok(()),
-        Err(_) => Err("keychain delete failed".into()),
-    }
+pub async fn key_store_delete(account: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || key_store_delete_sync(&account))
+        .await
+        .map_err(|_| "keychain delete failed".to_string())?
 }
 
 #[cfg(test)]
@@ -108,20 +128,20 @@ mod tests {
     #[ignore]
     fn round_trip_with_the_real_keychain() {
         let account = "00000000-0000-4000-8000-0000000000f0".to_string();
-        assert!(key_store_available());
-        key_store_delete(account.clone()).unwrap();
-        assert_eq!(key_store_get(account.clone()).unwrap(), None);
-        key_store_set(account.clone(), "test-key_ABC123".into()).unwrap();
+        assert!(Entry::store_status().is_ok());
+        key_store_delete_sync(&account).unwrap();
+        assert_eq!(key_store_get_sync(&account).unwrap(), None);
+        key_store_set_sync(&account, "test-key_ABC123").unwrap();
         assert_eq!(
-            key_store_get(account.clone()).unwrap().as_deref(),
+            key_store_get_sync(&account).unwrap().as_deref(),
             Some("test-key_ABC123")
         );
-        key_store_set(account.clone(), "second-key".into()).unwrap();
+        key_store_set_sync(&account, "second-key").unwrap();
         assert_eq!(
-            key_store_get(account.clone()).unwrap().as_deref(),
+            key_store_get_sync(&account).unwrap().as_deref(),
             Some("second-key")
         );
-        key_store_delete(account.clone()).unwrap();
-        assert_eq!(key_store_get(account).unwrap(), None);
+        key_store_delete_sync(&account).unwrap();
+        assert_eq!(key_store_get_sync(&account).unwrap(), None);
     }
 }

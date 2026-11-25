@@ -23,7 +23,7 @@ export type SetupResult =
       /** The server held a different key (another device or an older install); it is now replaced. */
       replacedOther: boolean
     }
-  | { ok: false; reason: "publish-failed" }
+  | { ok: false; reason: "publish-failed" | "store-failed" }
 
 /**
  * Buddy List window only. Makes sure this device has a private key in the key
@@ -46,6 +46,8 @@ export async function ensureMyKeyPair(me: string, store: KeyStore, api: KeyApi):
   if (plan === "create") {
     keys = await generateKeyPair()
     await store.set(me, keys.privateKey)
+    // Verify the OS keychain actually persisted the key before publishing or reporting ready.
+    if ((await store.get(me)) !== keys.privateKey) return { ok: false, reason: "store-failed" }
   } else if (localPrivate !== null && localPublic !== null) {
     keys = { privateKey: localPrivate, publicKey: localPublic }
   } else {

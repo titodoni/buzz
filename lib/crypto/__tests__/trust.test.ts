@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { generateKeyPair } from "../box"
 import { safetyNumber } from "../safetyNumber"
-import { acceptedKeys, checkFriendKey, keyToPin, loadPins, parsePins, pinFriendKey, sendGate, trustReceivedKey } from "../trust"
+import { acceptedKeys, checkFriendKey, keyToPin, loadPins, parsePins, pinFriendKey, seedFriendTrust, sendGate, trustReceivedKey } from "../trust"
 
 // Feature: buzz-encryption, Safety Number and key trust (E3)
 describe("safetyNumber", () => {
@@ -111,23 +111,40 @@ function memoryStore(): Pick<Storage, "getItem" | "setItem"> {
   return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => void m.set(k, v) }
 }
 
-describe("trustReceivedKey (audit S11)", () => {
-  it("accepts and remembers the first key seen for a friend", () => {
+describe("trustReceivedKey and seedFriendTrust (audit S11, issue #8)", () => {
+  it("refuses to auto-pin an unverified history key when nothing is accepted yet", () => {
     const s = memoryStore()
-    expect(trustReceivedKey(s, "me", "ann", "K1")).toBe(true)
-    expect(acceptedKeys(s, "me", "ann")).toEqual(["K1"])
+    expect(trustReceivedKey(s, "me", "ann", "OLD")).toBe(false)
+    expect(acceptedKeys(s, "me", "ann")).toEqual([])
   })
 
-  it("refuses a different key once one is accepted", () => {
+  it("seedFriendTrust pins the friend's currently published key on first sight", async () => {
     const s = memoryStore()
-    trustReceivedKey(s, "me", "ann", "K1")
-    expect(trustReceivedKey(s, "me", "ann", "EVIL")).toBe(false)
-    expect(acceptedKeys(s, "me", "ann")).toEqual(["K1"])
+    expect(await seedFriendTrust(s, "me", "ann", async () => "CURR")).toBe("CURR")
+    expect(loadPins(s, "me")).toEqual({ ann: "CURR" })
+    expect(trustReceivedKey(s, "me", "ann", "CURR")).toBe(true)
+    expect(trustReceivedKey(s, "me", "ann", "OLD")).toBe(false)
+  })
+
+  it("seedFriendTrust does not overwrite an already accepted key on later checks", async () => {
+    const s = memoryStore()
+    pinFriendKey(s, "me", "ann", "K1")
+    let fetched = false
+    expect(await seedFriendTrust(s, "me", "ann", async () => ((fetched = true), "K2"))).toBe("K1")
+    expect(fetched).toBe(false)
+    expect(trustReceivedKey(s, "me", "ann", "K1")).toBe(true)
+    expect(trustReceivedKey(s, "me", "ann", "K2")).toBe(false)
+  })
+
+  it("seedFriendTrust leaves trust empty when the friend has no published key", async () => {
+    const s = memoryStore()
+    expect(await seedFriendTrust(s, "me", "ann", async () => null)).toBeNull()
+    expect(acceptedKeys(s, "me", "ann")).toEqual([])
   })
 
   it("after the user accepts a new key, old and new messages both open", () => {
     const s = memoryStore()
-    trustReceivedKey(s, "me", "ann", "K1")
+    pinFriendKey(s, "me", "ann", "K1")
     pinFriendKey(s, "me", "ann", "K2")
     expect(trustReceivedKey(s, "me", "ann", "K1")).toBe(true)
     expect(trustReceivedKey(s, "me", "ann", "K2")).toBe(true)
@@ -143,7 +160,7 @@ describe("trustReceivedKey (audit S11)", () => {
 
   it("keeps friends separate", () => {
     const s = memoryStore()
-    trustReceivedKey(s, "me", "ann", "K1")
-    expect(trustReceivedKey(s, "me", "bob", "K2")).toBe(true)
+    pinFriendKey(s, "me", "ann", "K1")
+    expect(trustReceivedKey(s, "me", "bob", "K2")).toBe(false)
   })
 })

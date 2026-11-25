@@ -27,24 +27,24 @@ Calendar: today is 20 Nov 2026. Submit on 4 Dec. Feature freeze 1 Dec.
 - [x] 2.1 `lib/status/upForChat.ts` with timer, restore rules, stale-on-start clear; unit tests. _R2.2, R2.4_
 - [x] 2.2 Toggle in the Buddy List header; sets Status and Available. _R2.1_
 - [x] 2.3 Highlighted row and "Say hi" button; double-tap guard; message goes through the normal send path. _R2.1, R2.3_
-- [~] 2.4 (skipped on request, not run) Two-user check: highlight, Say hi sends once, toggle and timer restore the old Status.
-- [ ] Checkpoint: add Up for Chat to `GLOSSARY.md`, commit.
+- [~] 2.4 (local-stack check `1` passed in `docs/two-user-check.md` on `8395cd2`; hosted-DB two-user check still open) Two-user check: highlight, Say hi sends once, toggle and timer restore the old Status.
+- [x] Checkpoint: Up for Chat added to `GLOSSARY.md`.
 
 ## Phase 3. Hangout: trigger 2 (25 to 28 Nov)
 
 - [x] 3.1 (25 Nov: applied to the project with the MCP, history row `20250101001700` recorded; 25 checks run as rolled-back SQL through the MCP and all pass; `get_advisors` shows no new security finding. `npm run test:rls` itself not run, no database URL) Migration `hangouts` with RLS, partial unique index, publication, cron expiry. Extend `test:rls`: cross-user read denied, forged `sender_id` fails, second pending fails, ignored sender fails. _R3.6, R6.1, R6.2_
 - [x] 3.2 (`templates.ts`, `state.ts`, `api.ts`, 29 unit tests; types match the live schema) Regenerate DB types; add `lib/hangout/templates.ts`, `state.ts`, `api.ts` with unit tests (transitions, 15 min expiry on read, line text). _R3.1, R3.5_
-- [~] 3.3 (Built, builds clean, NOT RUN in an app) Chat Window Hangout button and `HangoutPicker`: templates, custom field, pending guard, Busy hint, Offline disabled with reason. _R3.1, R3.6 to R3.8_
-- [~] 3.4 (Built, NOT RUN: needs two running app instances) `useHangouts` and `HangoutBanner` in Buddy List and Chat Window. Banner within 2 seconds. _R3.2_
-- [~] 3.5 (Built, NOT RUN: needs two running app instances for accept, decline, expiry) Accept, Decline, expiry, system lines for both sides. Verify all three paths. _R3.3 to R3.5_
+- [~] 3.3 (Built, checked on local stack in `docs/two-user-check.md` steps 2, 3, 8, 9, 10; hosted-DB check still open) Chat Window Hangout button and `HangoutPicker`: templates, custom field, pending guard, Busy hint, Offline disabled with reason. _R3.1, R3.6 to R3.8_
+- [~] 3.4 (Built, checked on local stack in `docs/two-user-check.md` step 2; hosted-DB check still open) `useHangouts` and `HangoutBanner` in Buddy List and Chat Window. Banner within 2 seconds. _R3.2_
+- [~] 3.5 (Built, checked on local stack in `docs/two-user-check.md` steps 3, 9; decline and hosted-DB check still open) Accept, Decline, expiry, system lines for both sides. Verify all three paths. _R3.3 to R3.5_
 - [x] Checkpoint (glossary and ADR 0011 written; commit pending the migration check): Hangout in `GLOSSARY.md`; ADR 0011 "Hangouts are stored, Nudges are not" (0010 is encryption); commit.
 
 ## Phase 4. Nudge, extended: trigger 3 (29 to 30 Nov)
 
-- [~] 4.1 (Built, NOT RUN: needs two running app instances; the focus check after opening the window is untested on Windows and macOS) Pass `receivedAt` from `useNudgeInbox`; row shake; badge when the window cannot take focus. _R4.1, R4.2_
-- [~] 4.2 (`recent.ts` done with 14 unit tests; panel built, NOT RUN in an app) `lib/nudge/recent.ts` and `RecentNudgesPanel` with the bell; "Nudge back". _R4.3, R4.4_
-- [~] 4.3 (`limiter.ts` done with 8 unit tests; wired into the button, Ctrl+G, Actions > Buzz! and Nudge back; NOT RUN in an app) `lib/nudge/limiter.ts`, 5 per 10 minutes, message on the sixth. Wire into every Nudge entry point. _R4.5_
-- [ ] 4.4 NOT RUN, needs two running app instances: Two-user check with the Chat Window closed; badge clears on open.
+- [~] 4.1 (Built, checked on local stack in `docs/two-user-check.md` steps 4–5; hosted-DB check and Windows/macOS focus still open) Pass `receivedAt` from `useNudgeInbox`; row shake; badge when the window cannot take focus. _R4.1, R4.2_
+- [~] 4.2 (`recent.ts` done with 14 unit tests; panel built and checked on local stack step 6; hosted-DB check still open) `lib/nudge/recent.ts` and `RecentNudgesPanel` with the bell; "Nudge back". _R4.3, R4.4_
+- [~] 4.3 (`limiter.ts` done with 8 unit tests; wired into the button, Ctrl+G, Actions > Buzz! and Nudge back; checked on local stack step 7; hosted-DB check still open) `lib/nudge/limiter.ts`, 5 per 10 minutes, message on the sixth. Wire into every Nudge entry point. _R4.5_
+- [~] 4.4 (local-stack Xvfb check passed in `docs/two-user-check.md` step 5; hosted-DB check still open) Two-user check with the Chat Window closed; badge clears on open.
 
 ## Phase 5 (moved ahead of Phase 2.1 on 20 Nov, at your request). Now Playing: automatic, and as a conversation starter (30 Nov to 1 Dec)
 
@@ -61,9 +61,9 @@ Dependencies approved 20 Nov: `mpris` (Linux only), `windows` (Windows only). ma
 
 ## Phase 6. Polish and submission (2 to 4 Dec)
 
-- [ ] 6.1 Empty states, Busy hint, no fake green dots. Update `GLOSSARY.md` (Nudge entry, new terms) and README Status table.
-- [ ] 6.2 Full verification: `tsc --noEmit`, lint, unit tests, `test:rls`, `cargo clippy`, installers (CI beta build).
-- [ ] 6.3 Ten-step checklist in spec.md section 9 with two installed builds, plus: B plays a song, A sees it under B's name.
+- [~] 6.1 Empty states, Busy hint, no fake green dots. `GLOSSARY.md` (`Up for Chat`, `Recent Nudges`, updated `Nudge`) and `docs/development.md` updated; live release/submission tracking moved to GitHub Issues (`docs/agents/issue-tracker.md`).
+- [~] 6.2 Automated gates green (`tsc --noEmit`, lint, Vitest 61 files, Cargo fmt/clippy/test, `beta-build.yml`, 109 RLS checks); `test:rls` re-run and final `v0.1.4` release build still needed after sprint fixes.
+- [ ] 6.3 Ten-step checklist in spec.md section 9 with two installed builds on the **hosted** project (`docs/two-user-check.md` passed 1–10 on local stack `8395cd2`; hosted run + N1–N3 + audio/shake still open).
 - [ ] 6.4 Record the under-3-minute demo (spec.md section 11). Rehearse twice.
 - [ ] 6.5 Submission text, including how Kiro was used: specs, steering, ADRs, glossary.
 - [ ] 6.6 Submit on 4 Dec.

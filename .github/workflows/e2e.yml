@@ -79,7 +79,12 @@ jobs:
           "--- stdout"; Get-Content app-out.txt -ErrorAction SilentlyContinue
           "--- stderr"; Get-Content app-err.txt -ErrorAction SilentlyContinue
 
-      - name: Make two throwaway accounts
+      - name: Prepare two test accounts
+        env:
+          BUZZ_E2E_A_EMAIL: ${{ secrets.E2E_A_EMAIL }}
+          BUZZ_E2E_A_PASSWORD: ${{ secrets.E2E_A_PASSWORD }}
+          BUZZ_E2E_B_EMAIL: ${{ secrets.E2E_B_EMAIL }}
+          BUZZ_E2E_B_PASSWORD: ${{ secrets.E2E_B_PASSWORD }}
         run: node e2e/setup-accounts.mjs
 
       # GitHub's Windows runners run elevated, and an elevated WebView2 ignores the
