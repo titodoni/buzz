@@ -96,10 +96,7 @@ export async function signUp(
       return { ok: false, message: MSG_EMAIL_IN_USE }
     }
     if (data.session && data.user) {
-      if (trimmedName) {
-        // Also persist directly so sign-up sets Display Name even before the trigger migration is applied.
-        await supabase.from("profiles").update({ display_name: trimmedName }).eq("id", data.user.id)
-      }
+      // The Display Name reaches the profile through handle_new_user() reading the sign-up metadata.
       if (opts.avatarFile) {
         const up = await uploadAvatar(data.user.id, opts.avatarFile)
         if (!up.ok) return { ok: true, needsConfirmation: false, avatarError: up.message }

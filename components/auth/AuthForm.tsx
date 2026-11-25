@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 
 import { WindowFrame } from "@/components/WindowFrame"
 import { signIn, signUp, MSG_CONFIRM_EMAIL } from "@/lib/auth/session"
+import { setProfileNotice } from "@/lib/profile/notice"
 import { MSG_NAME_TOO_LONG } from "@/lib/profile/save"
 import {
   AVATAR_TYPES,
@@ -123,6 +124,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     const trimmedName = displayName.trim()
     setFormError("")
     setNotice("")
+    setAvatarError("")
     const emailMsg = isValidEmail(trimmed) ? "" : "Enter an email like name@example.com."
     // Sign-in only checks presence; the server decides if credentials match (Req 1.9).
     const passwordMsg =
@@ -144,7 +146,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     setEmailError(emailMsg)
     setPasswordError(passwordMsg)
     setDisplayNameError(nameMsg)
-    if (emailMsg || passwordMsg || nameMsg || avatarError) return
+    // A rejected picture is never kept in avatarFile, so its error must not block sign-up.
+    if (emailMsg || passwordMsg || nameMsg) return
 
     setSubmitting(true)
     try {
@@ -163,7 +166,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         markRunStarted()
         // A brand-new account starts Available, whatever this device chose before.
         markPresenceStarted()
-        router.replace(res.avatarError ? "/profile/" : "/")
+        if (res.avatarError) {
+          setProfileNotice(`Your account is ready, but your picture didn't upload. ${res.avatarError}`)
+          router.replace("/profile/")
+        } else {
+          router.replace("/")
+        }
       }
     } finally {
       setSubmitting(false)

@@ -63,7 +63,7 @@ export type SearchResultRelation =
 /**
  * Classifies a user appearing in friend-search results against the caller's
  * current friend/request state so the search row can offer Accept/Decline or
- * show Waiting.../Friend instead of a failing Add button.
+ * show (pending)/Friend instead of a failing Add button.
  */
 export function searchResultRelation(
   userId: string,

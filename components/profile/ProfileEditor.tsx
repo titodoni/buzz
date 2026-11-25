@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 
 import { WindowFrame } from "@/components/WindowFrame"
 import { useSession } from "@/lib/auth/session"
+import { takeProfileNotice } from "@/lib/profile/notice"
 import { getMyProfile, updateProfile } from "@/lib/profile/api"
 import { planProfileSave, type ProfileField, type ProfileFields } from "@/lib/profile/save"
 import { DISPLAY_NAME_MAX, NOW_PLAYING_MAX, STATUS_MAX } from "@/lib/validation/profile"
@@ -62,6 +63,13 @@ export function ProfileEditor() {
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const pending = takeProfileNotice()
+    // Read once after mount: sessionStorage doesn't exist during the static prerender.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (pending) setNotice(pending)
+  }, [])
 
   useEffect(() => {
     if (!userId) return

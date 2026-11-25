@@ -38,7 +38,7 @@ describe("signUp", () => {
     expect(mocks.signUpMock).not.toHaveBeenCalled()
   })
 
-  it("sends trimmed display_name in user metadata, updates profile, and uploads avatar when signed in", async () => {
+  it("sends trimmed display_name in user metadata and uploads avatar when signed in", async () => {
     mocks.signUpMock.mockResolvedValue({
       data: { user: { id: "u1", identities: [{}] }, session: { access_token: "tok" } },
       error: null,
@@ -54,10 +54,19 @@ describe("signUp", () => {
       password: "password123",
       options: { data: { display_name: "Ann Lee" } },
     })
-    expect(mocks.fromMock).toHaveBeenCalledWith("profiles")
-    expect(mocks.updateMock).toHaveBeenCalledWith({ display_name: "Ann Lee" })
-    expect(mocks.updateEqMock).toHaveBeenCalledWith("id", "u1")
+    expect(mocks.fromMock).not.toHaveBeenCalled()
     expect(mocks.uploadAvatarMock).toHaveBeenCalledWith("u1", png)
     expect(res).toEqual({ ok: true, needsConfirmation: false })
+  })
+
+  it("reports an avatar upload failure without failing the sign-up", async () => {
+    mocks.signUpMock.mockResolvedValue({
+      data: { user: { id: "u1", identities: [{}] }, session: { access_token: "tok" } },
+      error: null,
+    })
+    mocks.uploadAvatarMock.mockResolvedValue({ ok: false, message: "Upload failed." })
+    const png = new File(["png"], "pic.png", { type: "image/png" })
+    const res = await signUp("ann@buzz.test", "password123", { displayName: "Ann", avatarFile: png })
+    expect(res).toEqual({ ok: true, needsConfirmation: false, avatarError: "Upload failed." })
   })
 })
