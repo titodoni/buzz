@@ -73,6 +73,8 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
   // The Buddy List window makes my encryption key; this window only reads it (ADR 0010).
   const myKeys = useMyKeys(me, "reader");
   const keysLoading = myKeys.status === "loading";
+  // History is read again once a late key arrives, so the messages become readable.
+  const keysReady = myKeys.status === "ready";
   const readKey: ReadKey =
     myKeys.status === "ready"
       ? {
@@ -203,7 +205,7 @@ export function ChatWindow({ me, friendId }: ChatWindowProps) {
     return () => {
       active = false;
     };
-  }, [me, friendId, reload, keysLoading]);
+  }, [me, friendId, reload, keysLoading, keysReady]);
 
   // The friend's new Status or Now Playing reaches the header without a reload (buzz-trigger R0).
   const friendIds = useMemo(() => [friendId], [friendId]);

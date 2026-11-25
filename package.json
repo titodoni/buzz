@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests",
     "tauri": "tauri",
-    "test:rls": "node supabase/tests/rls-check.mjs"
+    "test:rls": "node supabase/tests/rls-check.mjs",
+    "test:e2e": "node e2e/two-user.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.1",
@@ -31,6 +32,7 @@
     "fast-check": "^4.10.3",
     "pg": "^8.23.1",
     "postcss": "^8.5.33",
+    "puppeteer-core": "^25.18.1",
     "tailwindcss": "^4.3.5",
     "typescript": "^6.0.3",
     "vitest": "^5.1.1"
