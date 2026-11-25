@@ -82,8 +82,14 @@ export async function signUp(email: string, password: string): Promise<SignUpRes
 
 export async function signOut(): Promise<AuthResult> {
   try {
-    const { error } = await getSupabase().auth.signOut()
-    if (error) return { ok: false, message: MSG_GENERIC }
+    const supabase = getSupabase()
+    const { error } = await supabase.auth.signOut()
+    if (!error) return { ok: true }
+    // supabase-js keeps the stored session when the server logout request fails
+    // (offline, firewall, timeout), and the sign-in page would send the user
+    // straight back in. Drop this device's session regardless.
+    const local = await supabase.auth.signOut({ scope: "local" })
+    if (local.error) return { ok: false, message: MSG_GENERIC }
     return { ok: true }
   } catch {
     return { ok: false, message: MSG_GENERIC }

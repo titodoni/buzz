@@ -66,7 +66,10 @@ export function useGroups(me: string): {
       channel
         .on("postgres_changes", { event: "*", schema: "public", table: "contact_groups", filter }, reload)
         .on("postgres_changes", { event: "*", schema: "public", table: "contact_group_members", filter }, reload)
-        .subscribe()
+        // Changes made while the socket was down are not replayed: load again on (re)join.
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") reload()
+        })
     })()
     return () => {
       cancelled = true

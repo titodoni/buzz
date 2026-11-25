@@ -24,16 +24,28 @@ export function useProfileUpdates(
     handler.current = onUpdate
   }, [onUpdate])
   const key = profileFilters(ids).join("|")
+  const idsRef = useRef(ids)
+  useEffect(() => {
+    idsRef.current = ids
+  }, [ids])
 
   useEffect(() => {
     if (key === "") return
+    let supabase: ReturnType<typeof getSupabase>
     try {
-      getSupabase() // throws when Supabase isn't configured; then there is nothing to subscribe to
+      supabase = getSupabase() // throws when Supabase isn't configured; then there is nothing to subscribe to
     } catch {
       return
     }
     let cancelled = false
     let opened: RealtimeChannel | null = null
+    // Realtime does not replay updates made while the socket was down, so read
+    // the profiles again whenever the channel (re)joins. Unchanged ones merge to nothing.
+    const resync = async () => {
+      const { data, error } = await supabase.from("profiles").select("*").in("id", [...idsRef.current])
+      if (cancelled || error || !data) return
+      for (const row of data) handler.current(profileFromRow(row))
+    }
     void (async () => {
       const channel = await openChannel(channelName, undefined, () => cancelled)
       if (!channel) return
@@ -44,7 +56,9 @@ export function useProfileUpdates(
           handler.current(profileFromRow(payload.new as ProfileRow))
         })
       }
-      channel.subscribe()
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED") void resync().catch(() => undefined)
+      })
     })()
     return () => {
       cancelled = true

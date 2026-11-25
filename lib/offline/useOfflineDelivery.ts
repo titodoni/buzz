@@ -120,7 +120,11 @@ export function useOfflineDelivery(
         if (!row || !row.read_at) return
         if (unreadRef.current.delete(row.id)) publish()
       })
-      .subscribe()
+      // Realtime does not replay rows from while the socket was down, so load
+      // again on every (re)join; otherwise missed messages get no count until focus.
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") void load()
+      })
     })()
 
     return () => {

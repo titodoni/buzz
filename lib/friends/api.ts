@@ -240,7 +240,13 @@ export function useFriends(me: string): FriendsData {
           { event: "*", schema: "public", table: "friendships", filter: `addressee_id=eq.${me}` },
           reload,
         )
-        .subscribe()
+        // Realtime does not replay changes made while the socket was down (laptop
+        // sleep, Wi-Fi switch, network change), so a request or accept from that
+        // time would never show. Load again each time the channel (re)joins; the
+        // first join also covers changes between the first load and the join.
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") reload()
+        })
     })()
     return () => {
       cancelled = true
