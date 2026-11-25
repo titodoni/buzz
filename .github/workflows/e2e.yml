@@ -62,8 +62,15 @@ jobs:
       - name: Make two throwaway accounts
         run: node e2e/setup-accounts.mjs
 
+      # GitHub's Windows runners run elevated, and an elevated WebView2 ignores the
+      # WEBVIEW2_* settings msedgedriver uses to attach. Run at normal (Medium)
+      # integrity, like a user would (https://zenn.dev/snowcait/articles/113d9c2e972ba5).
+      - name: gsudo, to run below administrator
+        run: winget install --id gerardog.gsudo --exact --version 2.6.1 --source winget --installer-type wix --silent --accept-package-agreements --accept-source-agreements
+
       - name: Two-user check
-        run: node e2e/two-user.mjs
+        shell: pwsh
+        run: '& "$env:ProgramFiles\gsudo\Current\gsudo.exe" --direct --integrity Medium node e2e/two-user.mjs'
 
       - name: Report
         if: always()
