@@ -125,34 +125,50 @@ export function logoSvg(theme: LogoThemeName, sparks: boolean): string {
 }
 
 /**
- * A wide banner: the burst fills the whole width, with the letters and sparkles
- * on top. Use it in an <svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice">
- * so it covers any window width.
+ * Open YM-style login/about hero emblem: tilted purple B! badge with an
+ * overlapping 3D glossy smiley floating over a transparent canvas so it blends
+ * smoothly onto the YM ice-blue sign-in gradient without boxing it in.
  */
 export function heroInner(theme: LogoThemeName, idPrefix: string): string {
   const t: LogoTheme = logoThemes[theme];
   const bg = `${idPrefix}-bg`;
+  const glow = `${idPrefix}-glow`;
+  const smileFill = `${idPrefix}-smile`;
   const letters = `${idPrefix}-b`;
   const bang = `${idPrefix}-bang`;
   const stroke = `fill="none" stroke-linecap="round" stroke-linejoin="round"`;
   return (
     `<defs>` +
+    `<radialGradient id="${glow}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="${t.tileTop}" stop-opacity=".22"/><stop offset="1" stop-color="${t.tileTop}" stop-opacity="0"/></radialGradient>` +
     `<linearGradient id="${bg}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.tileTop}"/><stop offset="1" stop-color="${t.tileBottom}"/></linearGradient>` +
+    `<radialGradient id="${smileFill}" cx="36%" cy="30%" r="68%"><stop offset="0" stop-color="#fff9c4"/><stop offset=".45" stop-color="#ffd52e"/><stop offset="1" stop-color="#dc9400"/></radialGradient>` +
     `<g id="${letters}" ${stroke}><path d="M24 24V76M24 24H43C60 24 60 49 43 49H24M24 49H47C67 49 67 76 47 76H24"/></g>` +
     `<g id="${bang}" ${stroke}><path d="M81 24V58"/><path d="M81 76V76.1"/></g>` +
     `</defs>` +
-    `<rect width="300" height="200" fill="url(#${bg})"/>` +
-    burst(t.rays, 150, 100, 400, 28) +
-    sparkle(32, 40, 15, t.spark) +
-    sparkle(268, 34, 11, t.spark) +
-    sparkle(46, 164, 10, t.spark) +
-    sparkle(262, 160, 14, t.spark) +
-    sparkle(228, 74, 6, t.spark) +
-    `<svg x="70" y="14" width="160" height="160" viewBox="0 0 100 100" overflow="visible">` +
+    `<ellipse cx="150" cy="68" rx="96" ry="52" fill="url(#${glow})"/>` +
+    sparkle(78, 30, 6.5, t.tileTop) +
+    sparkle(226, 26, 5.5, t.tileTop) +
+    sparkle(72, 98, 4.5, t.spark) +
+    sparkle(232, 98, 5.5, t.tileTop) +
+    `<g transform="translate(88 12) rotate(-7 54 50)">` +
+    `<rect x="6" y="8" width="96" height="86" rx="26" fill="#1e083a" fill-opacity=".18"/>` +
+    `<rect x="4" y="4" width="96" height="86" rx="26" fill="url(#${bg})" stroke="#ffffff" stroke-width="2.5"/>` +
+    `<rect x="8" y="7" width="88" height="36" rx="20" fill="#ffffff" fill-opacity=".18"/>` +
+    `<g transform="translate(8 6) scale(.86)">` +
     `<use href="#${letters}" stroke="${t.outline}" stroke-width="19"/>` +
     `<use href="#${bang}" stroke="${t.outline}" stroke-width="23"/>` +
     `<use href="#${letters}" stroke="${t.letter}" stroke-width="11"/>` +
     `<use href="#${bang}" stroke="${t.letter}" stroke-width="15"/>` +
-    `</svg>`
+    `</g>` +
+    `</g>` +
+    // Overlapping glossy smiley in bottom-right corner, echoing classic YM sign-in art.
+    `<g transform="translate(152 60)">` +
+    `<circle cx="29" cy="31" r="25" fill="#1e083a" fill-opacity=".2"/>` +
+    `<circle cx="27" cy="27" r="24" fill="url(#${smileFill})" stroke="#7c5200" stroke-width="2"/>` +
+    `<ellipse cx="21" cy="14" rx="11" ry="5" fill="#ffffff" fill-opacity=".45"/>` +
+    `<path d="M16 21 Q19 16 22 21" fill="none" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/>` +
+    `<path d="M32 21 Q35 16 38 21" fill="none" stroke="#3a2a00" stroke-width="2.6" stroke-linecap="round"/>` +
+    `<path d="M16 30 Q27 42 38 30" fill="none" stroke="#3a2a00" stroke-width="2.8" stroke-linecap="round"/>` +
+    `</g>`
   );
 }

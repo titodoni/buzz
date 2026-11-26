@@ -230,8 +230,8 @@ export function FriendList({
                 onClick={() => onToggleGroup(key)}
                 onKeyDown={(e) => onHeaderKey(e, g)}
                 onContextMenu={(e) => onHeaderContext(e, g)}
-                className="w-full cursor-pointer border-0 bg-transparent px-2 py-1 text-left font-bold"
-                style={{ color: "var(--text-body)" }}
+                className="w-full cursor-pointer border-0 bg-transparent px-2 py-1 text-left text-xs font-bold"
+                style={{ color: "#1d458d" }}
               >
                 <span aria-hidden="true">{open ? "▼" : "▶"} </span>
                 {g.name} ({g.online}/{g.total})

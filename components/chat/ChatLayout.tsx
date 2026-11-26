@@ -18,7 +18,13 @@ export function Avatar({ name, url }: { name: string; url: string | null }) {
           alt={`${name}'s picture`}
           width={64}
           height={64}
-          style={{ objectFit: "cover", border: "1px solid var(--border)" }}
+          style={{
+            objectFit: "cover",
+            background: "#ffffff",
+            padding: 2,
+            border: "1px solid #b8b2c9",
+            boxShadow: "0 1px 2px rgb(0 0 0 / 0.12)",
+          }}
         />
       ) : (
         <div
@@ -31,8 +37,11 @@ export function Avatar({ name, url }: { name: string; url: string | null }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "var(--ym-purple)",
+            background: "linear-gradient(to bottom, #823ee0, #460e8c)",
             color: "var(--titlebar-text)",
+            border: "2px solid #ffffff",
+            outline: "1px solid #b8b2c9",
+            boxShadow: "0 1px 2px rgb(0 0 0 / 0.12)",
             fontSize: 22,
             fontWeight: 700,
           }}

@@ -6,11 +6,320 @@
   <title>Buzz! Messenger: the Buddy List is back</title>
   <meta name="description" content="Buzz! is a free desktop messenger for Windows, Mac and Linux: a live Buddy List, a window for each friend, classic emoticons and the BUZZ! that shakes your friend's screen.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://buzz.asmorodonitito.my.id/">
+  <meta property="og:url" content="https://trybuzz.me/">
+  <link rel="canonical" href="https://trybuzz.me/">
+  <style>
+    /* 2000s company-portal & real screenshot showcase upgrades */
+    body {
+      background: linear-gradient(to bottom, #dfe3ee 0%, #eff1f7 220px, #e8eaf2 100%) !important;
+      font-family: Tahoma, Verdana, Arial, Helvetica, sans-serif !important;
+    }
+    .page {
+      max-width: 790px !important;
+      margin: 10px auto 24px !important;
+      background: #ffffff;
+      border: 1px solid #b6b9ca;
+      box-shadow: 0 3px 14px rgba(42, 14, 78, 0.14);
+      padding: 0 10px 18px !important;
+    }
+    .uh { padding: 12px 4px 8px !important; border-bottom: 1px solid #ececf3; }
+    .uh-links { font-size: 11px !important; line-height: 1.45; text-align: right; color: #555; }
+    .uh-links .uh-meta { display: block; color: #666; font-size: 10.5px; margin-top: 2px; }
+    .tabs { padding: 8px 4px 0 !important; }
+    .tabs a {
+      background: linear-gradient(to bottom, #9b6ee0 0%, #6b2eb3 55%, #551d99 100%);
+      border: 1px solid #44137d;
+      border-bottom: 0;
+      border-radius: 5px 5px 0 0;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    }
+    .hero {
+      grid-template-columns: minmax(0, 272px) minmax(0, 1fr) !important;
+      gap: 16px !important;
+      padding: 14px 12px !important;
+      background: linear-gradient(to bottom, #f7f4fc 0%, #ffffff 55%, #f4f7fd 100%) !important;
+      border-bottom: 1px solid #d4d6e4;
+    }
+    .hero-kicker {
+      display: inline-block;
+      margin: 0 0 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #3d0f6e;
+      background: linear-gradient(to bottom, #f3ebff, #e1d0fb);
+      border: 1px solid #bda2e8;
+      border-radius: 3px;
+    }
+    .hero h1 { font-size: 21px !important; line-height: 1.22 !important; color: #2b0958 !important; }
+    .hero-lede { font-size: 12.5px !important; line-height: 1.48 !important; }
+    .hero-specs {
+      margin: 8px 0 10px;
+      padding: 6px 8px;
+      font-size: 11px;
+      color: #444;
+      background: #fffdf0;
+      border: 1px solid #e7d996;
+      border-radius: 3px;
+      line-height: 1.4;
+    }
+    .hero-specs strong { color: #222; }
+
+    /* Showcase switcher + real desktop screenshots */
+    .ym-showcase {
+      border: 1px solid #b9a4da;
+      border-radius: 6px;
+      background: linear-gradient(to bottom, #ede6f9 0%, #f7f8fc 38px, #eef3fb 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 3px 10px rgba(45, 16, 84, 0.12);
+      overflow: hidden;
+    }
+    .ym-show-tabs {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 6px 8px 0;
+      background: linear-gradient(to bottom, #7e44c7 0%, #561d98 100%);
+      border-bottom: 2px solid #3c0f6e;
+    }
+    .ym-show-tabset { display: flex; gap: 4px; }
+    .ym-show-tab {
+      padding: 5px 10px 4px;
+      font: 700 11.5px Tahoma, Verdana, sans-serif;
+      color: #efe7ff;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.15));
+      border: 1px solid #3c0f6e;
+      border-bottom: 0;
+      border-radius: 4px 4px 0 0;
+      cursor: pointer;
+    }
+    .ym-show-tab:hover { color: #ffffff; background: rgba(255, 255, 255, 0.25); }
+    .ym-show-tab[aria-selected="true"] {
+      color: #2c0958;
+      background: linear-gradient(to bottom, #ffffff 0%, #f2ecfb 100%);
+      box-shadow: inset 0 1px 0 #ffffff;
+    }
+    .ym-show-badge {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #ffe98a;
+      padding-bottom: 4px;
+      white-space: nowrap;
+    }
+    .ym-panel[hidden], .screen-duo[hidden], .screen-single[hidden] { display: none !important; }
+
+    /* Desktop scene framing genuine captured screenshots */
+    .screen-stage {
+      padding: 10px 10px 8px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.85), transparent 60%),
+        linear-gradient(180deg, #dde9fa 0%, #edf2fb 65%, #e3e6f2 100%);
+    }
+    .screen-duo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 292px;
+    }
+    .screen-frame {
+      display: block;
+      margin: 0;
+      border: 1px solid #48217c;
+      border-radius: 6px;
+      background: #ffffff;
+      box-shadow: 0 8px 20px rgba(28, 12, 54, 0.28);
+      overflow: hidden;
+      cursor: zoom-in;
+      transition: transform 0.15s ease;
+    }
+    .screen-frame:hover { transform: translateY(-2px); }
+    .screen-frame img { display: block; height: auto; max-width: 100%; }
+    .screen-frame.is-chat { flex: 1 1 280px; max-width: 294px; margin-top: 0; }
+    .screen-frame.is-buddy { flex: 0 1 148px; max-width: 148px; }
+    .screen-single { display: flex; justify-content: center; min-height: 292px; align-items: center; }
+    .screen-single img {
+      max-height: 310px;
+      width: auto;
+      max-width: 100%;
+      border: 1px solid #48217c;
+      border-radius: 6px;
+      box-shadow: 0 8px 22px rgba(28, 12, 54, 0.28);
+      cursor: zoom-in;
+    }
+    .screen-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px solid #cfd8ea;
+    }
+    .screen-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+    .screen-pill {
+      padding: 3px 8px;
+      font: 700 11px Tahoma, Verdana, sans-serif;
+      color: #2b0958;
+      background: linear-gradient(to bottom, #ffffff 0%, #e4e8f4 100%);
+      border: 1px solid #aeb8cf;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .screen-pill:hover { border-color: #6b2eb3; }
+    .screen-pill[aria-pressed="true"] {
+      color: #ffffff;
+      background: linear-gradient(to bottom, #7a3fc0 0%, #4b1589 100%);
+      border-color: #3a0d6e;
+    }
+    .screen-zoom-btn {
+      padding: 3px 8px;
+      font: 700 11px Tahoma, Verdana, sans-serif;
+      color: #0b4db8;
+      background: #ffffff;
+      border: 1px solid #b4c2df;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .screen-zoom-btn:hover { background: #eef4ff; }
+    .screen-caption {
+      margin: 6px 0 0;
+      font-size: 11px;
+      color: #495068;
+      text-align: center;
+    }
+
+    /* Dedicated 2x2 Real Screenshot Gallery in main column */
+    .shot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .shot-card {
+      margin: 0;
+      padding: 7px;
+      background: linear-gradient(to bottom, #ffffff 0%, #f5f7fc 100%);
+      border: 1px solid #cdd2e2;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .shot-thumb {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 196px;
+      padding: 6px;
+      background: #e6ecf8;
+      border: 1px solid #c6d0e4;
+      border-radius: 3px;
+      cursor: zoom-in;
+      overflow: hidden;
+    }
+    .shot-thumb img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      border-radius: 4px;
+      box-shadow: 0 3px 10px rgba(24, 10, 48, 0.22);
+    }
+    .shot-card strong { display: block; font-size: 12px; color: #3d0f6e; }
+    .shot-card span { display: block; font-size: 11px; color: #4a4a55; line-height: 1.38; margin-top: 2px; }
+
+    /* System Requirements sidebar box */
+    .syslist { margin: 0; padding: 0; list-style: none; }
+    .syslist li {
+      padding: 4px 0;
+      border-bottom: 1px dotted #dcdce6;
+      font-size: 11.5px;
+      line-height: 1.38;
+    }
+    .syslist li:last-child { border-bottom: 0; }
+    .syslist b { color: #2b0958; }
+
+    /* Lightbox modal */
+    .ym-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(18, 8, 34, 0.78);
+    }
+    .ym-lightbox[hidden] { display: none; }
+    .ym-lightbox-win {
+      max-width: min(94vw, 680px);
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      background: #ececf4;
+      border: 2px solid #3a0d6e;
+      border-radius: 7px 7px 4px 4px;
+      box-shadow: 0 18px 46px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+    .ym-lightbox-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 10px;
+      color: #ffffff;
+      font: 700 12.5px Tahoma, Verdana, sans-serif;
+      background: linear-gradient(to bottom, #8448cf 0%, #5b1fa3 50%, #3e0d73 100%);
+    }
+    .ym-lightbox-close {
+      width: 22px;
+      height: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      border-radius: 3px;
+      background: linear-gradient(to bottom, #e96c5a 0%, #be2414 100%);
+      color: #ffffff;
+      font-weight: 700;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .ym-lightbox-body {
+      padding: 12px;
+      background: #e5ebf7;
+      overflow: auto;
+      text-align: center;
+    }
+    .ym-lightbox-body img {
+      max-width: 100%;
+      max-height: 75vh;
+      height: auto;
+      border-radius: 5px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+    .ym-lightbox-cap {
+      margin: 8px 0 0;
+      font-size: 12px;
+      color: #2b2b36;
+    }
+
+    @media (max-width: 780px) {
+      .page { margin: 0 !important; border: 0; padding: 0 8px 16px !important; }
+      .hero { grid-template-columns: 1fr !important; }
+      .ym-show-badge { display: none; }
+      .screen-duo { min-height: 0; gap: 8px; }
+      .screen-frame.is-chat { margin-top: 8px; }
+    }
+    @media (max-width: 540px) {
+      .shot-grid { grid-template-columns: 1fr; }
+      .screen-duo { flex-direction: column; align-items: center; }
+      .screen-frame.is-chat, .screen-frame.is-buddy { max-width: 280px; width: 100%; flex: none; margin-top: 0; }
+    }
+  </style>
   <meta property="og:title" content="Buzz! Messenger: the Buddy List is back">
   <meta property="og:description" content="A free desktop messenger for Windows, Mac and Linux: a live Buddy List, a window for each friend, classic emoticons and the BUZZ! that shakes your friend's screen.">
   <meta name="twitter:card" content="summary">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%235b21b6'/><text x='16' y='23' font-family='sans-serif' font-size='22' font-weight='900' fill='%23fbbf24' text-anchor='middle'>B!</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='4' y='4' width='92' height='92' rx='20' fill='%235f1f9e'/><g transform='translate(4.5 4.5) scale(.91)' fill='none' stroke-linecap='round' stroke-linejoin='round'><path d='M24 24V76M24 24H43C60 24 60 49 43 49H24M24 49H47C67 49 67 76 47 76H24' stroke='%233a2a00' stroke-width='19'/><path d='M81 24V58M81 76V76.1' stroke='%233a2a00' stroke-width='23'/><path d='M24 24V76M24 24H43C60 24 60 49 43 49H24M24 49H47C67 49 67 76 47 76H24' stroke='%23ffcc00' stroke-width='11'/><path d='M81 24V58M81 76V76.1' stroke='%23ffcc00' stroke-width='15'/></g></svg>">
     <style>
     /* Buzz! landing page, 2000s Messenger download-page world (PRODUCT.md, Brand Commitments).
        A fixed 770 px page on white, Verdana body, tabbed purple masthead, boxed modules with
@@ -420,40 +729,82 @@
 
   <header class="uh">
     <a class="uh-logo" href="#top" id="top" aria-label="Buzz! Messenger home">
-      <svg width="46" height="46" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="bl0-tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7828c8"/><stop offset="1" stop-color="#400080"/></linearGradient><clipPath id="bl0-clip"><rect x="4" y="4" width="92" height="92" rx="20"/></clipPath><g id="bl0-b" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M24 24V76M24 24H43C60 24 60 49 43 49H24M24 49H47C67 49 67 76 47 76H24"/></g><g id="bl0-bang" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M81 24V58"/><path d="M81 76V76.1"/></g></defs><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#bl0-tile)"/><rect x="7" y="6" width="86" height="42" rx="17" fill="#fff" fill-opacity=".14"/><g transform="translate(4.5 4.5) scale(.91)"><use href="#bl0-b" stroke="#3a2a00" stroke-width="19"/><use href="#bl0-bang" stroke="#3a2a00" stroke-width="23"/><use href="#bl0-b" stroke="#ffcc00" stroke-width="11"/><use href="#bl0-bang" stroke="#ffcc00" stroke-width="15"/></g></svg>
+      <svg width="48" height="48" viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="uh0-tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8438d4"/><stop offset="1" stop-color="#3c0078"/></linearGradient><radialGradient id="uh0-face" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="#fff099"/><stop offset="55%" stop-color="#ffcc00"/><stop offset="100%" stop-color="#d49300"/></radialGradient></defs><g transform="rotate(-8 46 48)"><rect x="6" y="8" width="76" height="76" rx="18" fill="url(#uh0-tile)" stroke="#ffffff" stroke-width="3"/><rect x="10" y="11" width="68" height="34" rx="14" fill="#ffffff" fill-opacity="0.16"/><g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M23 27V65M23 27H37C50 27 50 45 37 45H23M23 45H40C55 45 55 65 40 65H23" stroke="#3a2a00" stroke-width="14"/><path d="M62 27V51M62 65V65.1" stroke="#3a2a00" stroke-width="16"/><path d="M23 27V65M23 27H37C50 27 50 45 37 45H23M23 45H40C55 45 55 65 40 65H23" stroke="#ffcc00" stroke-width="8"/><path d="M62 27V51M62 65V65.1" stroke="#ffcc00" stroke-width="10"/></g></g><circle cx="74" cy="72" r="20" fill="url(#uh0-face)" stroke="#4c3100" stroke-width="2.5"/><path d="M67 68c1.5-2.5 4-2.5 5 0M77 68c1.5-2.5 4-2.5 5 0" fill="none" stroke="#1e1200" stroke-width="2.4" stroke-linecap="round"/><path d="M66 75c3.5 5 12.5 5 16 0" fill="none" stroke="#1e1200" stroke-width="2.6" stroke-linecap="round"/></svg>
       <span class="uh-word">Buzz!<small>MESSENGER</small></span>
     </a>
     <div class="uh-links">
-      <a href="https://github.com/titodoni/buzz">GitHub</a> &nbsp;-&nbsp; <a href="#help">Help</a> &nbsp;-&nbsp; <a href="#download">Download</a>
+      <a href="#top">Home</a> &nbsp;|&nbsp; <a href="#screenshots">Screenshots</a> &nbsp;|&nbsp; <a href="#features">Features</a> &nbsp;|&nbsp; <a href="#download">Download</a> &nbsp;|&nbsp; <a href="#help">Help</a> &nbsp;|&nbsp; <a href="https://github.com/titodoni/buzz">GitHub</a>
+      <span class="uh-meta">Buzz! Desktop Software &middot; Version 0.1.4 beta &middot; Windows / Mac / Linux</span>
     </div>
   </header>
 
   <nav aria-label="Sections">
     <ul class="tabs">
       <li><a href="#top" aria-current="page">Home</a></li>
+      <li><a href="#screenshots">Screenshots</a></li>
       <li><a href="#features">Features</a></li>
       <li><a href="#emoticons">Emoticons</a></li>
       <li><a href="#download">Download</a></li>
       <li><a href="#help">Help</a></li>
     </ul>
   </nav>
-  <p class="news"><span class="badge-new">NEW!</span> Buzz 0.1.4 beta is out for Windows, Mac and Linux. <a href="#download">Get it now&nbsp;&raquo;</a></p>
+  <p class="news"><span class="badge-new">NEW!</span> Buzz! 0.1.4 beta is out for Windows, Mac &amp; Linux with live Preferences. <a href="#download">Download now&nbsp;&raquo;</a></p>
 
   <main>
     <section class="hero" aria-labelledby="hero-title">
       <div>
-        <h1 id="hero-title">Remember when chat was about being present?</h1>
-        <p class="hero-lede">Buzz! brings back the Buddy List. See who is online, open a window for each friend, type your favorite emoticons, and send a <b>BUZZ!</b> that shakes their screen.</p>
+        <span class="hero-kicker">Buzz! Messenger 0.1.4 beta</span>
+        <h1 id="hero-title">The Buddy List is back. Chat the way it used to feel.</h1>
+        <p class="hero-lede">See who is online the instant you sign in, open a dedicated window for each friend, drop 58 classic emoticons, and send a <b>BUZZ!</b> that shakes their screen.</p>
         <ul class="hero-points">
-          <li><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Free, MIT licensed</span></li>
-          <li><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>A real desktop app for Windows, Mac and Linux</span></li>
-          <li><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>No feed, no ads, no algorithm</span></li>
+          <li><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Real desktop windows for Windows, Mac &amp; Linux</span></li>
+          <li><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Built with Rust &amp; Tauri &mdash; fast, light tray app</span></li>
+          <li><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Free MIT open source &mdash; no feed, no ads</span></li>
         </ul>
         <a class="dl" id="dlMain" href="#download"><svg class="dl-arrow" width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="14" fill="#2e7d1f" stroke="#1d5212"/><circle cx="15" cy="11" r="11" fill="#fff" opacity="0.18"/><path d="M15 7.5v12M9.5 14.5l5.5 5.5 5.5-5.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span><span id="dlMainLabel">Download Buzz!</span><small id="dlMainSub">Free &middot; Version 0.1.4 beta</small></span></a>
-        <p class="dl-under">Also for <a href="#download">Windows</a> | <a href="#download">Mac</a> | <a href="#download">Linux</a></p>
-        <p class="try-note"><b>Try it right here!</b> These windows work: click <b>BUZZ!</b>, send a message, or double-click a friend in the Buddy List.</p>
+        <p class="dl-under">Direct links: <a href="#download">Windows</a> | <a href="#download">Mac</a> | <a href="#download">Linux</a></p>
+        <div class="hero-specs"><strong>Real Desktop UI:</strong> Actual screenshots captured from the live desktop app. Switch to the interactive tab anytime to test sending a <b>BUZZ!</b> in your browser.</div>
       </div>
+
       <div>
+        <div class="ym-showcase">
+          <div class="ym-show-tabs">
+            <div class="ym-show-tabset" role="tablist" aria-label="App preview mode">
+              <button type="button" class="ym-show-tab" id="tabShots" role="tab" aria-selected="true" aria-controls="panelShots">Real Screenshots</button>
+              <button type="button" class="ym-show-tab" id="tabLive" role="tab" aria-selected="false" aria-controls="panelLive">Interactive Demo</button>
+            </div>
+            <span class="ym-show-badge">Desktop App v0.1.4</span>
+          </div>
+
+          <div class="ym-panel" id="panelShots" role="tabpanel" aria-labelledby="tabShots">
+            <div class="screen-stage">
+              <div class="screen-duo" id="screenDuo">
+                <figure class="screen-frame is-chat" data-zoom-src="assets/screens/chat.png" data-zoom-title="Instant Message Window &amp; BUZZ!" data-zoom-cap="Real Buzz! Desktop chat window showing formatted text, emoticons, and a live BUZZ!!! shake alert.">
+                  <img src="assets/screens/chat.png" width="465" height="440" alt="Real screenshot of the Buzz! Desktop Instant Message window">
+                </figure>
+                <figure class="screen-frame is-buddy" data-zoom-src="assets/screens/buddylist.png" data-zoom-title="Buddy List &amp; Toolbar" data-zoom-cap="Real Buzz! Desktop Buddy List showing online status, Add, Message, Up for Chat, and Buzzes toolbar.">
+                  <img src="assets/screens/buddylist.png" width="260" height="580" alt="Real screenshot of the Buzz! Desktop Buddy List window">
+                </figure>
+              </div>
+              <div class="screen-single" id="screenSingle" hidden>
+                <img id="screenSingleImg" src="assets/screens/buddylist.png" alt="Buzz! Desktop Screenshot">
+              </div>
+              <div class="screen-controls">
+                <div class="screen-pills" role="group" aria-label="Choose desktop screenshot">
+                  <button type="button" class="screen-pill" data-view="duo" aria-pressed="true">Desktop Pair</button>
+                  <button type="button" class="screen-pill" data-view="buddylist" aria-pressed="false">Buddy List</button>
+                  <button type="button" class="screen-pill" data-view="chat" aria-pressed="false">Chat</button>
+                  <button type="button" class="screen-pill" data-view="login" aria-pressed="false">Sign In</button>
+                  <button type="button" class="screen-pill" data-view="about" aria-pressed="false">About</button>
+                </div>
+                <button type="button" class="screen-zoom-btn" id="screenZoomBtn">Zoom 1:1</button>
+              </div>
+              <p class="screen-caption" id="screenCaption">Real unretouched captures from the Buzz! Desktop application (click any window to zoom).</p>
+            </div>
+          </div>
+
+          <div class="ym-panel" id="panelLive" role="tabpanel" aria-labelledby="tabLive" hidden>
+            <div style="padding:10px 8px">
       <!-- Live app demo: the real Buzz windows -->
       <div class="ymx-wrap">
         
@@ -505,21 +856,69 @@
           </div>
         </div>
       </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
     <div class="cols">
       <div>
+        <section class="box violet" id="screenshots" aria-labelledby="shots-title">
+          <h2 id="shots-title">Inside Buzz! Desktop &mdash; Real App Screenshots</h2>
+          <div class="box-body">
+            <div class="shot-grid">
+              <figure class="shot-card">
+                <div class="shot-thumb" data-zoom-src="assets/screens/login.png" data-zoom-title="Buzz! - Sign In" data-zoom-cap="Ice-blue Sign In window with the floating B! smiley emblem and classic auto-login checkboxes.">
+                  <img src="assets/screens/login.png" width="260" height="580" alt="Buzz! Sign In desktop window screenshot">
+                </div>
+                <figcaption>
+                  <strong>1. Classic Sign In</strong>
+                  <span>Ice-blue welcome canvas with tilted <code>B!</code> smiley emblem, Remember my ID, and invisible sign-in.</span>
+                </figcaption>
+              </figure>
+              <figure class="shot-card">
+                <div class="shot-thumb" data-zoom-src="assets/screens/buddylist.png" data-zoom-title="Buzz! - Buddy List" data-zoom-cap="Always-handy Buddy List with status indicator, Add, Message, Up for Chat, and Buzzes toolbar.">
+                  <img src="assets/screens/buddylist.png" width="260" height="580" alt="Buzz! Buddy List desktop window screenshot">
+                </div>
+                <figcaption>
+                  <strong>2. Buddy List &amp; Toolbar</strong>
+                  <span>See online buddies at a glance, filter contacts, or broadcast &ldquo;Up for Chat&rdquo; from the toolbar.</span>
+                </figcaption>
+              </figure>
+              <figure class="shot-card">
+                <div class="shot-thumb" data-zoom-src="assets/screens/chat.png" data-zoom-title="Instant Message &amp; BUZZ!" data-zoom-cap="Dedicated per-friend window with Tahoma font styling, vector emoticons, Hangouts, and red BUZZ!!! alerts.">
+                  <img src="assets/screens/chat.png" width="465" height="440" alt="Buzz! Chat Window desktop screenshot with active conversation and BUZZ!!!">
+                </div>
+                <figcaption>
+                  <strong>3. Instant Message &amp; BUZZ!</strong>
+                  <span>One window per buddy with colored sender names, clickable emoticon picker, Hangouts, and BUZZ! shake.</span>
+                </figcaption>
+              </figure>
+              <figure class="shot-card">
+                <div class="shot-thumb" data-zoom-src="assets/screens/about.png" data-zoom-title="About Buzz! Messenger" data-zoom-cap="About dialog displaying version 0.1.4 and explicit independent open-source project notice.">
+                  <img src="assets/screens/about.png" width="260" height="580" alt="About Buzz! Messenger desktop dialog screenshot">
+                </div>
+                <figcaption>
+                  <strong>4. Authentic Desktop Chrome</strong>
+                  <span>Purple title bars, beveled 2000s controls, Preferences window, and clear independent attribution.</span>
+                </figcaption>
+              </figure>
+            </div>
+            <p class="box-foot">All four captures are real desktop screenshots (click any card to inspect full size).</p>
+          </div>
+        </section>
+
         <section class="box" id="features" aria-labelledby="features-title">
           <h2 id="features-title">What you can do with Buzz!</h2>
           <div class="box-body">
             <ul class="feats">
-              <li><img src="assets/emoticons/smile.svg" alt="" width="32" height="32"><div><h3>See who's around</h3><p>Your Buddy List is the home screen: Available, Busy, Away or Offline, live.</p></div></li>
-              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 1 6 6v4l2 3H4l2-3V9a6 6 0 0 1 6-6z" fill="#ffcc00" stroke="#3a2a00" stroke-width="1.5" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0" fill="none" stroke="#3a2a00" stroke-width="1.5"/><path d="M2 6l2 1M22 6l-2 1M2.5 11h2M21.5 11h-2" stroke="#cc0000" stroke-width="1.5" stroke-linecap="round"/></svg><div><h3>Send a BUZZ!</h3><p>One click shakes your friend's window with a sound. A 10 second wait keeps it friendly.</p></div></li>
-              <li><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="5" width="18" height="15" rx="2" fill="#fff" stroke="#5f1f9e" stroke-width="1.6"/><rect x="2" y="5" width="18" height="4" rx="2" fill="#7a3fc0"/><rect x="12" y="12" width="18" height="15" rx="2" fill="#fff" stroke="#5f1f9e" stroke-width="1.6"/><rect x="12" y="12" width="18" height="4" rx="2" fill="#7a3fc0"/><path d="M15 20h11M15 23h7" stroke="#0067fa" stroke-width="1.6" stroke-linecap="round"/></svg><div><h3>One window per friend</h3><p>Every chat opens in its own window. Put them anywhere on your screen.</p></div></li>
-              <li><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#e8f0ff" stroke="#0067fa" stroke-width="1.5"/><path d="M13 21.5V10.5l9-2v11" fill="none" stroke="#0067fa" stroke-width="2" stroke-linejoin="round"/><ellipse cx="11" cy="21.5" rx="2.6" ry="2" fill="#0067fa"/><ellipse cx="20" cy="19.5" rx="2.6" ry="2" fill="#0067fa"/></svg><div><h3>Share what I'm playing</h3><p>Turn it on and the song you play shows under your name. Off until you say so.</p></div></li>
-              <li><svg viewBox="0 0 24 24" aria-hidden="true"><g stroke="#e8820a" stroke-width="1.6" stroke-linecap="round"><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></g><circle cx="12" cy="12" r="6.5" fill="#ffcc00" stroke="#3a2a00" stroke-width="1.3"/><circle cx="9.8" cy="10.6" r=".9" fill="#3a2a00"/><circle cx="14.2" cy="10.6" r=".9" fill="#3a2a00"/><path d="M9 13.5c1.6 2 4.4 2 6 0" fill="none" stroke="#3a2a00" stroke-width="1.2" stroke-linecap="round"/></svg><div><h3>Hangouts</h3><p>Ask "Play a game?" or "Study together?". No answer in 15 minutes and it goes away.</p></div></li>
-              <li><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M10 14v-3a6 6 0 0 1 12 0v3" fill="none" stroke="#5f1f9e" stroke-width="2.4"/><rect x="6.5" y="14" width="19" height="14" rx="3" fill="#ffcc00" stroke="#3a2a00" stroke-width="1.5"/><circle cx="16" cy="20" r="2" fill="#3a2a00"/><path d="M16 21.5v3" stroke="#3a2a00" stroke-width="1.8" stroke-linecap="round"/></svg><div><h3>Friends only</h3><p>You chat with people you accepted. Put anyone on your Ignore List and they see you as offline.</p></div></li>
+              <li><img src="assets/emoticons/smile.svg" alt="" width="32" height="32"><div><h3>See who's around</h3><p>Your Buddy List is the home screen: Available, Busy, Away or Offline, updated live.</p></div></li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,1.2 14.9,4.3 18.9,3.2 18.8,7.3 22.8,8.7 20.1,12 22.8,15.3 18.8,16.7 18.9,20.8 14.9,19.7 12,22.8 9.1,19.7 5.1,20.8 5.2,16.7 1.2,15.3 3.9,12 1.2,8.7 5.2,7.3 5.1,3.2 9.1,4.3" fill="#fff09a" stroke="#d82018" stroke-width="1.4" stroke-linejoin="round"/><rect x="10.8" y="6.2" width="2.4" height="7" rx="1" fill="#d82018"/><circle cx="12" cy="16.4" r="1.4" fill="#d82018"/></svg><div><h3>Send a BUZZ!</h3><p>One click shakes your friend's window with a sound. A 10-second cooldown keeps it friendly.</p></div></li>
+              <li><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="5" width="18" height="15" rx="2" fill="#fff" stroke="#5f1f9e" stroke-width="1.6"/><rect x="2" y="5" width="18" height="4" rx="2" fill="#7a3fc0"/><rect x="12" y="12" width="18" height="15" rx="2" fill="#fff" stroke="#5f1f9e" stroke-width="1.6"/><rect x="12" y="12" width="18" height="4" rx="2" fill="#7a3fc0"/><path d="M15 20h11M15 23h7" stroke="#0067fa" stroke-width="1.6" stroke-linecap="round"/></svg><div><h3>One window per friend</h3><p>Every chat opens in its own real OS window. Arrange buddies side-by-side anywhere on screen.</p></div></li>
+              <li><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#e8f0ff" stroke="#0067fa" stroke-width="1.5"/><path d="M13 21.5V10.5l9-2v11" fill="none" stroke="#0067fa" stroke-width="2" stroke-linejoin="round"/><ellipse cx="11" cy="21.5" rx="2.6" ry="2" fill="#0067fa"/><ellipse cx="20" cy="19.5" rx="2.6" ry="2" fill="#0067fa"/></svg><div><h3>Share what I'm playing</h3><p>Turn it on and your active track appears next to your name in the Buddy List.</p></div></li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><g stroke="#e8820a" stroke-width="1.6" stroke-linecap="round"><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></g><circle cx="12" cy="12" r="6.5" fill="#ffcc00" stroke="#3a2a00" stroke-width="1.3"/><circle cx="9.8" cy="10.6" r=".9" fill="#3a2a00"/><circle cx="14.2" cy="10.6" r=".9" fill="#3a2a00"/><path d="M9 13.5c1.6 2 4.4 2 6 0" fill="none" stroke="#3a2a00" stroke-width="1.2" stroke-linecap="round"/></svg><div><h3>Hangouts</h3><p>Invite a friend to &ldquo;Play a game?&rdquo; or &ldquo;Study together?&rdquo;. Auto-expires after 15 minutes.</p></div></li>
+              <li><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M10 14v-3a6 6 0 0 1 12 0v3" fill="none" stroke="#5f1f9e" stroke-width="2.4"/><rect x="6.5" y="14" width="19" height="14" rx="3" fill="#ffcc00" stroke="#3a2a00" stroke-width="1.5"/><circle cx="16" cy="20" r="2" fill="#3a2a00"/><path d="M16 21.5v3" stroke="#3a2a00" stroke-width="1.8" stroke-linecap="round"/></svg><div><h3>Friends only &amp; Ignore List</h3><p>Only accepted friends can message or Buzz you. Manage blocked users anytime in Preferences.</p></div></li>
             </ul>
           </div>
         </section>
@@ -527,12 +926,12 @@
         <section class="box" aria-labelledby="vs-title">
           <h2 id="vs-title">Why Buzz! exists</h2>
           <table class="vs">
-            <thead><tr><th scope="col">Chat apps today</th><th scope="col">Buzz!</th></tr></thead>
+            <thead><tr><th scope="col">Chat apps today</th><th scope="col">Buzz! Desktop</th></tr></thead>
             <tbody>
-              <tr><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#9a9a9a"/><path d="M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>Feeds that turn friends into content</span></td><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>A Buddy List that shows who is online now</span></td></tr>
+              <tr><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#9a9a9a"/><path d="M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>Feeds that turn friends into content</span></td><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>A Buddy List showing who is online now</span></td></tr>
               <tr><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#9a9a9a"/><path d="M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>Engagement tricks built to keep you scrolling</span></td><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>No feed, no algorithm, no ads</span></td></tr>
-              <tr><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#9a9a9a"/><path d="M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>One pane where each chat hides the others</span></td><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>A window per friend, anywhere on your screens</span></td></tr>
-              <tr><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#9a9a9a"/><path d="M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>A whole browser bundled with every app</span></td><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>A Rust and Tauri app that uses the system webview</span></td></tr>
+              <tr><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#9a9a9a"/><path d="M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>One pane where each chat hides the others</span></td><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>A real desktop window per friend</span></td></tr>
+              <tr><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#9a9a9a"/><path d="M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>A whole browser bundled with every app</span></td><td><span><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7.5" fill="#2e7d1f"/><path d="M4.3 8.3l2.4 2.4 5-5.2" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Rust &amp; Tauri using your OS webview</span></td></tr>
             </tbody>
           </table>
         </section>
@@ -541,7 +940,7 @@
           <h2 id="emo-title">Emoticons</h2>
           <div class="box-body">
             <ul class="emo"><li><img src="assets/emoticons/smile.svg" alt="" width="30" height="30"><code>:)</code></li><li><img src="assets/emoticons/grin.svg" alt="" width="30" height="30"><code>:D</code></li><li><img src="assets/emoticons/wink.svg" alt="" width="30" height="30"><code>;)</code></li><li><img src="assets/emoticons/tongue.svg" alt="" width="30" height="30"><code>:P</code></li><li><img src="assets/emoticons/cool.svg" alt="" width="30" height="30"><code>B-)</code></li><li><img src="assets/emoticons/angry.svg" alt="" width="30" height="30"><code>X(</code></li><li><img src="assets/emoticons/cry.svg" alt="" width="30" height="30"><code>:((</code></li><li><img src="assets/emoticons/angel.svg" alt="" width="30" height="30"><code>O:-)</code></li><li><img src="assets/emoticons/kiss.svg" alt="" width="30" height="30"><code>:-*</code></li><li><img src="assets/emoticons/rofl.svg" alt="" width="30" height="30"><code>=))</code></li><li><img src="assets/emoticons/thinking.svg" alt="" width="30" height="30"><code>:-?</code></li><li><img src="assets/emoticons/sleeping.svg" alt="" width="30" height="30"><code>|-)</code></li></ul>
-            <p class="box-foot">Type the code and it turns into the face. 58 of them, all drawn for Buzz!. Try <code>=))</code> in the chat above.</p>
+            <p class="box-foot">Type any shortcut and Buzz! swaps in crisp original artwork (58 emoticons total). Try <code>=))</code> in the <a href="#tabLive" id="emoTryLink">Interactive Demo</a>.</p>
           </div>
         </section>
 
@@ -558,7 +957,7 @@
         </section>
 
         <section class="box" id="help" aria-labelledby="help-title">
-          <h2 id="help-title">Help</h2>
+          <h2 id="help-title">Help &amp; Product FAQ</h2>
           <div class="box-body">
             <dl class="faq">
               <dt>Is Buzz! free?</dt>
@@ -578,10 +977,21 @@
 
       <aside class="side" aria-label="More">
         <section class="box get">
-          <h2>Get Buzz!</h2>
+          <h2>Get Buzz! Messenger</h2>
           <div class="box-body">
-            <a class="dl" href="#download"><svg class="dl-arrow" width="24" height="24" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="14" fill="#2e7d1f" stroke="#1d5212"/><circle cx="15" cy="11" r="11" fill="#fff" opacity="0.18"/><path d="M15 7.5v12M9.5 14.5l5.5 5.5 5.5-5.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Download</span></a>
-            <p>Free &middot; 0.1.4 beta</p>
+            <a class="dl" href="#download"><svg class="dl-arrow" width="24" height="24" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="14" fill="#2e7d1f" stroke="#1d5212"/><circle cx="15" cy="11" r="11" fill="#fff" opacity="0.18"/><path d="M15 7.5v12M9.5 14.5l5.5 5.5 5.5-5.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Download Now</span></a>
+            <p>Freeware &middot; 0.1.4 beta</p>
+          </div>
+        </section>
+        <section class="box">
+          <h2>System Requirements</h2>
+          <div class="box-body">
+            <ul class="syslist">
+              <li><b>Windows:</b> Windows 10 / 11 (64-bit, Beta untested)</li>
+              <li><b>Mac:</b> Apple Silicon or Intel macOS (Beta untested)</li>
+              <li><b>Linux:</b> Ubuntu, Debian, Mint (.deb / AppImage, Tested)</li>
+              <li><b>Network:</b> Internet access &amp; free Buzz! account</li>
+            </ul>
           </div>
         </section>
         <section class="box share" aria-labelledby="share-title">
@@ -590,13 +1000,13 @@
             <p class="share-lede">Buzz! is more fun with your buddies on it. Send them the link.</p>
             <button type="button" class="btn-share" id="shareBtn" hidden><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8.5 14 2.5l-3 11-3.2-3.6L5 12.2V9.6l6.2-5.4-7.7 4.9Z" fill="#5f1f9e" stroke="#3d0f6e" stroke-width="0.8" stroke-linejoin="round"/></svg><span id="shareBtnLabel">Share Buzz!</span></button>
             <label class="sr-only" for="shareUrl">Link to Buzz!</label>
-            <input class="share-url" id="shareUrl" type="text" readonly value="https://buzz.asmorodonitito.my.id/">
+            <input class="share-url" id="shareUrl" type="text" readonly value="https://trybuzz.me/">
             <p class="share-status" id="shareStatus" role="status" aria-live="polite"></p>
             <ul class="share-links" aria-label="Share on">
-              <li><a href="mailto:?subject=Try%20Buzz!%20Messenger&amp;body=The%20Buddy%20List%20is%20back%3A%20Buzz!%20is%20a%20free%20desktop%20messenger%20for%20Windows%2C%20Mac%20and%20Linux.%20https%3A%2F%2Fbuzz.asmorodonitito.my.id%2F">Email</a></li>
-              <li><a href="https://wa.me/?text=The%20Buddy%20List%20is%20back%3A%20Buzz!%20Messenger%20https%3A%2F%2Fbuzz.asmorodonitito.my.id%2F" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>
-              <li><a href="https://x.com/intent/post?text=The%20Buddy%20List%20is%20back%3A%20Buzz!%20Messenger&amp;url=https%3A%2F%2Fbuzz.asmorodonitito.my.id%2F" target="_blank" rel="noopener noreferrer">X</a></li>
-              <li><a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fbuzz.asmorodonitito.my.id%2F" target="_blank" rel="noopener noreferrer">Facebook</a></li>
+              <li><a href="mailto:?subject=Try%20Buzz!%20Messenger&amp;body=The%20Buddy%20List%20is%20back%3A%20Buzz!%20is%20a%20free%20desktop%20messenger%20for%20Windows%2C%20Mac%20and%20Linux.%20https%3A%2F%2Ftrybuzz.me%2F">Email</a></li>
+              <li><a href="https://wa.me/?text=The%20Buddy%20List%20is%20back%3A%20Buzz!%20Messenger%20https%3A%2F%2Ftrybuzz.me%2F" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>
+              <li><a href="https://x.com/intent/post?text=The%20Buddy%20List%20is%20back%3A%20Buzz!%20Messenger&amp;url=https%3A%2F%2Ftrybuzz.me%2F" target="_blank" rel="noopener noreferrer">X</a></li>
+              <li><a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Ftrybuzz.me%2F" target="_blank" rel="noopener noreferrer">Facebook</a></li>
             </ul>
           </div>
         </section>
@@ -612,12 +1022,13 @@
           </div>
         </section>
         <section class="box">
-          <h2>Links</h2>
+          <h2>Publisher &amp; Links</h2>
           <div class="box-body">
             <ul>
-              <li><a href="https://github.com/titodoni/buzz">Source code</a></li>
-              <li><a href="https://github.com/titodoni/buzz/releases">All releases</a></li>
-              <li><a href="https://github.com/titodoni/buzz/issues">Report a problem</a></li>
+              <li><a href="https://github.com/titodoni/buzz">Source code (GitHub)</a></li>
+              <li><a href="https://github.com/titodoni/buzz/releases">Official Releases</a></li>
+              <li><a href="https://github.com/titodoni/buzz/blob/main/docs/beta-install.md">Beta Install Guide</a></li>
+              <li><a href="https://github.com/titodoni/buzz/issues">Support &amp; Issue Tracker</a></li>
               <li><a href="https://github.com/titodoni/buzz/blob/main/LICENSE">MIT License</a></li>
             </ul>
           </div>
@@ -626,10 +1037,23 @@
     </div>
   </main>
 
+  <div class="ym-lightbox" id="ymLightbox" role="dialog" aria-modal="true" aria-labelledby="lightboxTitle" hidden>
+    <div class="ym-lightbox-win">
+      <div class="ym-lightbox-bar">
+        <span id="lightboxTitle">Buzz! Desktop Screenshot</span>
+        <button type="button" class="ym-lightbox-close" id="lightboxClose" aria-label="Close screenshot preview">&times;</button>
+      </div>
+      <div class="ym-lightbox-body">
+        <img id="lightboxImg" src="assets/screens/chat.png" alt="">
+        <p class="ym-lightbox-cap" id="lightboxCap"></p>
+      </div>
+    </div>
+  </div>
+
   <footer class="foot">
-    <p><a href="#features">Features</a> | <a href="#emoticons">Emoticons</a> | <a href="#download">Download</a> | <a href="#help">Help</a> | <a href="https://github.com/titodoni/buzz">GitHub</a></p>
-    <p>Copyright &copy; 2026 the Buzz! authors. Made for Kiroween 2026.</p>
-    <p>Buzz! is an independent project and is not affiliated with Yahoo. Yahoo! and Yahoo! Messenger are trademarks of Yahoo Inc.</p>
+    <p><a href="#screenshots">Screenshots</a> | <a href="#features">Features</a> | <a href="#emoticons">Emoticons</a> | <a href="#download">Download</a> | <a href="#help">Help</a> | <a href="https://github.com/titodoni/buzz">GitHub</a> | <a href="https://github.com/titodoni/buzz/blob/main/LICENSE">MIT License</a></p>
+    <p>Copyright &copy; 2026 Buzz Desktop Authors. Made for Kiroween 2026.</p>
+    <p>Buzz! is an independent open-source desktop messenger and is not affiliated with or endorsed by Yahoo. Yahoo! and Yahoo! Messenger are trademarks of Yahoo Inc.</p>
   </footer>
 
 </div>
@@ -990,6 +1414,106 @@
 
       $('ymxMeDot').innerHTML = dot('online', 16);
       renderHeader(); renderList(); renderLog(); refreshBuzz();
+    })();
+  </script>
+  <!-- Screenshot showcase tabs, view switcher & lightbox -->
+  <script>
+    (function () {
+      var SHOTS = {
+        buddylist: { src: 'assets/screens/buddylist.png', title: 'Buzz! - Buddy List', cap: 'Live Buddy List showing online status, Add, Message, Up for Chat, and Buzzes buttons.' },
+        chat: { src: 'assets/screens/chat.png', title: 'Instant Message & BUZZ!', cap: 'Dedicated per-friend window with emoticon picker, Hangouts, and red BUZZ!!! alert.' },
+        login: { src: 'assets/screens/login.png', title: 'Buzz! - Sign In', cap: 'Ice-blue Sign In window with the floating B! smiley emblem and classic login options.' },
+        about: { src: 'assets/screens/about.png', title: 'About Buzz! Messenger', cap: 'About dialog with Buzz! Messenger branding and independent open-source notice.' }
+      };
+      var tabShots = document.getElementById('tabShots');
+      var tabLive = document.getElementById('tabLive');
+      var panelShots = document.getElementById('panelShots');
+      var panelLive = document.getElementById('panelLive');
+      var screenDuo = document.getElementById('screenDuo');
+      var screenSingle = document.getElementById('screenSingle');
+      var screenSingleImg = document.getElementById('screenSingleImg');
+      var screenCap = document.getElementById('screenCaption');
+      var pills = document.querySelectorAll('.screen-pill');
+      var zoomBtn = document.getElementById('screenZoomBtn');
+      var lightbox = document.getElementById('ymLightbox');
+      var lbTitle = document.getElementById('lightboxTitle');
+      var lbImg = document.getElementById('lightboxImg');
+      var lbCap = document.getElementById('lightboxCap');
+      var lbClose = document.getElementById('lightboxClose');
+      var emoTryLink = document.getElementById('emoTryLink');
+      var currentView = 'duo';
+
+      function setTab(mode) {
+        var isLive = mode === 'live';
+        if (tabShots) tabShots.setAttribute('aria-selected', isLive ? 'false' : 'true');
+        if (tabLive) tabLive.setAttribute('aria-selected', isLive ? 'true' : 'false');
+        if (panelShots) panelShots.hidden = isLive;
+        if (panelLive) panelLive.hidden = !isLive;
+      }
+      if (tabShots) tabShots.addEventListener('click', function () { setTab('shots'); });
+      if (tabLive) tabLive.addEventListener('click', function () { setTab('live'); });
+      if (emoTryLink) emoTryLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        setTab('live');
+        var hero = document.querySelector('.hero');
+        if (hero && hero.scrollIntoView) hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        var inp = document.getElementById('ymxInput');
+        if (inp) setTimeout(function () { inp.focus(); }, 250);
+      });
+
+      function setScreenView(view) {
+        currentView = view;
+        for (var i = 0; i < pills.length; i++) {
+          pills[i].setAttribute('aria-pressed', pills[i].getAttribute('data-view') === view ? 'true' : 'false');
+        }
+        if (view === 'duo') {
+          screenDuo.hidden = false;
+          screenSingle.hidden = true;
+          screenCap.textContent = 'Real unretouched captures from the Buzz! Desktop application (click any window to zoom).';
+        } else if (SHOTS[view]) {
+          screenDuo.hidden = true;
+          screenSingle.hidden = false;
+          screenSingleImg.src = SHOTS[view].src;
+          screenSingleImg.alt = SHOTS[view].title;
+          screenCap.textContent = SHOTS[view].cap;
+        }
+      }
+      for (var i = 0; i < pills.length; i++) {
+        (function (btn) {
+          btn.addEventListener('click', function () { setScreenView(btn.getAttribute('data-view')); });
+        })(pills[i]);
+      }
+
+      function openZoom(src, title, cap) {
+        if (!lightbox) return;
+        lbImg.src = src;
+        lbImg.alt = title;
+        lbTitle.textContent = title;
+        lbCap.textContent = cap;
+        lightbox.hidden = false;
+        lbClose.focus();
+      }
+      function closeZoom() { if (lightbox) lightbox.hidden = true; }
+
+      var zoomables = document.querySelectorAll('[data-zoom-src]');
+      for (var j = 0; j < zoomables.length; j++) {
+        (function (el) {
+          el.addEventListener('click', function () {
+            openZoom(el.getAttribute('data-zoom-src'), el.getAttribute('data-zoom-title'), el.getAttribute('data-zoom-cap'));
+          });
+        })(zoomables[j]);
+      }
+      if (screenSingleImg) screenSingleImg.addEventListener('click', function () {
+        var s = SHOTS[currentView] || SHOTS.chat;
+        openZoom(s.src, s.title, s.cap);
+      });
+      if (zoomBtn) zoomBtn.addEventListener('click', function () {
+        var s = SHOTS[currentView] || SHOTS.chat;
+        openZoom(s.src, s.title, s.cap);
+      });
+      if (lbClose) lbClose.addEventListener('click', closeZoom);
+      if (lightbox) lightbox.addEventListener('click', function (e) { if (e.target === lightbox) closeZoom(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && lightbox && !lightbox.hidden) closeZoom(); });
     })();
   </script>
 </body>

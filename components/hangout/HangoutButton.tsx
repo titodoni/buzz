@@ -67,6 +67,12 @@ export function HangoutButton({
         disabled={reason !== null || sending}
         onClick={() => setOpen((v) => !v)}
       >
+        <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+          <circle cx="8" cy="8" r="6.4" fill="#ffe259" stroke="#7a5200" strokeWidth="1" />
+          <circle cx="6.2" cy="6.6" r="0.85" fill="#3a2a00" />
+          <circle cx="9.8" cy="6.6" r="0.85" fill="#3a2a00" />
+          <path d="M5.4 9.2Q8 12 10.6 9.2" fill="none" stroke="#3a2a00" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
         Hangout
       </button>
       {reasonText ? (

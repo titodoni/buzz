@@ -174,18 +174,23 @@ runs the checks, then builds on Windows, macOS (Apple Silicon and Intel), and
 Ubuntu 22.04, and attaches the installers to a draft release. Start it from
 the Actions tab or by pushing a tag. A tag with a hyphen (`v0.1.0-beta.1`)
 makes a pre-release; a plain tag (`v0.1.0`) makes the normal release that the
-landing page at https://buzz.asmorodonitito.my.id links to
+landing page at https://trybuzz.me (alias https://buzz.asmorodonitito.my.id) links to
 ([ADR 0012](adr/0012-website-is-a-landing-page-jury-tests-the-desktop-app.md)).
 The tag must match the version in `src-tauri/tauri.conf.json`. It needs the
 two `NEXT_PUBLIC_SUPABASE_*` values as repository secrets. The builds are not
 code signed; testers follow [docs/beta-install.md](beta-install.md).
 
-Logo and app icon: the "B!" logo (original art, ADR 0006) is drawn once in
-`lib/brand/logo.ts`. `components/BuzzLogo.tsx` shows it in every title bar, and
-`components/BuzzHero.tsx` shows the full-width burst banner on the sign-in,
-sign-up, and About windows. There are four themes: `classic` (the default),
-`sakura`, `ember`, and `midnight`; pass `theme="sakura"` to either component.
-There is no theme setting for users yet.
+Logo and app icon: the tilted "B!" + smiley artwork (original art, ADR 0006)
+is drawn once in `lib/brand/logo.ts`. `components/BuzzLogo.tsx` renders it at
+`16px` in title bars and `48px` in the About dialog, while
+`components/BuzzHero.tsx` renders the transparent tilted badge with its
+overlapping glossy golden smiley on the sign-in and sign-up screens. Glossy
+YM-era toolbar, presence, `BUZZ!`, and Hangout vector icons live in
+`components/PresenceDot.tsx`, `components/ToolButton.tsx`,
+`components/chat/NudgeButton.tsx`, and `components/hangout/HangoutButton.tsx`.
+There are four themes: `classic` (the default), `sakura`, `ember`, and
+`midnight`; pass `theme="sakura"` to either brand component. There is no theme
+setting for users yet.
 
 `node scripts/gen-app-icon.mjs [theme] [--sheet]` renders
 `src-tauri/icons/app-icon.png` (`--sheet` also writes a preview of every theme

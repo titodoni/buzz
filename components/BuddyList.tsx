@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSignOut } from "@/components/AuthGuard"
 import { WindowFrame } from "@/components/WindowFrame"
 import { AboutDialog } from "@/components/AboutDialog"
-import { PresenceDot } from "@/components/PresenceDot"
 import { hasPresenceStarted, loadSignInOptions, markPresenceStarted } from "@/components/auth/remember"
 import { shouldStartInvisible } from "@/lib/auth/options"
 import { StatusSelector } from "@/components/StatusSelector"
@@ -253,7 +252,7 @@ function BuddyListInner({ me, onSignOut }: { me: string; onSignOut: () => Promis
   )
 
   return (
-    <WindowFrame title="Buzz" icon={<PresenceDot state={myState} size={14} />} menuBar={<MenuBar menus={menus} />}>
+    <WindowFrame title="Buzz!" menuBar={<MenuBar menus={menus} />}>
       <div className="ym-buddy">
         <header className="ym-me">
         <Link href="/profile/" title="Edit my profile" aria-label="Edit my profile" className="shrink-0">

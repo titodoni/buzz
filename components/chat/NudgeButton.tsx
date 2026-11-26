@@ -133,6 +133,17 @@ export const NudgeButton = forwardRef<
         aria-describedby="nudge-status"
         onClick={() => void sendNudge()}
       >
+        <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+          <path
+            d="M8 0.8L9.6 3.7L12.9 2.3L12.1 5.6L15.4 6.9L12.6 8.9L14.3 12L10.8 11.7L9.8 15L8 12.2L6.2 15L5.2 11.7L1.7 12L3.4 8.9L0.6 6.9L3.9 5.6L3.1 2.3L6.4 3.7Z"
+            fill="#ffd01a"
+            stroke="#9f1208"
+            strokeWidth="0.9"
+            strokeLinejoin="round"
+          />
+          <path d="M8 4.4V8.8" stroke="#9f1208" strokeWidth="1.7" strokeLinecap="round" />
+          <circle cx="8" cy="11.1" r="1" fill="#9f1208" />
+        </svg>
         BUZZ!
       </button>
       <span id="nudge-status" role="status" aria-live="polite" className="ym-chip-status text-xs">

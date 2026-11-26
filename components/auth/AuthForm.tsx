@@ -34,7 +34,7 @@ export type AuthMode = "signin" | "signup"
 
 const COPY = {
   signin: {
-    title: "Buzz - Sign In",
+    title: "Buzz! - Sign In",
     submit: "Sign In",
     busy: "Signing in...",
     altText: "New to Buzz?",
@@ -42,7 +42,7 @@ const COPY = {
     altHref: "/signup/",
   },
   signup: {
-    title: "Buzz - Sign Up",
+    title: "Buzz! - Sign Up",
     submit: "Sign Up",
     busy: "Creating account...",
     altText: "Already have an account?",
@@ -198,14 +198,40 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   return (
     <WindowFrame title={copy.title} menuBar={<MenuBar menus={menus} />}>
       {about ? <AboutDialog onClose={() => setAbout(false)} /> : null}
-      {/* The window frame spans the whole window at any size; the form stays a centered column. */}
-      <div className="flex min-h-full flex-col">
-        <BuzzHero height={200} />
-        <div className="flex flex-1 items-center justify-center p-4">
-        <form onSubmit={onSubmit} noValidate className="flex w-full max-w-sm flex-col gap-3">
+      {/* Open YM-style light gradient canvas with floating B! emblem and compact fields. */}
+      <div className="ym-login-bg flex min-h-full flex-col">
+        <div className="flex flex-col items-center px-3 pt-3">
+          <BuzzHero height={mode === "signin" ? 116 : 92} />
+          <div className="mt-0.5 text-center leading-none">
+            <span
+              className="block font-black tracking-tight"
+              style={{
+                fontFamily: 'Arial, "Liberation Sans", Helvetica, sans-serif',
+                fontSize: 21,
+                color: "#5f1f9e",
+                textShadow: "1px 1px 0 #d8c8f0",
+              }}
+            >
+              Buzz!
+            </span>
+            <span
+              className="mt-0.5 block font-bold uppercase"
+              style={{
+                fontFamily: 'Arial, "Liberation Sans", Helvetica, sans-serif',
+                fontSize: 9.5,
+                letterSpacing: 3.2,
+                color: "#6b32ad",
+              }}
+            >
+              MESSENGER
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-1 items-start justify-center px-4 pt-3 pb-4">
+        <form onSubmit={onSubmit} noValidate className="flex w-full max-w-sm flex-col gap-2.5">
           {mode === "signup" && (
             <div className="flex flex-col gap-1">
-              <label htmlFor={nameId} className="text-sm font-bold">
+              <label htmlFor={nameId} className="text-xs font-bold">
                 Display name
               </label>
               <input
@@ -216,7 +242,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 onChange={(e) => setDisplayName(e.target.value)}
                 aria-invalid={displayNameError ? true : undefined}
                 aria-describedby={displayNameError ? `${nameId}-err` : undefined}
-                className="rounded border border-gray-400 px-2 py-2"
+                className="rounded-sm border border-gray-400 px-2 py-1.5 text-sm"
               />
               <div className="flex justify-between text-xs">
                 <span id={`${nameId}-err`} className="text-red-700">
@@ -229,7 +255,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             </div>
           )}
           <div className="flex flex-col gap-1">
-            <label htmlFor={emailId} className="text-sm font-bold">
+            <label htmlFor={emailId} className="text-xs font-bold">
               Email
             </label>
             <input
@@ -240,16 +266,16 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               onChange={(e) => setEmail(e.target.value)}
               aria-invalid={emailError ? true : undefined}
               aria-describedby={emailError ? `${emailId}-err` : undefined}
-              className="rounded border border-gray-400 px-2 py-2"
+              className="rounded-sm border border-gray-400 px-2 py-1.5 text-sm"
             />
             {emailError && (
-              <p id={`${emailId}-err`} className="text-sm text-red-700">
+              <p id={`${emailId}-err`} className="text-xs text-red-700">
                 {emailError}
               </p>
             )}
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor={passwordId} className="text-sm font-bold">
+            <label htmlFor={passwordId} className="text-xs font-bold">
               Password
             </label>
             <input
@@ -260,10 +286,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               onChange={(e) => setPassword(e.target.value)}
               aria-invalid={passwordError ? true : undefined}
               aria-describedby={passwordError ? `${passwordId}-err` : undefined}
-              className="rounded border border-gray-400 px-2 py-2"
+              className="rounded-sm border border-gray-400 px-2 py-1.5 text-sm"
             />
             {passwordError && (
-              <p id={`${passwordId}-err`} className="text-sm text-red-700">
+              <p id={`${passwordId}-err`} className="text-xs text-red-700">
                 {passwordError}
               </p>
             )}

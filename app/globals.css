@@ -39,14 +39,14 @@
   --color-buzz-red: #cc0000;
   --color-msg-self: #0067fa;
   --color-msg-friend: #cc3300;
-  --font-ym: Tahoma, Verdana, "Segoe UI", sans-serif;
+  --font-ym: Tahoma, Verdana, Geneva, "DejaVu Sans", "Liberation Sans", "Segoe UI", sans-serif;
 }
 
 html,
 body {
   margin: 0;
-  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
-  font-size: 13px;
+  font-family: Tahoma, Verdana, Geneva, "DejaVu Sans", "Liberation Sans", "Segoe UI", sans-serif;
+  font-size: 12.5px;
   color: var(--text-body);
   /* Transparent so the rounded .ym-window corners show through the frameless
      OS window (tauri.conf.json: transparent). The window paints its own fill. */
@@ -55,16 +55,16 @@ body {
 
 .ym-skin {
   min-height: 100vh;
-  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
-  font-size: 13px;
+  font-family: Tahoma, Verdana, Geneva, "DejaVu Sans", "Liberation Sans", "Segoe UI", sans-serif;
+  font-size: 12.5px;
   color: var(--text-body);
 }
 
 .ym-window {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border);
-  border-radius: 10px 10px 6px 6px;
+  border: 1px solid #4d267c;
+  border-radius: 10px 10px 5px 5px;
   background: var(--window-bg);
   color: var(--text-body);
   overflow: hidden;
@@ -73,12 +73,23 @@ body {
 .ym-titlebar {
   display: flex;
   align-items: center;
-  padding: 4px 8px;
+  padding: 4px 7px;
   color: var(--titlebar-text);
   font-weight: bold;
-  background: linear-gradient(to bottom, var(--ym-purple), var(--ym-purple-deep));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4);
+  background: linear-gradient(180deg, #8b47df 0%, #6400cd 42%, #420885 56%, #5616a4 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.48);
+  border-bottom: 1px solid #2f1050;
   border-radius: 9px 9px 0 0;
+}
+
+.ym-menubar {
+  background: linear-gradient(to bottom, #f7f4fc, #e4dcf2);
+  border-color: #c5b8de;
+  font-size: 12px;
+}
+
+.ym-login-bg {
+  background: linear-gradient(to bottom, #dce9f9 0%, #edf4fd 45%, #ffffff 100%);
 }
 
 .ym-button {
@@ -255,8 +266,9 @@ body {
   align-items: center;
   gap: 6px;
   min-width: 0;
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--border);
+  padding: 5px 8px;
+  background: linear-gradient(to bottom, #f8f6fc, #eae4f5);
+  border-bottom: 1px solid #c5b8de;
 }
 
 .ym-chat-body {
@@ -295,6 +307,7 @@ body {
   width: 88px;
   padding: 8px;
   overflow-y: auto;
+  background: linear-gradient(to bottom, #f8f7fb, #eceaf3);
   border-left: 1px solid var(--border);
 }
 
@@ -403,28 +416,29 @@ body {
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  background: linear-gradient(to bottom, #f6f3fc, #dcd4ef);
-  border-bottom: 1px solid var(--border);
+  background: linear-gradient(to bottom, #f9f7fe, #e3dbf3);
+  border-bottom: 1px solid #c5b8de;
 }
 
 /* Toolbar of icon buttons with a short word under each. */
 .ym-toolbar {
   display: flex;
-  gap: 2px;
+  justify-content: space-between;
+  gap: 1px;
   padding: 3px 4px;
-  background: linear-gradient(to bottom, #ffffff, #e4def2);
-  border-bottom: 1px solid var(--border);
+  background: linear-gradient(to bottom, #ffffff 0%, #efeaf9 55%, #dcd3ef 100%);
+  border-bottom: 1px solid #c5b8de;
 }
 .ym-tool {
-  flex: 0 0 auto;
-  width: 52px;
+  flex: 0 1 auto;
+  min-width: 44px;
   min-height: 44px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1px;
-  padding: 2px;
+  padding: 2px 5px;
   font: inherit;
   color: var(--text-body);
   cursor: pointer;
@@ -451,6 +465,7 @@ body {
 .ym-tool-label {
   max-width: 100%;
   font-size: 10px;
+  letter-spacing: -0.15px;
   line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -473,9 +488,9 @@ body {
 
 /* Group header bar: "▼ Friends (1/3)". */
 .ym-group-head {
-  background: linear-gradient(to bottom, #f4f4f4, #e2e2e2);
+  background: linear-gradient(to bottom, #f6f4fc, #e5def2);
   border-top: 1px solid #ffffff;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #c9c0dc;
 }
 
 /* Yellow notice strip, e.g. "You have 1 offline message". */

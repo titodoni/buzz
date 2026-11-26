@@ -12,9 +12,11 @@ export function BuddyPicture({ name, url, size = 32 }: { name: string; url: stri
     width: size,
     height: size,
     flexShrink: 0,
-    border: "1px solid var(--border)",
-    borderRadius: 3,
+    border: "1px solid #b8b2c9",
+    borderRadius: 2,
     background: "#ffffff",
+    padding: 1,
+    boxShadow: "0 1px 1px rgb(0 0 0 / 0.08)",
     boxSizing: "border-box",
   } as const
   if (url) {

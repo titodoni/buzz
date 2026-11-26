@@ -16,17 +16,24 @@ export interface TitleBarProps {
 }
 
 const controlStyle = {
-  width: 26,
-  height: 20,
+  width: 21,
+  height: 19,
   padding: 0,
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   color: "#ffffff",
   cursor: "pointer",
-  border: "1px solid rgb(255 255 255 / 0.6)",
+  border: "1px solid rgb(255 255 255 / 0.65)",
   borderRadius: 3,
-  background: "linear-gradient(to bottom, rgb(255 255 255 / 0.3), rgb(255 255 255 / 0.05))",
+  boxShadow: "inset 0 1px 0 rgb(255 255 255 / 0.35), 0 1px 1px rgb(0 0 0 / 0.25)",
+  background: "linear-gradient(to bottom, rgb(255 255 255 / 0.28), rgb(255 255 255 / 0.06))",
+} as const;
+
+const closeControlStyle = {
+  ...controlStyle,
+  border: "1px solid rgb(255 215 215 / 0.75)",
+  background: "linear-gradient(to bottom, #e55b4b, #b62519)",
 } as const;
 
 function stop(e: { stopPropagation: () => void }) {
@@ -47,8 +54,7 @@ export function TitleBar({ title, icon, showMaximize = true }: TitleBarProps) {
       }}
       style={{ gap: 6, userSelect: "none", fontSize: 12, flexShrink: 0 }}
     >
-      <BuzzLogo size={16} />
-      {icon ? <span style={{ display: "inline-flex" }}>{icon}</span> : null}
+      {icon ? <span style={{ display: "inline-flex", flexShrink: 0 }}>{icon}</span> : <BuzzLogo size={16} />}
       <span
         style={{
           flex: 1,
@@ -93,7 +99,7 @@ export function TitleBar({ title, icon, showMaximize = true }: TitleBarProps) {
         <button
           type="button"
           aria-label="Close"
-          style={controlStyle}
+          style={closeControlStyle}
           onClick={() => void closeWindow()}
         >
           <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">

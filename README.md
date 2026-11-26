@@ -9,7 +9,7 @@ see anything else, every friend gets their own chat window, and one tap on
 
 It runs natively on **Windows, macOS and Linux**.
 
-**[Try the demo on the website](https://buzz.asmorodonitito.my.id)** · [Download](https://github.com/titodoni/buzz/releases) · [Install help](docs/beta-install.md)
+**[Visit trybuzz.me (screenshots & demo)](https://trybuzz.me)** · [Download](https://github.com/titodoni/buzz/releases) · [Install help](docs/beta-install.md)
 
 ## What you get
 

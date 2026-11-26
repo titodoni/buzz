@@ -25,7 +25,7 @@ Chat built around people being present. The Buddy List is the home screen, every
 
 ## Operating Context
 
-The page is static HTML on Hostinger at https://buzz.asmorodonitito.my.id, deployed from `website/`. Downloads come from GitHub Releases (tag `v0.1.4`). The installers are not code signed; `docs/beta-install.md` explains the first-launch warnings.
+The page is static HTML on Hostinger at https://trybuzz.me/ (and alias https://buzz.asmorodonitito.my.id/), deployed from `website/`. Downloads come from GitHub Releases (tag `v0.1.4`). The installers are not code signed; `docs/beta-install.md` explains the first-launch warnings.
 
 ## Capabilities and Constraints
 
@@ -36,14 +36,14 @@ The page is static HTML on Hostinger at https://buzz.asmorodonitito.my.id, deplo
 
 ## Brand Commitments
 
-- Name: **Buzz!** with the "B!" logo (original art, docs/adr/0006; drawn in `lib/brand/logo.ts`).
+- Name: **Buzz!** with the tilted `B!` + golden smiley logo (original art, docs/adr/0006; drawn in `lib/brand/logo.ts`).
 - YM-era tone: warm, a little playful, never corporate. Plain words, one tap one action.
 - All art and sounds are original. Buzz is not affiliated with Yahoo; never use Yahoo's logo or art.
 - The landing page's visual world is pinned by the owner: a 2000s website, in the spirit of the original Yahoo! Messenger download page.
 
 ## Evidence on Hand
 
-- The app's real skin, emoticons (`public/emoticons/`, 58 SVGs) and logo.
+- Real unretouched desktop screenshots captured from the desktop build (`website/assets/screens/{login,buddylist,chat,about}.png`), the app's skin, 58 SVG emoticons (`public/emoticons/`), and original logo artwork.
 - No testimonials, user counts, benchmarks or press. Do not invent any. No measured memory or speed figures.
 
 ## Product Principles
