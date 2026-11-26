@@ -14,7 +14,7 @@
     "test:e2e": "node e2e/two-user.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.119.1",
+    "@supabase/supabase-js": "^2.119.2",
     "@tauri-apps/api": "^2.12.5",
     "libsodium-wrappers": "^0.8.4",
     "next": "^16.4.6",
